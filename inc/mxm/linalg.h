@@ -2,16 +2,16 @@
 #define _LINALG_H_
 
 
-#include "mxm/linalg_mat.h"
-#include "mxm/linalg_mat_block.h"
-#include "mxm/linalg_mat_ref.h"
+#include "linalg_mat.h"
+#include "linalg_mat_block.h"
+#include "linalg_mat_ref.h"
 #include "linalg_solve.h"
 
 #include "linalg_vec.h"
 #include "linalg_vec_ref.h"
 
 #include "linalg_utils.h"
-// #include "linalg_complex.h"
+#include "linalg_complex.h"
 
 
 
