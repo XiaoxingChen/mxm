@@ -2,6 +2,7 @@
 #define _ROTATION_BASE_H_
 
 #include "linalg.h"
+#include <map>
 
 namespace mxm
 {
@@ -101,8 +102,12 @@ inline void simpleRotationToPlaneAngle(const Matrix<DType>& R, Matrix<DType>& pl
     DType cos_theta = 0.5 * (R.trace() - dim) + 1;
     angle = acos(cos_theta);
     Matrix<DType> skew = R - R.T();
-    plane(Col(0)) = skew(Col(0)).normalized();
-    plane(Col(1)) = skew(Col(1)).normalized();
+    std::vector<std::pair<size_t, DType>> col_norm(dim);
+    for(size_t i = 0; i < dim; i++) col_norm[i] = {i,skew(Col(i)).norm()};
+    std::sort(col_norm.begin(), col_norm.end(), [](auto a, auto b){return a.second > b.second;});
+    plane(Col(0)) = skew(Col(col_norm.at(0).first)).normalized();
+    plane(Col(1)) = skew(Col(col_norm.at(1).first)).normalized();
+    // std::cout << "plane: " << plane.T().str() << std::endl;
 }
 
 template<typename DType>
