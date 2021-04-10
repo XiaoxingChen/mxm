@@ -51,6 +51,42 @@ inline void rotationTestCase4()
     }
 }
 
+inline void rotationTestCase5()
+{
+    Matrix<double> rot({3,3},
+        {0.999999999999995, 9.999999999999984e-08 ,  0.,
+        -9.999999999999984e-08 , 0.999999999999995,  0.,
+        0.        ,  0.        ,  1.});
+
+    Vector<double> axis;
+    double angle;
+    matrixToAxisAngle3D(rot, axis, angle);
+    if((axis - Vector<double>({0,0,1})).norm() > eps() || fabs(angle - 1e-7) > eps())
+    {
+        std::cout << "axis: " << axis.T().str() << "angle: " << angle << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
+inline void rotationTestCase6()
+{
+    Matrix<double> rot({3,3},
+        {0.5403023058681398, 0.8414709848078965 ,  0.,
+        -0.8414709848078965 , 0.5403023058681398,  0.,
+        0.        ,  0.        ,  1.});
+
+    Vector<double> axis;
+    double angle;
+    matrixToAxisAngle3D(rot, axis, angle);
+    if((axis - Vector<double>({0,0,1})).norm() > eps() || fabs(angle - 1) > eps())
+    {
+        std::cout << "axis: " << axis.T().str() << "angle: " << angle << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 inline void rotationTestDeterminant()
 {
     for(size_t i = 0; i < 10; i++)
@@ -70,6 +106,8 @@ inline void testRotation()
     rotationTestCase1();
     rotationTestCase2();
     rotationTestCase4();
+    rotationTestCase5();
+    rotationTestCase6();
     rotationTestDeterminant();
 }
 

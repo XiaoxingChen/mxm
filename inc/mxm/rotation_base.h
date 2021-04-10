@@ -34,47 +34,84 @@ inline Matrix<DType> rodrigues3D(const Vector<DType>& axis_in, DType angle)
     return Matrix<DType>::Identity(3) * c + (axis.matmul(axis.T())) * c1 + r_x * s;
 }
 
-inline void matrixToAxisAngle3D(const Mat& R, UnitVec& axis, FloatType& angle)
+//
+// Reference:
+// 1. https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation#Log_map_from_SO.283.29_to_.7F.27.22.60UNIQ--postMath-0000000D-QINU.60.22.27.7F.283.29
+// 2. https://github.com/opencv/opencv/blob/4.5.2/modules/calib3d/src/calibration.cpp#L388
+#if 0
+template<typename DType>
+inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DType& angle)
 {
-    FloatType rx = R(2, 1) - R(1, 2);
-    FloatType ry = R(0, 2) - R(2, 0);
-    FloatType rz = R(1, 0) - R(0, 1);
+    DType rx = R(2, 1) - R(1, 2);
+    DType ry = R(0, 2) - R(2, 0);
+    DType rz = R(1, 0) - R(0, 1);
 
-    FloatType theta, s, c;
+    DType theta, s, c;
     s = std::sqrt((rx*rx + ry*ry + rz*rz)*0.25);
     c = (R(0, 0) + R(1, 1) + R(2, 2) - 1)*0.5;
     c = c > 1. ? 1. : c < -1. ? -1. : c;
     theta = acos(c);
-    Vec r({rx, ry, rz});
+    Vector<DType> r({rx, ry, rz});
 
-    if( s < 1e-5 )
+    if( s < 1e-5 ) // R is very close to Identity matrix.
     {
-        FloatType t;
-
-        if( c > 0 )
-            r = Vec(3);
+        if( c > 0 ) // trace(R) > 1
+        {
+            // r = Vec(3);
+            axis = Vector<DType>(3);
+            angle = 0;
+        }
         else
         {
+            //recalculate r
+            DType t;
             t = (R(0, 0) + 1)*0.5;
-            r(0) = std::sqrt(std::max(t,(FloatType)0));
+            r(0) = std::sqrt(std::max(t,(DType)0));
             t = (R(1, 1) + 1)*0.5;
-            r(1) = std::sqrt(std::max(t,(FloatType)0))*(R(0, 1) < 0 ? -1. : 1.);
+            r(1) = std::sqrt(std::max(t,(DType)0))*(R(0, 1) < 0 ? -1. : 1.);
             t = (R(2, 2) + 1)*0.5;
-            r(2) = std::sqrt(std::max(t,(FloatType)0))*(R(0, 2) < 0 ? -1. : 1.);
+            r(2) = std::sqrt(std::max(t,(DType)0))*(R(0, 2) < 0 ? -1. : 1.);
             if( fabs(r(0)) < fabs(r(1)) && fabs(r(0)) < fabs(r(2)) && (R(1, 2) > 0) != (r(1)*r(2) > 0) )
                 r(2) = -r(2);
-            theta /= r.norm();
-            r *= theta;
+            // theta /= r.norm();
+            // r *= theta;
+            angle = theta;
+            axis = r.normalized();
         }
     }
-    else
+    else // general cases
     {
-        FloatType vth = 1/(2*s);
-        vth *= theta;
-        r *= vth;
+        DType vth = 1/(2*s);
+        // vth *= theta;
+        // r *= vth;
+        angle = theta;
+        axis = vth * r;
     }
-    angle = r.norm();
-    axis = UnitVec(r);
+    // angle = r.norm();
+    // axis = r.normalized();
+}
+#endif
+
+template<typename DType>
+inline void simpleRotationToPlaneAngle(const Matrix<DType>& R, Matrix<DType>& plane, DType& angle)
+{
+    size_t dim = R.shape(0);
+    plane = Matrix<DType>({dim, 2});
+
+    DType cos_theta = 0.5 * (R.trace() - dim) + 1;
+    angle = acos(cos_theta);
+    Matrix<DType> skew = R - R.T();
+    plane(Col(0)) = skew(Col(0)).normalized();
+    plane(Col(1)) = skew(Col(1)).normalized();
+}
+
+template<typename DType>
+inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DType& angle)
+{
+    Matrix<DType> plane;
+
+    simpleRotationToPlaneAngle(R, plane, angle);
+    axis = orthogonalComplement(plane).normalized();
 }
 
 inline Mat reflection(UnitVecIn u)

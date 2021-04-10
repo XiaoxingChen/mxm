@@ -179,11 +179,10 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
                 if(!validIntersect (result) || !ray.valid(hit_t))
                     continue;
 
-                HitRecord record(dim());
+                HitRecord record;
                 record.t = hit_t;
                 record.prim_idx = prim_idx;
                 record.ray = ray_in;
-
 
 
                 if(hit_type == eAnyHit)

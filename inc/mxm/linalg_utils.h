@@ -7,7 +7,8 @@
 namespace mxm
 {
 
-inline Mat orthogonalComplement(const Mat& vs)
+template<typename DType>
+inline Matrix<DType> orthogonalComplement(const Matrix<DType>& vs)
 {
     int diff = static_cast<int>(vs.shape(0)) - vs.shape(1);
     if(diff == -1)
@@ -15,10 +16,10 @@ inline Mat orthogonalComplement(const Mat& vs)
     if(diff != 1)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-    Mat ret({vs.shape(0), 1});
+    Matrix<DType> ret({vs.shape(0), 1});
     for(size_t i = 0; i < vs.shape(0); i++)
     {
-        Mat adjoint_mat(Mat::zeros({vs.shape(1), vs.shape(1)}));
+        Matrix<DType> adjoint_mat(Matrix<DType>::zeros({vs.shape(1), vs.shape(1)}));
 
         if(i > 0)
             adjoint_mat(Block({0, i},{})) = vs(Block({0, i},{}));

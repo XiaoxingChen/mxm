@@ -9,7 +9,8 @@ namespace mxm{
 
 class Ray
 {
-    public:
+public:
+    Ray():origin_(), direction_(), t_min_(mxm::tMin()), t_max_(mxm::tMax()){}
     Ray(size_t dimension):origin_(dimension), direction_(dimension), t_min_(mxm::tMin()), t_max_(mxm::tMax()){}
     Ray(const Vec& origin, const Vec& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
     origin_(origin), direction_(direction), t_min_(t_min), t_max_(t_max) { checkDimension(); }
@@ -30,8 +31,8 @@ class Ray
     const Vec& origin() const       { return origin_; }
     Vec& origin()       { return origin_; }
 
-    const UnitVec& direction() const    { return direction_; }
-    void setDirection(UnitVecIn direction)    { direction_ = direction; checkDimension(); }
+    const Vec& direction() const    { return direction_; }
+    void setDirection(const Vec& direction)    { direction_ = direction.normalized(); checkDimension(); }
 
     Vec operator() (FloatType t) const { return origin() + direction() * t; }
     bool valid(FloatType t) const { return t < t_max_ && t > t_min_; }
@@ -41,7 +42,7 @@ class Ray
 
     private:
     Vec origin_;
-    UnitVec direction_;
+    Vec direction_;
     FloatType t_min_;
     FloatType t_max_;
 };

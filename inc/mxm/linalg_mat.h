@@ -62,7 +62,7 @@ public:
     Matrix():shape_({0,0}), data_(), major_(ROW) {}
 
     Matrix(const Shape& _shape, const std::vector<DType>& data={}, bool major=ROW)
-        :shape_(_shape), data_(_shape[0] * _shape[1], DType()), major_(major)
+        :shape_(_shape), data_(_shape[0] * _shape[1]), major_(major)
     {
         if(data.size() == 0)  return;
         if(shape(0) * shape(1) != data.size())
@@ -116,7 +116,7 @@ public:
     //
     // static methods
     //
-    static ThisType zeros(const Shape& _shape) { return ThisType(_shape); }
+    static ThisType zeros(const Shape& _shape) { return ThisType(_shape) *= 0; }
     static ThisType ones(const Shape& _shape) { return ThisType(_shape) + 1; }
     static ThisType Identity(size_t n)
     {
@@ -274,7 +274,7 @@ DType Matrix<DType>::norm(uint8_t p) const
     if(2 == p)
     {
         DType sum2(0);
-        Mat mat_2((*this)*(*this));
+        Matrix<DType> mat_2((*this)*(*this));
         traverse([&](size_t i, size_t j){sum2 += mat_2(i,j);});
         return sqrt(sum2);
     }

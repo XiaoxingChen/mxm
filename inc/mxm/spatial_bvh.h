@@ -35,7 +35,6 @@ class PrimitiveMeshTree
 public:
     struct HitRecord
     {
-        HitRecord(size_t dim): ray(dim){}
         Ray ray;
         FloatType t;
         size_t prim_idx;
