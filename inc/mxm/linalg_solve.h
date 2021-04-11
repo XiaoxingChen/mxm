@@ -61,19 +61,24 @@ Matrix<DType> project(const Matrix<DType>& u, const Matrix<DType>& a)
 }
 
 template<typename DType>
-Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in)
+// Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in, bool hessenberg=false)
+std::array<Matrix<DType>, 2>
+decomposeByRotation(const Matrix<DType>& mat_in, bool hessenberg=false, bool symmetric=false)
 {
     // reference: https://www.math.usm.edu/lambers/mat610/sum10/lecture9.pdf
     if(!mat_in.square())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-    Matrix<DType> mat(mat_in);
+    std::array<Matrix<DType>, 2> ret;
+    Matrix<DType>& mat(ret[1]);
+    mat = mat_in;
     const size_t& n = mat.shape(0);
-    Matrix<DType> rot = Matrix<DType>::Identity(n);
+    Matrix<DType>& rot(ret[0]);
+    rot = Matrix<DType>::Identity(n);
 
     for(size_t j = 0; j < n; j++)
     {
-        for(size_t i = n-1; i > j; i--)
+        for(size_t i = n-1; i > (hessenberg ? j+1 : j); i--)
         {
             // std::cout << "(i,j): " << i << "," << j << std::endl;
             DType theta = -atan2(mat(i,j), mat(i-1,j));
@@ -89,9 +94,12 @@ Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in)
 
             rot = sub_rot.matmul(rot);
             mat = sub_rot.matmul(mat);
+            if(symmetric)
+                mat = mat.matmul(sub_rot.T());
         }
     }
-    return rot.T();
+    rot = rot.T();
+    return ret;
 }
 
 template<typename DType>
@@ -123,7 +131,7 @@ Matrix<DType> calcMatQFromReflection(const Matrix<DType>& mat)
 template<typename DType>
 Matrix<DType> calcMatQ(const Matrix<DType>& mat)
 {
-    return calcMatQFromRotation(mat);
+    return decomposeByRotation(mat)[0];
 }
 
 template<typename DType>
@@ -167,6 +175,71 @@ Matrix<DType> Matrix<DType>::inv() const
 {
     if(!square()) return Matrix<DType>::zeros(shape());
     return qr::solve(*this, Matrix<DType>::Identity(shape(0)));
+}
+
+// References:
+// https://www.cs.cornell.edu/courses/cs6210/2010fa/A6/A6.pdf
+template <typename DType>
+std::array<Matrix<DType>, 2> tridiagonalizeSkewSymmetric(const Matrix<DType>& skew)
+{
+    assert(("Skew symmetric matrix must be square!", skew.square()));
+#if 0 // by reflection
+    const size_t& n = skew.shape(0);
+    mat_orth = Matrix<DType>::Identity(n);
+    for(size_t i = 0; i < n-1; i++)
+    {
+        Matrix<DType> v = skew(Block({i+1, end()}, {i, i+1}));
+        v(0,0) += v.norm();
+        v.normalize();
+        Matrix<DType> mat_p = Matrix<DType>::Identity(n);
+        // std::cout << mat_p(Block({i+1, end()}, {i+1, end()})).shape(0) << "," << v.shape(0) <<  std::endl;
+        mat_p(Block({i+1, end()}, {i+1, end()})) -= 2* v.matmul(v.T());
+        mat_orth = mat_p.matmul(mat_orth);
+        skew = mat_p.matmul(skew).matmul(mat_p);
+    }
+#else // by rotation
+
+    auto ret = qr::decomposeByRotation(skew, /*hessenberg*/true, /*block diagonalize*/true);
+    return ret;
+#endif
+}
+
+template <typename DType>
+std::array<Matrix<DType>, 2> blockDiagonalizeSkewSymmetric(const Matrix<DType>& skew)
+{
+    if(!skew.square())
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+    std::array<Matrix<DType>, 2> ret;
+    Matrix<DType>& mat(ret[1]);
+    mat = skew;
+    const size_t& n = mat.shape(0);
+    Matrix<DType>& rot(ret[0]);
+    rot = Matrix<DType>::Identity(n);
+
+    for(size_t j = 0; j < n; j++)
+    {
+        for(size_t i = n-1; i > (0 == j % 2 ? j+1 : j); i--)
+        {
+            std::cout << "(i,j): " << i << "," << j << std::endl;
+            DType theta = -atan2(mat(i,j), mat(i-1,j));
+            // std::cout << "theta: " << theta << std::endl;
+            Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
+
+            Matrix<DType> so2({2,2},
+                {cos(theta), -sin(theta),
+                sin(theta), cos(theta)});
+
+            sub_rot.setBlock(i-1, i-1, so2);
+            // std::cout << sub_rot.str() << std::endl;
+            std::cout << "b: \n"<< mat.str()  << std::endl;
+
+            rot = sub_rot.matmul(rot);
+            mat = sub_rot.matmul(mat).matmul(sub_rot.T());
+        }
+    }
+    rot = rot.T();
+    return ret;
 }
 
 } // namespace mxm

@@ -84,26 +84,43 @@ public:
 
     virtual void operator = (ThisType&& rhs)
     {
-        if(&rhs.owner() == &rhs) // not MatrixRef<DType>
+        if(&rhs.owner() == &rhs) // type(rhs) != MatrixRef<DType>
         {
-            shape_.swap(rhs.shape_);
+            shape_= rhs.shape_;
             data_.swap(rhs.data_);
             major_ = rhs.major_;
+
+            rhs.shape_ = {0,0};
             return;
         }
-        if(rhs.owner().shape(0) * rhs.owner().shape(1) == rhs.shape(0) * rhs.shape(1)) // transposed MatrixRef<DType>
+
+    #if 0
+        // disable move construct from MatrixRef. See testMatRef()-test09
+        if(rhs.owner().shape(0) * rhs.owner().shape(1) == rhs.shape(0) * rhs.shape(1)) // rhs full shape MatrixRef<DType>
         {
-            shape_.swap(rhs.shape_);
+            shape_= rhs.shape_;
             data_.swap(rhs.owner().data_);
             major_ = rhs.major_;
+
+            rhs.shape_ = {0,0};
+            rhs.owner().shape_ = {0,0};
             return ;
         }
+    #endif
 
         (*this) = rhs;
     }
 
     virtual void operator = (const ThisType& rhs)
     {
+        if(&rhs.owner() == this
+            && rhs.majorAxis() != majorAxis()
+            && rhs.shape() == Shape({shape_[1], shape_[0]})) //deal with mat = mat.T()
+        {
+            major_ = ! major_;
+            return;
+        }
+
         if(this->shape() == Shape{0,0})
         {
             shape_ = rhs.shape();
@@ -217,7 +234,7 @@ public:
     {
         std::string ret;
         traverse([&](size_t i, size_t j){
-            ret += (mxm::to_string((*this)(i,j), 6) + (j == shape(1) - 1 ? "\n" : " ")); });
+            ret += (mxm::to_string((*this)(i,j), 16) + (j == shape(1) - 1 ? "\n" : " ")); });
         return ret;
     }
 

@@ -92,7 +92,8 @@ inline void testQRcalcMatQ()
             0.6007756 , 0.30253734, 0.78378593,
             0.93970026, 0.781002  , 0.86480691});
 
-        Mat mat_q = qr::calcMatQFromRotation(m);
+        // Mat mat_q = qr::calcMatQFromRotation(m);
+        Mat mat_q = qr::decomposeByRotation(m)[0];
 
         Mat expect_q({3,3},
             {0.66699001,  0.5087728 , 0.54431109,
@@ -134,6 +135,44 @@ inline void testQRSolve()
     }
 }
 
+inline void testTridiagonalizeSkewSymmetric()
+{
+    {
+        Mat skew({5,5},
+        {0, 1, 2, 3, 4,
+        -1, 0, 3, 6, 7,
+        -2,-3, 0, 8, 2,
+        -3,-6,-8, 0, 1,
+        -4,-7,-2,-1, 0});
+
+        Mat expected({5,5},
+            {0.0000000000000000, -5.4772253036499023, -0.0000000000000000, -0.0000000000000000, 0.0000000000000000,
+            5.4772253036499023, 0.0000000000000000, -11.6404466629028320, -0.0000000000000000, 0.0000000000000000,
+            0.0000000000000000, 11.6404457092285156, 0.0000000000000000, -3.3462533950805664, -0.0000000000000000,
+            0.0000000000000000, 0.0000000000000000, 3.3462533950805664, -0.0000000000000000, -4.0376458168029785,
+            -0.0000000000000000, 0.0000000000000000, 0.0000000000000000, 4.0376458168029785, 0.0000000000000000});
+
+        auto result_q_d = tridiagonalizeSkewSymmetric(skew);
+        if((result_q_d[1] - expected).norm() > eps() * 30)
+        {
+
+            std::cout << "d: \n" << result_q_d[1].str() << "error: " << (result_q_d[1] - expected).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    if(0){
+        Mat skew({3,3},{
+            0, -1, 1,
+            1, 0, -1,
+            -1,1, 0});
+
+        auto result_q_d = blockDiagonalizeSkewSymmetric(skew);
+        std::cout << result_q_d[1].str() << std::endl;
+    }
+
+}
+
 inline Mat testMatRefTransposeReturn(size_t dim)
 {
     return Mat::Identity(dim).T();
@@ -141,20 +180,20 @@ inline Mat testMatRefTransposeReturn(size_t dim)
 
 inline void testMatRef()
 {
-    {
+    {//test 01
         auto mat = testMatRefTransposeReturn(3);
         if(mat(0,0) != 1.f)
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    }
+    }//test 01
 
-    {
+    {//test 02
         Mat mat_a(Mat::ones({3, 10}));
         MatRef mr(mat_a(Col(1)).T());
         if((mr - Mat::ones({1, 3})).norm() > eps())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    }
+    }//test 02
 
-    {
+    {//test 03
         Mat mat_a(Mat::ones({3, 10}));
         MatRef m1(mat_a(Block({},{3,7})).T());
         MatRef m2(m1(Row(1)).T());
@@ -165,7 +204,7 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    {
+    {//test 04
         Mat vs(Mat::ones({2, 3}));
         MatRef vst = vs.T();
         auto b = vst(Block({1,},{0, end()}));
@@ -173,7 +212,7 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    if(1){
+    if(1){//test 05
         Mat vs(Mat::ones({2, 3}));
         auto block = vs(Row(0));
         auto v = block.asVector();
@@ -181,7 +220,7 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    {
+    {//test 06
         Mat vs(Mat::ones({2, 3}));
         vs(Col(1)) = Vec({5,6});
         auto v = vs(Row(0)).asVector();
@@ -191,7 +230,7 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    {
+    {//test 07
         Mat mat(Mat::Identity(3));
         auto v = mat(Col(1));
         auto vt = v.T();
@@ -199,13 +238,22 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    {
+    {//test 08
         Mat mat(Mat::Identity(3));
         auto b = mat(Col(1));
         auto v = b.asVector();
 
         if((v - Vec({0,1,0})).norm() > eps())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    {//test 09
+        Mat mat = Mat::Identity(3);
+        Mat mat_b = mat(Block({0,end()},{0, end()}));
+        if(mat.shape() != Shape{3,3})
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 }
 
@@ -275,13 +323,14 @@ inline void testLinearAlgebra()
 
 
     testMatRef();
-    testMatInv();
     testOrthogonalComplement();
     testSolveLowerTriangle();
     testQRcalcMatQ();
     testQRSolve();
+    testMatInv();
     testRvalueReference();
     // testComplexBase();
+    testTridiagonalizeSkewSymmetric();
 
 
 }
