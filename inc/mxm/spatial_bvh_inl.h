@@ -9,17 +9,19 @@
 #include <cmath>
 #include <chrono>
 
+#include "spatial_tree_base.h"
+
 namespace mxm
 {
 namespace bvh
 {
 
 
-struct RangeNode
-{
-    size_t node_idx;
-    std::array<size_t, 2> range;
-};
+// struct RangeNode
+// {
+//     size_t node_idx;
+//     std::array<size_t, 2> range;
+// };
 
 MXM_INLINE size_t treeNodeRequirement(size_t leaf_num, size_t child_num=2)
 {
