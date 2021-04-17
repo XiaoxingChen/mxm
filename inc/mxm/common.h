@@ -27,6 +27,38 @@ inline constexpr FloatType eps() {return 1e-7;}
 inline constexpr FloatType tMin() {return 1e-4;}
 inline constexpr FloatType tMax() {return 10000.;}
 
+// template<typename DType>
+
+template<typename DType>
+std::string to_string(const DType& v, size_t prec=6)
+{
+    return std::to_string(v);
+}
+
+inline std::string to_string(const float& v, size_t prec=6)
+{
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(prec) << v;
+    return stream.str();
+}
+
+inline std::string to_string(const double& v, size_t prec=6)
+{
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(prec) << v;
+    return stream.str();
+}
+
+template<template <class, class> class Container, class T, class Alloc>
+inline std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
+{
+    std::string ret;
+    for(size_t i = 0; i < container.size(); i++)
+        ret += to_string(container.at(i), prec) + (i == container.size() - 1 ? "" : " ");
+    return ret;
+}
+
+
 }//namespace mxm
 
 

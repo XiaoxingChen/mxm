@@ -52,6 +52,20 @@ inline std::vector<size_t> argSort(const Vec& v)
     return indices;
 }
 
+inline size_t min(const Vec& v)
+{
+    FloatType m(INFINITY);
+    for(size_t i = 0; i < v.size(); i++) m = v(i) < m ? v(i) : m;
+    return m;
+}
+
+inline size_t max(const Vec& v)
+{
+    FloatType m(INFINITY);
+    for(size_t i = 0; i < v.size(); i++) m = v(i) > m ? v(i) : m;
+    return m;
+}
+
 template <typename DType>
 inline Matrix<DType> hstack(const Matrix<DType>& lhs, const Matrix<DType>& rhs)
 {

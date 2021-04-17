@@ -54,7 +54,7 @@ inline void testBuildTree2()
     auto vertex_buffer = createTriangleBand(40, *index_buffer);
 
     bvh::PrimitiveMeshTree tree(vertex_buffer, index_buffer);
-    tree.build(4, true);
+    tree.build(4, false);
 }
 
 inline void testMultiHit()

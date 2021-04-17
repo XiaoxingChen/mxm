@@ -13,6 +13,7 @@
 #include "test_camera.h"
 // #include "test_pixel.h"
 // #include "test_image_processing.h"
+#include "test_bsp_tree.h"
 
 
 int main(int argc, char const *argv[])
@@ -32,6 +33,7 @@ int main(int argc, char const *argv[])
   testBazier();
   testCamera();
   // testImageProcessing();
+  testBspTree();
   std::cout << "done" << std::endl;
   return 0;
 }

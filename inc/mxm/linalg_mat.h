@@ -19,17 +19,17 @@ namespace mxm
 {
 
 size_t indexConvert2D(size_t i, size_t j, bool major, size_t shape_i, size_t shape_j);
-inline std::string to_string(const FloatType& v, size_t prec=6)
-{
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(prec) << v;
-    return stream.str();
-}
+// inline std::string to_string(const FloatType& v, size_t prec=6)
+// {
+//     std::stringstream stream;
+//     stream << std::fixed << std::setprecision(prec) << v;
+//     return stream.str();
+// }
 
-inline std::string to_string(const std::array<size_t, 2>& s)
-{
-    return std::to_string(s[0]) + " "  + std::to_string(s[1]);
-}
+// inline std::string to_string(const std::array<size_t, 2>& s)
+// {
+//     return std::to_string(s[0]) + " "  + std::to_string(s[1]);
+// }
 // class Vec;
 class Block;
 template<typename DType> class MatrixRef;
@@ -182,6 +182,10 @@ public:
 
     ThisType operator -() const        { return ThisType(*this) *= -1;}
 
+    bool operator == (const ThisType& rhs) { bool ret(true); traverse([&](size_t i, size_t j){ret = (ret && (*this)(i,j) == rhs(i,j));}); return ret;}
+    bool operator != (const ThisType& rhs) { return ! (*this == rhs); }
+
+
     DType det() const;
     ThisType inv() const;
     DType trace() const
@@ -234,7 +238,7 @@ public:
     {
         std::string ret;
         traverse([&](size_t i, size_t j){
-            ret += (mxm::to_string((*this)(i,j), 16) + (j == shape(1) - 1 ? "\n" : " ")); });
+            ret += (mxm::to_string((*this)(i,j), 6) + (j == shape(1) - 1 ? "\n" : " ")); });
         return ret;
     }
 

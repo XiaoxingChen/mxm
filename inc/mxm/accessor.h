@@ -13,13 +13,13 @@ using LoopN1 = std::function< void(size_t)>;
 using LoopN2 = std::function< void(size_t, size_t)>;
 
 
-template<typename DType>
-inline std::string to_string(const DType& v, size_t prec=6)
-{
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(prec) << v;
-    return stream.str();
-}
+// template<typename DType>
+// inline std::string to_string(const DType& v, size_t prec=6)
+// {
+//     std::stringstream stream;
+//     stream << std::fixed << std::setprecision(prec) << v;
+//     return stream.str();
+// }
 
 //DType can only be float, double or int
 template<typename DeriveType, typename DType>
