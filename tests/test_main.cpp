@@ -3,7 +3,7 @@
 // #include "test_rigid_body.h"
 #include "test_linalg.h"
 #include "test_ray.h"
-// #include "test_random_factory.h"
+#include "test_random.h"
 // #include "test_material.h"
 #include "test_rotation.h"
 #include "test_bvh.h"
@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
   testInterpolation();
   // testRigidBody();
   // testPrimitiveGeometry();
-  // testRandomFactory();
+  testRandom();
   // testMaterial();
   testBvh();
   testRigidTransform();
