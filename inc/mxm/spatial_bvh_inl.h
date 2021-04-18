@@ -206,7 +206,7 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
     return records;
 }
 
-MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, FloatType radius)
+MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, FloatType radius) const
 {
     std::stack<Node> stk;
     stk.push(nodeBuffer().at(0));
@@ -236,6 +236,45 @@ MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, Float
             }
         }
     }
+    return ret;
+}
+
+MXM_INLINE std::multimap<FloatType, size_t> PointCloudTree::nearestNeighborSearch(const Vec& pt, size_t k) const
+{
+    std::multimap<FloatType, size_t> ret;
+
+    std::stack<size_t> stk;
+    stk.push(0);
+    while(!stk.empty())
+    {
+        auto target = nodeBuffer().at(stk.top());
+        stk.pop();
+
+        auto curr_max_dist = ret.empty() ? INFINITY : std::prev(ret.end())->first;
+
+        if(target.is_leaf)
+        {
+            for(auto idx: target.primitive_index_buffer)
+            {
+                auto dist = ((*point_buffer_)(Col(idx)) - pt).norm();
+                if(dist < curr_max_dist)
+                    ret.insert({dist, idx});
+            }
+        }else
+        {
+            for(auto idx: target.children_index_buffer)
+            {
+                auto dist = distance(nodeBuffer().at(idx).aabb, pt)[0];
+                if(dist < curr_max_dist) stk.push(idx);
+            }
+        }
+
+        while(ret.size() > k)
+        {
+            ret.erase(std::prev(ret.end()));
+        }
+    }
+
     return ret;
 }
 

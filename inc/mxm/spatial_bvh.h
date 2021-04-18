@@ -5,6 +5,7 @@
 #include "geometry_primitive.h"
 #include <stack>
 #include <memory>
+#include <map>
 
 
 namespace mxm
@@ -94,7 +95,8 @@ public:
     // const std::vector<bvh::Node>& nodeBuffer() const { return node_buffer_; }
     virtual Mat primitive(size_t idx) const override { return (*point_buffer_)(Col(idx)); }
     virtual size_t primitiveSize() const override { return point_buffer_->shape(1); }
-    std::vector<size_t> radiusSearch(const Vec& pt, FloatType radius);
+    std::vector<size_t> radiusSearch(const Vec& pt, FloatType radius) const;
+    std::multimap<FloatType, size_t> nearestNeighborSearch(const Vec& pt, size_t k) const;
 
 private:
     std::shared_ptr<Mat> point_buffer_;

@@ -194,6 +194,33 @@ void testRadiusSearch()
 
 }
 
+void testNearestNeighborSearch()
+{
+    size_t dim = 2;
+    std::shared_ptr<Mat> pts(new Mat(random::random<FloatType>({dim, 100})));
+
+    bvh::PointCloudTree tree(pts);
+    tree.build(4, false);
+
+    Vec target_pt({.5, .5});
+    size_t k = 5;
+
+    auto result = tree.nearestNeighborSearch(target_pt, k);
+    std::multimap<FloatType, size_t> expected;
+
+    for(size_t i = 0; i < pts->shape(1); i++)
+    {
+        expected.insert({((*pts)(Col(i)) - target_pt).norm(), i});
+    }
+    while(expected.size() > k) expected.erase(std::prev(expected.end()));
+
+    if(expected != result)
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 void testBvh()
 {
     testSort();
@@ -201,6 +228,7 @@ void testBvh()
     testBuildTree2();
     testMultiHit();
     testRadiusSearch();
+    testNearestNeighborSearch();
 }
 
 #endif // _TEST_BVH_H
