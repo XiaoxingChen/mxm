@@ -91,5 +91,18 @@ inline size_t factorial(size_t x)
     return ret;
 }
 
+template<typename DType>
+Vector<DType> binaryToVector(size_t dim, uint32_t bin)
+{
+    Vector<DType> ret(Vector<DType>::zeros(dim));
+    size_t axis = 0;
+    while(axis < dim)
+    {
+        if(((bin >> axis) & 1u) > 0) ret(axis) = DType(1);
+        axis++;
+    }
+    return ret;
+}
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H

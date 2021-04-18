@@ -2,10 +2,13 @@
 #define _TEST_BVH_H
 
 #include "mxm/spatial_bvh.h"
+#include "mxm/random.h"
 #include <memory>
+#include <set>
 
 using namespace mxm;
 
+// A triangle band from [0,half_n]
 inline std::shared_ptr<Mat> createTriangleBand(
     size_t half_n,
     Matrix<size_t>& indices)
@@ -55,6 +58,54 @@ inline void testBuildTree2()
 
     bvh::PrimitiveMeshTree tree(vertex_buffer, index_buffer);
     tree.build(4, false);
+
+    const auto & node_buffer = tree.nodeBuffer();
+
+    Mat expected({6, 31},
+        {0.000000, 0.000000, 0.000000, 40.000000, 1.000000, 0.000000,
+        0.000000, 0.000000, 0.000000, 20.000000, 1.000000, 0.000000,
+        20.000000, 0.000000, 0.000000, 40.000000, 1.000000, 0.000000,
+        20.000000, 0.000000, 0.000000, 30.000000, 1.000000, 0.000000,
+        30.000000, 0.000000, 0.000000, 40.000000, 1.000000, 0.000000,
+        30.000000, 0.000000, 0.000000, 36.000000, 1.000000, 0.000000,
+        34.000000, 0.000000, 0.000000, 40.000000, 1.000000, 0.000000,
+        34.000000, 0.000000, 0.000000, 38.000000, 1.000000, 0.000000,
+        36.000000, 0.000000, 0.000000, 40.000000, 1.000000, 0.000000,
+        30.000000, 0.000000, 0.000000, 32.000000, 1.000000, 0.000000,
+        32.000000, 0.000000, 0.000000, 36.000000, 1.000000, 0.000000,
+        20.000000, 0.000000, 0.000000, 26.000000, 1.000000, 0.000000,
+        24.000000, 0.000000, 0.000000, 30.000000, 1.000000, 0.000000,
+        24.000000, 0.000000, 0.000000, 28.000000, 1.000000, 0.000000,
+        26.000000, 0.000000, 0.000000, 30.000000, 1.000000, 0.000000,
+        20.000000, 0.000000, 0.000000, 22.000000, 1.000000, 0.000000,
+        22.000000, 0.000000, 0.000000, 26.000000, 1.000000, 0.000000,
+        0.000000, 0.000000, 0.000000, 10.000000, 1.000000, 0.000000,
+        10.000000, 0.000000, 0.000000, 20.000000, 1.000000, 0.000000,
+        10.000000, 0.000000, 0.000000, 16.000000, 1.000000, 0.000000,
+        14.000000, 0.000000, 0.000000, 20.000000, 1.000000, 0.000000,
+        14.000000, 0.000000, 0.000000, 18.000000, 1.000000, 0.000000,
+        16.000000, 0.000000, 0.000000, 20.000000, 1.000000, 0.000000,
+        10.000000, 0.000000, 0.000000, 12.000000, 1.000000, 0.000000,
+        12.000000, 0.000000, 0.000000, 16.000000, 1.000000, 0.000000,
+        0.000000, 0.000000, 0.000000, 6.000000, 1.000000, 0.000000,
+        4.000000, 0.000000, 0.000000, 10.000000, 1.000000, 0.000000,
+        4.000000, 0.000000, 0.000000, 8.000000, 1.000000, 0.000000,
+        6.000000, 0.000000, 0.000000, 10.000000, 1.000000, 0.000000,
+        0.000000, 0.000000, 0.000000, 2.000000, 1.000000, 0.000000,
+        2.000000, 0.000000, 0.000000, 6.000000, 1.000000, 0.000000}, Mat::COL);
+
+    for(size_t i = 0; i < node_buffer.size(); i++)
+    {
+        if((node_buffer.at(i).aabb.min() - expected(Block({0,3},{i, i+1}))).norm() > eps())
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+        if((node_buffer.at(i).aabb.max() - expected(Block({3,6},{i, i+1}))).norm() > eps())
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
 }
 
 inline void testMultiHit()
@@ -115,12 +166,41 @@ inline void testMultiHit()
 
 }
 
+void testRadiusSearch()
+{
+    size_t dim = 2;
+    std::shared_ptr<Mat> pts(new Mat(random::random<FloatType>({dim, 100})));
+
+    bvh::PointCloudTree tree(pts);
+    tree.build(4, false);
+
+    Vec target_pt({.5, .5});
+    FloatType radius = 0.5;
+
+    auto result = tree.radiusSearch(target_pt, radius);
+    std::set<size_t> result_set;
+    for(auto idx : result) result_set.insert(idx);
+
+    for(size_t i = 0; i < pts->shape(1); i++)
+    {
+        if(((*pts)(Col(i)) - target_pt).norm() < radius != (result_set.count(i) > 0))
+        {
+            std::cout << (*pts)(Col(i)).T().str() << "r: " << ((*pts)(Col(i)) - target_pt).norm()
+             << ", in result: " << (result_set.count(i) > 0) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+
+}
+
 void testBvh()
 {
     testSort();
     testBuildTree();
     testBuildTree2();
     testMultiHit();
+    testRadiusSearch();
 }
 
 #endif // _TEST_BVH_H

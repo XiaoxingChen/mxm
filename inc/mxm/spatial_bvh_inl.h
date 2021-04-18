@@ -45,9 +45,9 @@ MXM_INLINE bool verifyTree(const std::vector<bvh::Node>& node_buffer, size_t nod
     return true;
 }
 
-MXM_INLINE void PrimitiveMeshTree::build(size_t primitive_per_leaf, bool verbose)
+MXM_INLINE void BaseTree::build(size_t primitive_per_leaf, bool verbose)
 {
-    std::vector<size_t> primitive_index_buffer(vertex_index_buffer_->shape(1));
+    std::vector<size_t> primitive_index_buffer(primitiveSize());
     for(size_t i = 0; i < primitive_index_buffer.size(); i++) primitive_index_buffer.at(i) = i;
 
     {
@@ -68,6 +68,7 @@ MXM_INLINE void PrimitiveMeshTree::build(size_t primitive_per_leaf, bool verbose
         stk.pop();
 
         auto& target_node = node_buffer_.at(target.node_idx);
+        target_node.prim_num = target.range[1] - target.range[0];
 
         //
         // eliminate leaf node
@@ -106,19 +107,6 @@ MXM_INLINE void PrimitiveMeshTree::build(size_t primitive_per_leaf, bool verbose
         // sort along the target axis
         size_t mid = (target.range[1] + target.range[0]) / 2;
 
-        #if 0
-        std::sort(
-            primitive_index_buffer.begin() + target.range[0],
-            primitive_index_buffer.begin() + target.range[1],
-            [&](const size_t& prim_idx1, const size_t& prim_idx2)
-            {
-                Mat prim1 = primitive(prim_idx1);
-                Mat prim2 = primitive(prim_idx2);
-
-                return prim1(Row(target_axis)).asVector().sum() < prim2(Row(target_axis)).asVector().sum();
-            });
-
-        #else
         std::nth_element(
             primitive_index_buffer.begin() + target.range[0],
             primitive_index_buffer.begin() + mid,
@@ -131,7 +119,6 @@ MXM_INLINE void PrimitiveMeshTree::build(size_t primitive_per_leaf, bool verbose
                 return prim1(Row(target_axis)).asVector().sum() < prim2(Row(target_axis)).asVector().sum();
             }
         );
-        #endif
 
         // create children
 
@@ -217,6 +204,39 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
     }
 
     return records;
+}
+
+MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, FloatType radius)
+{
+    std::stack<Node> stk;
+    stk.push(nodeBuffer().at(0));
+
+    std::vector<size_t> ret;
+
+    while(!stk.empty())
+    {
+
+        auto target_node = stk.top();
+        stk.pop();
+
+        // leaf node
+        if(target_node.is_leaf)
+        {
+            for(auto idx : target_node.primitive_index_buffer)
+            {
+                if(((*point_buffer_)(Col(idx)) - pt).norm() < radius)
+                    ret.push_back(idx);
+            }
+        }else // internal node
+        {
+            for(auto idx: target_node.children_index_buffer)
+            {
+                if(distance(nodeBuffer().at(idx).aabb, pt).at(0) < radius)
+                    stk.push(nodeBuffer().at(idx));
+            }
+        }
+    }
+    return ret;
 }
 
 } // namespace bvh

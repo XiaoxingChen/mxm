@@ -4,6 +4,16 @@
 
 using namespace mxm;
 
+void testDistanceToPoint()
+{
+    AABB box({0.157613084, 0.00478348415}, {0.992881298, 0.297029436});
+    Vec pt({0.5, 0.5});
+
+    auto dist = distance(box, pt);
+    if(0.39802742004394531250 != dist[0])
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+}
+
 void testAABB()
 {
     {
@@ -38,4 +48,6 @@ void testAABB()
         if((box.max() - 5 * Vec::ones(3)).norm() > eps())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+
+    testDistanceToPoint();
 }

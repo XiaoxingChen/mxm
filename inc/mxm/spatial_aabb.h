@@ -4,6 +4,7 @@
 #include "geometry_ray.h"
 #include <algorithm>
 #include <limits>
+#include <map>
 
 
 namespace mxm
@@ -68,6 +69,14 @@ class AxisAlignedBoundingBox
         return true;
     }
 
+    bool contains(const Mat& pts) const
+    {
+        for(size_t i = 0; i < pts.shape(0); i++)
+            for(size_t j = 0; j < pts.shape(1); j++)
+                if(pts(i,j) < min()(i) || pts(i,j) > max()(i)) return false;
+        return true;
+    }
+
     void checkDimension(const char* file, uint32_t line) const
     {
         if(min_.size() != max_.size())
@@ -122,7 +131,40 @@ class AxisAlignedBoundingBox
     Vec max_;
 };
 
+inline std::array<FloatType, 2> distance(const AxisAlignedBoundingBox& bbox, const Vec& pt)
+{
+    // AxisAlignedBoundingBox ret(bbox.dim());
+    std::array<FloatType, 2> ret{INFINITY, -INFINITY};
+
+    // FloatType max_dist = 0;
+    for(uint32_t i = 0; i < (1u << bbox.dim()); i++)
+    {
+        Vec t = binaryToVector<FloatType>(bbox.dim(), i);
+        Vec vertex = (-t + 1) * bbox.min() + t * bbox.max();
+
+        ret[1] = std::max(ret[1], (vertex - pt).norm());
+    }
+
+    Vec min_dist(bbox.dim());
+    for(size_t axis = 0; axis < bbox.dim(); axis++)
+    {
+        if(pt(axis) < bbox.min()(axis) && pt(axis) < bbox.max()(axis))
+        {
+            min_dist(axis) = 0.;
+        }else
+        {
+            min_dist(axis) = std::min(abs(bbox.min()(axis) - pt(axis)), abs(bbox.max()(axis) - pt(axis)));
+        }
+    }
+
+    // ret.extend(min_dist);
+    ret[0] = min_dist.norm();
+    return ret;
+}
+
 using AABB = AxisAlignedBoundingBox;
+
+
 } // namespace mxm
 
 
