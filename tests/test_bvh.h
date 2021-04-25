@@ -178,18 +178,17 @@ void testRadiusSearch()
     FloatType radius = 0.5;
 
     auto result = tree.radiusSearch(target_pt, radius);
-    std::set<size_t> result_set;
-    for(auto idx : result) result_set.insert(idx);
-
-    for(size_t i = 0; i < pts->shape(1); i++)
+    std::multimap<FloatType, size_t> expected;
+    for(size_t idx = 0; idx < pts->shape(1); idx++)
     {
-        if(((*pts)(Col(i)) - target_pt).norm() < radius != (result_set.count(i) > 0))
-        {
-            std::cout << (*pts)(Col(i)).T().str() << "r: " << ((*pts)(Col(i)) - target_pt).norm()
-             << ", in result: " << (result_set.count(i) > 0) << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
+        auto distance = (target_pt - (*pts)(Col(idx))).norm();
+        if(distance < radius)
+            expected.insert({distance , idx});
+    }
 
+    if(expected != result)
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
 }

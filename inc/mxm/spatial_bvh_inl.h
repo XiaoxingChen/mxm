@@ -206,12 +206,12 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
     return records;
 }
 
-MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, FloatType radius) const
+MXM_INLINE std::multimap<FloatType, size_t> PointCloudTree::radiusSearch(const Vec& pt, FloatType radius) const
 {
     std::stack<Node> stk;
     stk.push(nodeBuffer().at(0));
 
-    std::vector<size_t> ret;
+    std::multimap<FloatType, size_t> ret;
 
     while(!stk.empty())
     {
@@ -224,8 +224,9 @@ MXM_INLINE std::vector<size_t> PointCloudTree::radiusSearch(const Vec& pt, Float
         {
             for(auto idx : target_node.primitive_index_buffer)
             {
-                if(((*point_buffer_)(Col(idx)) - pt).norm() < radius)
-                    ret.push_back(idx);
+                auto dist = ((*point_buffer_)(Col(idx)) - pt).norm();
+                if(dist < radius)
+                    ret.insert({dist, idx});
             }
         }else // internal node
         {
