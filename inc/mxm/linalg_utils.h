@@ -61,7 +61,7 @@ inline size_t min(const Vec& v)
 
 inline size_t max(const Vec& v)
 {
-    FloatType m(INFINITY);
+    FloatType m(-INFINITY);
     for(size_t i = 0; i < v.size(); i++) m = v(i) > m ? v(i) : m;
     return m;
 }
@@ -102,6 +102,18 @@ Vector<DType> binaryToVector(size_t dim, uint32_t bin)
         axis++;
     }
     return ret;
+}
+
+template<typename DType>
+Matrix<DType> boundary(const Matrix<DType>& pts)
+{
+    Matrix<DType> min_max = Matrix<DType>::ones({pts.shape(0), 2}) * INFINITY;
+    min_max(Col(1)) *= -1;
+    pts.traverse([&](auto i, auto j){
+        if(pts(i,j) < min_max(i,0)) min_max(i,0) = pts(i,j);
+        if(pts(i,j) > min_max(i,1)) min_max(i,1) = pts(i,j);
+    });
+    return min_max;
 }
 
 } // namespace mxm

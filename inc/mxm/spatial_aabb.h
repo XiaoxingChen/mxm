@@ -42,13 +42,12 @@ class AxisAlignedBoundingBox
         if(vertices.shape(0) != min_.size())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-        for(size_t i = 0; i < vertices.shape(0); i++)
+        Mat bounds = boundary(vertices);
+
+        for(size_t i = 0; i < bounds.shape(0); i++)
         {
-            for(size_t j = 0; j < vertices.shape(1); j++)
-            {
-                if(vertices(i, j) > max_(i)) max_(i) = vertices(i, j);
-                if(vertices(i, j) < min_(i)) min_(i) = vertices(i, j);
-            }
+            if(bounds(i, 0) < min_(i)) min_(i) = bounds(i, 0);
+            if(bounds(i, 1) > max_(i)) max_(i) = bounds(i, 1);
         }
         return *this;
     }

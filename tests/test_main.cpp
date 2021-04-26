@@ -15,6 +15,7 @@
 // #include "test_image_processing.h"
 #include "test_bsp_tree.h"
 #include "test_graph.h"
+#include "test_grid_map.h"
 
 
 int main(int argc, char const *argv[])
@@ -36,6 +37,7 @@ int main(int argc, char const *argv[])
   // testImageProcessing();
   testBspTree();
   testGraph();
+  testGridMap();
   std::cout << "done" << std::endl;
   return 0;
 }
