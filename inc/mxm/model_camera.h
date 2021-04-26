@@ -30,21 +30,20 @@ public:
 
     Ray pixelRay(const std::vector<size_t>& pixel_coordinate) const
     {
-        if(pose_.dim() > pixel_coordinate.size() + 1)
-        {
-            std::cout << "position dim: " << pose_.dim()
-                << " pixel coordinate dim: " << pixel_coordinate.size() << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
+        std::vector<size_t> homo_coord(pixel_coordinate);
+        homo_coord.push_back(1);
+        return Ray(pose_.translation(), pixelDirection(Vector<size_t>(homo_coord)));
+    }
 
-        Vec dir(pose_.dim());
-        for(size_t i = 0; i < pose_.dim() - 1; i++)
-        {
-            dir(i) = (pixel_coordinate.at(i) - c_(i)) / f_(i);
-        }
-        dir(pose_.dim() - 1) = 1.;
-        dir = pose_.rotation().apply(dir);
-        return Ray(pose_.translation(), dir);
+    Mat pixelDirection(const Matrix<size_t>& pixels) const
+    {
+        Mat homo_coord({pixels.shape(0) + 1, pixels.shape(1)});
+
+        pixels.traverse([&](auto i, auto j){homo_coord(i,j) = pixels(i,j);});
+        homo_coord(Row(end() - 1)) = Mat::ones({1,pixels.shape(1)});
+
+        Mat directions = pose_.rotation().asMatrix().matmul(cam_mat_inv_).matmul(pixels);
+        return directions;
     }
 
     const RigidTrans& pose() const { return pose_; }
@@ -68,10 +67,14 @@ private:
     void updateCameraMatrix()
     {
         cam_mat_ = Mat::Identity(pose_.dim());
+        cam_mat_inv_ = Mat::Identity(pose_.dim());
         for(size_t i = 0; i < pose_.dim() - 1; i++)
         {
             cam_mat_(i,i) = f_(i);
             cam_mat_(i, pose_.dim() - 1) = c_(i);
+
+            cam_mat_inv_(i,i) = 1./ f_(i);
+            cam_mat_inv_(i, pose_.dim() - 1) = -c_(i) / f_(i);
         }
     }
 
@@ -90,6 +93,7 @@ private:
     Vec f_;
     Vec c_;
     Mat cam_mat_;
+    Mat cam_mat_inv_;
 };
 
 } // namespace mxm
