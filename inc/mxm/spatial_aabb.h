@@ -54,6 +54,7 @@ class AxisAlignedBoundingBox
 
     ThisType& extend(const ThisType& others)
     {
+        if(others.empty()) return *this;
         extend(others.min());
         extend(others.max());
         return *this;
@@ -61,6 +62,7 @@ class AxisAlignedBoundingBox
 
     bool in(const ThisType& rhs) const
     {
+        if(empty()) return true;
         for(size_t i = 0; i < dim(); i++)
         {
             if(min()(i) < rhs.min()(i) || max()(i) > rhs.max()(i)) return false;
@@ -70,6 +72,7 @@ class AxisAlignedBoundingBox
 
     bool contains(const Mat& pts) const
     {
+        if(empty()) return false;
         for(size_t i = 0; i < pts.shape(0); i++)
             for(size_t j = 0; j < pts.shape(1); j++)
                 if(pts(i,j) < min()(i) || pts(i,j) > max()(i)) return false;

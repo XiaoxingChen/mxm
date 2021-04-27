@@ -49,5 +49,21 @@ void testAABB()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
+    {
+        AABB box(3);
+        AABB box1({0,0,0},{1,1,1});
+
+        if( ! box.in(box1))
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+        box1.extend(box);
+        if((box1.max() - Vec::ones(3)).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+        if((box1.min() - Vec::zeros(3)).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+    }
+
     testDistanceToPoint();
 }
