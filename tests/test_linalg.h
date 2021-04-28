@@ -135,6 +135,39 @@ inline void testQRSolve()
     }
 }
 
+// Reference: https://www.cs.utexas.edu/users/flame/laff/alaff-beta/chapter10-QR1-simple-shifted-QR.html
+// https://www.cs.utexas.edu/users/flame/laff/alaff-beta/Assignments/Week10/answers/SimpleShiftedQRAlg.m
+inline void testQRIteration()
+{
+    size_t n = 3;
+    Mat rot({n,n}, {
+        -0.0816791 , -0.43273854,  0.89781172,
+        -0.36035366,  0.85270191,  0.3782125 ,
+        -0.92923289, -0.29263768, -0.22558684});
+
+    Mat tmp = rot;
+    Mat eig_vec = Mat::Identity(n);
+
+
+    for(size_t i = 0; i < 100; i++)
+    {
+        FloatType rho = tmp(2,2);
+        Mat shift = Mat::Identity(n) * rho;
+        auto q_r = qr::decomposeByRotation(tmp - shift);
+        tmp = q_r[1].matmul(q_r[0]) + shift;
+
+        eig_vec = eig_vec.matmul(q_r[0]);
+    }
+    // std::cout << tmp.str() << std::endl;
+    Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
+    if((recover - rot).norm() > 20 * eps())
+    {
+        std::cout << (recover - rot).norm() << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 inline void testTridiagonalizeSkewSymmetric()
 {
     {
@@ -331,6 +364,7 @@ inline void testLinearAlgebra()
     testRvalueReference();
     // testComplexBase();
     testTridiagonalizeSkewSymmetric();
+    testQRIteration();
 
 
 }
