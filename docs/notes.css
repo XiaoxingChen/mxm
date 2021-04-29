@@ -1,0 +1,32 @@
+code.md{
+    background-color:#eee;
+    color:deeppink;
+    border-radius: 3px;
+    border:1px solid #888;
+    padding: 1px 2px;
+}
+pre.md{
+    background-color:#eee;
+    border-radius: 3px;
+    border: 1px solid #888 ;
+}
+blockquote.md{
+    padding: 0 1em;
+    border-left: .25em solid #888;
+}
+table.md, table.md td, table.md th{
+        border: 1px solid black;
+        text-align: center;
+        border-collapse: collapse;
+    }
+body{
+    margin-left: 10%;
+    margin-right: 10%;
+    width: 6in;
+    zoom: 150%;
+}
+div.frame
+{
+    border: solid;
+    padding: 1ch;
+}
