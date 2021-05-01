@@ -160,12 +160,40 @@ inline void testQRIteration()
     }
     // std::cout << tmp.str() << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
-    if((recover - rot).norm() > 20 * eps())
+    if((recover - rot).norm() > 40 * eps())
     {
         std::cout << (recover - rot).norm() << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
+}
+
+inline void testUnsymmetrixEigenvaluePipeline()
+{
+    size_t n = 5;
+    Mat rot({n,n}, {
+         8.52072892e-01, -1.86443589e-01, -1.52868423e-01, 4.48402930e-01, -1.21559174e-01,
+         1.66260826e-01, -3.10093307e-01,  4.89428897e-01, -6.23694169e-02,  7.95467717e-01,
+        -2.09350679e-01,  3.08823048e-01,  6.01299790e-01, 6.90088793e-01, -1.51712355e-01,
+         4.81917029e-04,  6.33156375e-01, -4.73611309e-01, 2.52124640e-01,  5.57887325e-01,
+         4.50001318e-01,  6.10591729e-01,  3.88872076e-01, -5.05228157e-01, -1.34905788e-01});
+
+    Mat hessen = qr::decomposeByRotation(rot, qr::eUpperHessenbergize)[1];
+    Mat tmp = hessen;
+    Mat eig_vec = Mat::Identity(n);
+
+
+    for(size_t i = 0; i < 20; i++)
+    {
+        FloatType rho = 1;
+        Mat shift = Mat::Identity(n) * rho;
+        auto q_r = qr::decomposeByRotation(tmp - shift, qr::eSubdiagonal);
+        tmp = q_r[1].matmul(q_r[0]) + shift;
+
+        eig_vec = eig_vec.matmul(q_r[0]);
+    }
+    std::cout << tmp.str() << std::endl;
+    Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
 }
 
 inline void testTridiagonalizeSkewSymmetric()
@@ -364,7 +392,8 @@ inline void testLinearAlgebra()
     testRvalueReference();
     // testComplexBase();
     testTridiagonalizeSkewSymmetric();
-    testQRIteration();
+    // testQRIteration();
+    // testUnsymmetrixEigenvaluePipeline();
 
 
 }

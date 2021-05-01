@@ -60,10 +60,39 @@ Matrix<DType> project(const Matrix<DType>& u, const Matrix<DType>& a)
     return u_dir.dot(u_dir.T()).dot(a);
 }
 
+inline std::vector<std::array<size_t, 2>> upperTrianglizeSequence(size_t cols)
+{
+    std::vector<std::array<size_t, 2>> ret;
+    for(size_t j = 0; j < cols; j++)
+        for(size_t i = cols-1; i > j; i--)
+            ret.push_back({i,j});
+    return ret;
+}
+inline std::vector<std::array<size_t, 2>> upperHessenbergizeSequence(size_t cols)
+{
+    std::vector<std::array<size_t, 2>> ret;
+    for(size_t j = 0; j < cols; j++)
+        for(size_t i = cols-1; i > j+1; i--)
+            ret.push_back({i,j});
+    return ret;
+}
+inline std::vector<std::array<size_t, 2>> subdiagonalSequence(size_t cols)
+{
+    std::vector<std::array<size_t, 2>> ret;
+    for(size_t j = 0; j < cols-1; j++)
+        ret.push_back({j+1,j});
+    return ret;
+}
+enum TraverseSeq{
+    eUpperTrianglize,
+    eUpperHessenbergize,
+    eSubdiagonal
+};
+
 template<typename DType>
 // Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in, bool hessenberg=false)
 std::array<Matrix<DType>, 2>
-decomposeByRotation(const Matrix<DType>& mat_in, bool hessenberg=false, bool symmetric=false)
+decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrianglize, bool symmetric=false)
 {
     // reference: https://www.math.usm.edu/lambers/mat610/sum10/lecture9.pdf
     if(!mat_in.square())
@@ -76,27 +105,31 @@ decomposeByRotation(const Matrix<DType>& mat_in, bool hessenberg=false, bool sym
     Matrix<DType>& rot(ret[0]);
     rot = Matrix<DType>::Identity(n);
 
-    for(size_t j = 0; j < n; j++)
+    std::vector<std::array<size_t, 2>> seq;
+    if(idx_seq == eUpperTrianglize) seq = upperTrianglizeSequence(mat_in.shape(1));
+    else if (idx_seq == eUpperHessenbergize) seq = upperHessenbergizeSequence(mat_in.shape(1));
+    else if (idx_seq == eSubdiagonal)  seq = subdiagonalSequence(mat_in.shape(1));
+
+    for(auto& idx: seq)
     {
-        for(size_t i = n-1; i > (hessenberg ? j+1 : j); i--)
-        {
-            // std::cout << "(i,j): " << i << "," << j << std::endl;
-            DType theta = -atan2(mat(i,j), mat(i-1,j));
-            // std::cout << "theta: " << theta << std::endl;
-            Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
+        auto i = idx[0];
+        auto j = idx[1];
+        // std::cout << "(i,j): " << i << "," << j << std::endl;
+        DType theta = -atan2(mat(i,j), mat(i-1,j));
+        // std::cout << "theta: " << theta << std::endl;
+        Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
 
-            Matrix<DType> so2({2,2},
-                {cos(theta), -sin(theta),
-                sin(theta), cos(theta)});
+        Matrix<DType> so2({2,2},
+            {cos(theta), -sin(theta),
+            sin(theta), cos(theta)});
 
-            sub_rot.setBlock(i-1, i-1, so2);
-            // std::cout << sub_rot.str() << std::endl;
+        sub_rot.setBlock(i-1, i-1, so2);
+        // std::cout << sub_rot.str() << std::endl;
 
-            rot = sub_rot.matmul(rot);
-            mat = sub_rot.matmul(mat);
-            if(symmetric)
-                mat = mat.matmul(sub_rot.T());
-        }
+        rot = sub_rot.matmul(rot);
+        mat = sub_rot.matmul(mat);
+        if(symmetric)
+            mat = mat.matmul(sub_rot.T());
     }
     rot = rot.T();
     return ret;
@@ -199,7 +232,7 @@ std::array<Matrix<DType>, 2> tridiagonalizeSkewSymmetric(const Matrix<DType>& sk
     }
 #else // by rotation
 
-    auto ret = qr::decomposeByRotation(skew, /*hessenberg*/true, /*block diagonalize*/true);
+    auto ret = qr::decomposeByRotation(skew, qr::eUpperHessenbergize, /*symmetric*/true);
     return ret;
 #endif
 }
