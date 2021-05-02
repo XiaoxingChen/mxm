@@ -245,28 +245,29 @@ Matrix<DType> Matrix<DType>::inv() const
 }
 
 template <typename DType>
-Matrix<ComplexNumber<DType, 2>> eigvals2x2(const Matrix<DType> mat)
+Matrix<Complex<DType>> eigvals2x2(const Matrix<DType> mat)
 {
-    Matrix<ComplexNumber<DType, 2>> ret({2,1});
+    Matrix<Complex<DType>> ret({2,1});
     DType tr = mat.trace();
     DType det = mat.det();
     DType delta = tr*tr - 4 * det;
     if(delta >= 0)
     {
-        ret(0,0) = ComplexNumber<DType,2>({DType(0.5) * (tr + sqrt(delta)), 0});
-        ret(1,0) = ComplexNumber<DType,2>({DType(0.5) * (tr - sqrt(delta)), 0});
+        ret(0,0) = Complex<DType>({DType(0.5) * (tr + sqrt(delta)), 0});
+        ret(1,0) = Complex<DType>({DType(0.5) * (tr - sqrt(delta)), 0});
     }else
     {
-        ret(0,0) = ComplexNumber<DType,2>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
-        ret(1,0) = ComplexNumber<DType,2>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
+        ret(0,0) = Complex<DType>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
+        ret(1,0) = Complex<DType>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
     }
     return ret;
 }
 
 // Reference:
 // http://www.math.usm.edu/lambers/mat610/sum10/lecture15.pdf
+// https://www.cs.purdue.edu/homes/skeel/CS515/4.pdf
 template <typename DType>
-Matrix<ComplexNumber<DType, 2>> Matrix<DType>::eigvals() const
+Matrix<Complex<DType>> Matrix<DType>::eigvals() const
 {
     if(!square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
@@ -293,7 +294,7 @@ Matrix<ComplexNumber<DType, 2>> Matrix<DType>::eigvals() const
 
     // std::cout << quasi.str() << std::endl;
 
-    Matrix<ComplexNumber<DType, 2>> ret({n, 1});
+    Matrix<Complex<DType>> ret({n, 1});
     for(size_t i = 0; i < n;)
     {
         if(i < n-1 && abs(q_r[0](i,i) - q_r[0](i+1, i+1)) < tol && abs(q_r[0](i+1,i)) > tol)
@@ -302,7 +303,7 @@ Matrix<ComplexNumber<DType, 2>> Matrix<DType>::eigvals() const
             i += 2;
         }else
         {
-            ret(i,0) = ComplexNumber<DType, 2>({quasi(i,i), 0});
+            ret(i,0) = Complex<DType>({quasi(i,i), 0});
             i++;
         }
     }

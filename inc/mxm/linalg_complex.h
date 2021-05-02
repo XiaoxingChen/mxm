@@ -6,15 +6,16 @@
 #include <cmath>
 #include "common.h"
 #include "accessor.h"
+#include <initializer_list>
 
 namespace mxm
 {
 
 template<typename DType, unsigned int N>
-class ComplexNumber;
+class Hypercomplex;
 
 template<typename DType, unsigned int N>
-ComplexNumber<DType, N> complexMul(const ComplexNumber<DType, N>& lhs, const ComplexNumber<DType, N>& rhs);
+Hypercomplex<DType, N> complexMul(const Hypercomplex<DType, N>& lhs, const Hypercomplex<DType, N>& rhs);
 
 inline std::string complexSymbol(size_t i)
 {
@@ -24,17 +25,24 @@ inline std::string complexSymbol(size_t i)
 
 
 template<typename DType, unsigned int N>
-class ComplexNumber: public LinearData<ComplexNumber<DType, N>, DType>
+class Hypercomplex: public LinearData<Hypercomplex<DType, N>, DType>
 {
 public:
-    using ThisType = ComplexNumber<DType,N>;
-    ComplexNumber(const std::array<DType, N>& v):data_(v){}
-    ComplexNumber(const ThisType& rhs)
+    using ThisType = Hypercomplex<DType,N>;
+    Hypercomplex(const std::array<DType, N>& v):data_(v){}
+    Hypercomplex(std::initializer_list<DType> v)
+    {
+        for(size_t i = 0; i < std::distance(v.begin(), v.end()); i++)
+        {
+            data_.at(i) = *(v.begin() + i);
+        }
+    }
+    Hypercomplex(const ThisType& rhs)
     {
         (*this) = rhs;
     }
-    ComplexNumber(){}
-    ~ComplexNumber(){}
+    Hypercomplex(){}
+    ~Hypercomplex(){}
 
     const DType& operator () (size_t i) const { return data_.at(i); }
     DType& operator () (size_t i) { return const_cast<DType&>(static_cast<const ThisType&>(*this)(i)); }
@@ -54,35 +62,28 @@ public:
 
     ThisType conjugate() const { ThisType ret(-(*this)); ret(0) *= -1; return ret;}
 
-    std::string str() const
-    {
-        std::string ret;
-        this->traverse([&](size_t i){
-            ret += ((*this)(i) >= 0 && i > 0 ? "+" : "");
-            ret += (mxm::to_string((*this)(i), 6) + complexSymbol(i)); });
-        return ret;
-    }
+    std::string str() const;
 
 private:
     std::array<DType, N> data_;
 };
 
 template<typename DType, unsigned int N>
-ComplexNumber<DType, N> complexMul(const ComplexNumber<DType, N>& lhs, const ComplexNumber<DType, N>& rhs)
+Hypercomplex<DType, N> complexMul(const Hypercomplex<DType, N>& lhs, const Hypercomplex<DType, N>& rhs)
 {
     throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
 
 template<typename DType>
-ComplexNumber<DType, 2> complexMul(const ComplexNumber<DType, 2>& lhs, const ComplexNumber<DType, 2>& rhs)
+Hypercomplex<DType, 2> complexMul(const Hypercomplex<DType, 2>& lhs, const Hypercomplex<DType, 2>& rhs)
 {
-    return ComplexNumber<DType, 2>({
+    return Hypercomplex<DType, 2>({
         lhs(0) * rhs(0) - lhs(1) * rhs(1),
         lhs(0) * rhs(1) + lhs(1) * rhs(0)});
 }
 
 template<typename DType>
-ComplexNumber<DType, 4> complexMul(const ComplexNumber<DType, 4>& lhs, const ComplexNumber<DType, 4>& rhs)
+Hypercomplex<DType, 4> complexMul(const Hypercomplex<DType, 4>& lhs, const Hypercomplex<DType, 4>& rhs)
 {
     const size_t N(4);
     std::array<DType, N> ret_data;
@@ -100,17 +101,29 @@ ComplexNumber<DType, 4> complexMul(const ComplexNumber<DType, 4>& lhs, const Com
             ret_data[i] += mat[i * N + j] * rhs(j);
         }
     }
-    return ComplexNumber<DType, 4>(ret_data);
+    return Hypercomplex<DType, 4>(ret_data);
 }
 
-using Quaternion = ComplexNumber<FloatType, 4>;
-using Complex = ComplexNumber<FloatType, 2>;
+template<typename DType>
+using Quaternion = Hypercomplex<DType, 4>;
+template<typename DType>
+using Complex = Hypercomplex<DType, 2>;
 
-// template<typename DType, unsigned int N>
-// std::string to_string(const ComplexNumber<DType, N>& v)
-// {
-//     return v.str();
-// }
+template<typename DType, unsigned int N>
+std::string to_string(const Hypercomplex<DType, N>& v, size_t prec=6)
+{
+    std::string ret;
+    v.traverse([&](size_t i){
+        ret += (v(i) >= 0 && i > 0 ? "+" : "");
+        ret += (mxm::to_string(v(i), prec) + complexSymbol(i)); });
+    return ret;
+}
+
+template<typename DType, unsigned int N>
+std::string Hypercomplex<DType, N>::str() const
+{
+    return to_string(*this);
+}
 
 } // namespace mxm
 

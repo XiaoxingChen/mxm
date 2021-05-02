@@ -189,7 +189,7 @@ public:
 
     DType det() const;
     ThisType inv() const;
-    Matrix<ComplexNumber<DType, 2>> eigvals() const;
+    Matrix<Complex<DType>> eigvals() const;
 
     DType trace() const
     {

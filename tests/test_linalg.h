@@ -255,18 +255,14 @@ inline void testEigenvalues()
         0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
         0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
 
-    Matrix<Complex> eigvals = mat_a.eigvals();
+    Matrix<Complex<FloatType>> eigvals = mat_a.eigvals();
     // std::cout << eigvals.str() << std::endl;
-    // for(size_t i = 0; i < n ;i++)
-    // {
-    //     std::cout << eigvals(i,0).str() << std::endl;
-    // }
-    Matrix<Complex> expected({n,1}, {
-        Complex({2.0937458093, 0}),
-        Complex({-0.6786741964, 0}),
-        Complex({-0.1648492118, 0.3498644439}),
-        Complex({-0.1648492118, -0.3498644439}),
-        Complex({0.3486058443, 0})});
+    Matrix<Complex<FloatType>> expected({n,1}, {
+        {2.0937458093, 0},
+        {-0.6786741964, 0},
+        {-0.1648492118, 0.3498644439},
+        {-0.1648492118, -0.3498644439},
+        {0.3486058443, 0}});
 
     for(size_t i = 0; i < n; i++)
     {

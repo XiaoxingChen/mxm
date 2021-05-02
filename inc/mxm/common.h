@@ -32,7 +32,9 @@ inline constexpr FloatType tMax() {return 10000.;}
 template<typename DType>
 std::string to_string(const DType& v, size_t prec=6)
 {
-    return std::to_string(v);
+    std::stringstream stream;
+    stream << v;
+    return stream.str();
 }
 
 inline std::string to_string(const float& v, size_t prec=6)
