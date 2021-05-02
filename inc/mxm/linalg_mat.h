@@ -12,6 +12,7 @@
 #include <iomanip>
 
 #include "mxm/common.h"
+#include "linalg_complex.h"
 
 
 
@@ -188,6 +189,8 @@ public:
 
     DType det() const;
     ThisType inv() const;
+    Matrix<ComplexNumber<DType, 2>> eigvals() const;
+
     DType trace() const
     {
         if(!square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));

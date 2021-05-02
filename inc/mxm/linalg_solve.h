@@ -76,11 +76,19 @@ inline std::vector<std::array<size_t, 2>> upperHessenbergizeSequence(size_t cols
             ret.push_back({i,j});
     return ret;
 }
-inline std::vector<std::array<size_t, 2>> subdiagonalSequence(size_t cols)
+inline std::vector<std::array<size_t, 2>> subdiagonalSequence(const Shape& shape)
 {
     std::vector<std::array<size_t, 2>> ret;
-    for(size_t j = 0; j < cols-1; j++)
+    for(size_t j = 0; j < shape[1]-1; j++)
         ret.push_back({j+1,j});
+    if(shape[0] > shape[1]) ret.push_back({shape[1], shape[1]-1});
+    return ret;
+}
+inline std::vector<std::array<size_t, 2>> superdiagonalSequence(const Shape& shape)
+{
+    std::vector<std::array<size_t, 2>> ret;
+    for(size_t j = 1; j < shape[1]; j++)
+        ret.push_back({j-1,j});
     return ret;
 }
 enum TraverseSeq{
@@ -108,7 +116,7 @@ decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrian
     std::vector<std::array<size_t, 2>> seq;
     if(idx_seq == eUpperTrianglize) seq = upperTrianglizeSequence(mat_in.shape(1));
     else if (idx_seq == eUpperHessenbergize) seq = upperHessenbergizeSequence(mat_in.shape(1));
-    else if (idx_seq == eSubdiagonal)  seq = subdiagonalSequence(mat_in.shape(1));
+    else if (idx_seq == eSubdiagonal)  seq = subdiagonalSequence(mat_in.shape());
 
     for(auto& idx: seq)
     {
@@ -183,6 +191,32 @@ Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
     Matrix<DType> x(solveUpperTriangle(mat_r, mat_q.T().matmul(b)));
     return x;
 }
+
+// Reference:
+// https://math.stackexchange.com/questions/1262363/convergence-of-qr-algorithm-to-upper-triangular-matrix
+template<typename DType>
+DType wilkinsonShiftStrategy(const Matrix<DType> mat_a)
+{
+    size_t n = mat_a.shape(1);
+    DType sigma = 0.5 * (mat_a(n-2,n-2) - mat_a(n-1, n-1));
+    DType sign = sigma > 0 ? 1. : -1.;
+    DType mu = mat_a(n-1, n-1) - (sign * mat_a(n-1, n-2) * mat_a(n-1, n-2)) / (abs(sigma) + sqrt(sigma * sigma) + mat_a(n-1, n-1) * mat_a(n-1, n-1));
+    return mu;
+}
+
+template<typename DType>
+DType errorOrthogonalBlockDiagonal(const Matrix<DType> mat_a)
+{
+    DType sum = 0.;
+    auto seq = superdiagonalSequence(mat_a.shape());
+    for(auto & idx : seq)
+    {
+        DType res = mat_a(idx[0], idx[1]) + mat_a(idx[1], idx[0]);
+        sum += res * res;
+    }
+    return sum;
+}
+
 } // namespace qr
 
 template <typename DType>
@@ -208,6 +242,72 @@ Matrix<DType> Matrix<DType>::inv() const
 {
     if(!square()) return Matrix<DType>::zeros(shape());
     return qr::solve(*this, Matrix<DType>::Identity(shape(0)));
+}
+
+template <typename DType>
+Matrix<ComplexNumber<DType, 2>> eigvals2x2(const Matrix<DType> mat)
+{
+    Matrix<ComplexNumber<DType, 2>> ret({2,1});
+    DType tr = mat.trace();
+    DType det = mat.det();
+    DType delta = tr*tr - 4 * det;
+    if(delta >= 0)
+    {
+        ret(0,0) = ComplexNumber<DType,2>({DType(0.5) * (tr + sqrt(delta)), 0});
+        ret(1,0) = ComplexNumber<DType,2>({DType(0.5) * (tr - sqrt(delta)), 0});
+    }else
+    {
+        ret(0,0) = ComplexNumber<DType,2>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
+        ret(1,0) = ComplexNumber<DType,2>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
+    }
+    return ret;
+}
+
+// Reference:
+// http://www.math.usm.edu/lambers/mat610/sum10/lecture15.pdf
+template <typename DType>
+Matrix<ComplexNumber<DType, 2>> Matrix<DType>::eigvals() const
+{
+    if(!square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+    size_t n = shape(0);
+    DType tol = 1e-13;
+    size_t max_it = 30;
+
+    if(2 == n) return eigvals2x2(*this);
+
+    Matrix<DType> hessenberg = qr::decomposeByRotation(*this, qr::eUpperHessenbergize, true)[1];
+    Matrix<DType> quasi = hessenberg;
+
+    std::array<Matrix<DType>, 2> q_r;
+
+    for(size_t i = 0; i < max_it; i++)
+    {
+        // FloatType rho = 1;
+        FloatType rho = qr::wilkinsonShiftStrategy(quasi);
+        Mat shift = Mat::Identity(n) * rho;
+        q_r = qr::decomposeByRotation(quasi - shift, qr::eSubdiagonal);
+        quasi = q_r[1].matmul(q_r[0]) + shift;
+        if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
+    }
+
+    // std::cout << quasi.str() << std::endl;
+
+    Matrix<ComplexNumber<DType, 2>> ret({n, 1});
+    for(size_t i = 0; i < n;)
+    {
+        if(i < n-1 && abs(q_r[0](i,i) - q_r[0](i+1, i+1)) < tol && abs(q_r[0](i+1,i)) > tol)
+        {
+            ret.setBlock(i,0, eigvals2x2(quasi(Block({i,i+2},{i,i+2}))));
+            i += 2;
+        }else
+        {
+            ret(i,0) = ComplexNumber<DType, 2>({quasi(i,i), 0});
+            i++;
+        }
+    }
+
+    return ret;
 }
 
 // References:

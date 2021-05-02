@@ -168,7 +168,7 @@ inline void testQRIteration()
 
 }
 
-inline void testUnsymmetrixEigenvaluePipeline()
+inline void testUnsymmetrixEigenvaluePipeline01()
 {
     size_t n = 5;
     Mat rot({n,n}, {
@@ -183,17 +183,103 @@ inline void testUnsymmetrixEigenvaluePipeline()
     Mat eig_vec = Mat::Identity(n);
 
 
-    for(size_t i = 0; i < 20; i++)
+    for(size_t i = 0; i < 50; i++)
     {
-        FloatType rho = 1;
+        // FloatType rho = 1;
+        FloatType rho = qr::wilkinsonShiftStrategy(tmp);
         Mat shift = Mat::Identity(n) * rho;
         auto q_r = qr::decomposeByRotation(tmp - shift, qr::eSubdiagonal);
         tmp = q_r[1].matmul(q_r[0]) + shift;
 
         eig_vec = eig_vec.matmul(q_r[0]);
+        // std::cout << "i: " << i << " err: " << qr::errorQuasiUpperTriangle(tmp) << std::endl;
     }
     std::cout << tmp.str() << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
+}
+
+inline void testUnsymmetrixEigenvaluePipeline02()
+{
+    size_t n = 5;
+    Mat mat_a({n,n}, {
+        0.0028910405, 0.2797538283, 0.9771945489, 0.2228983867, 0.6710390525,
+        0.6567445086, 0.0454680832, 0.9139623576, 0.7276380447, 0.0890351175,
+        0.7236019741, 0.6144312151, 0.5533828464, 0.4187292391, 0.0462407111,
+        0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
+        0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
+
+    // Mat mat_a({n,n},
+    // {0.7388932475, 0.9445831439, 0.131383505 , 0.6429751039, 0.7577514673,
+    // 0.792865382 , 0.993147103 , 0.3259064733, 0.7192953417, 0.5080102095,
+    // 0.6231152385, 0.640810716 , 0.7857406608, 0.0312927124, 0.2884410864,
+    // 0.0966878558, 0.6565393823, 0.2895794538, 0.3901908797, 0.2669917572,
+    // 0.7349230421, 0.2174315283, 0.3584232178, 0.0402299961, 0.5570949113});
+
+
+    // expected: [ 2.0937458093+0.j, -0.6786741964+0.j, -0.1648492118+0.3498644439j, -0.1648492118-0.3498644439j,  0.3486058443+0.j]
+
+
+    auto q_hessen = qr::decomposeByRotation(mat_a, qr::eUpperHessenbergize, true);
+    Mat tmp = q_hessen[1];
+    std::cout << q_hessen[1].str() << std::endl;
+    // Mat eig_vec = Mat::Identity(n);
+    Mat eig_vec = q_hessen[0];
+
+
+    for(size_t i = 0; i < 30; i++)
+    {
+        // FloatType rho = 1;
+        FloatType rho = qr::wilkinsonShiftStrategy(tmp);
+        Mat shift = Mat::Identity(n) * rho;
+        auto q_r = qr::decomposeByRotation(tmp - shift, qr::eSubdiagonal);
+        tmp = q_r[1].matmul(q_r[0]) + shift;
+
+        eig_vec = eig_vec.matmul(q_r[0]);
+
+        std::cout << "r: " << q_r[0].str() << std::endl;
+
+        // std::cout << "i: " << i << " err: " << qr::errorOrthogonalBlockDiagonal(q_r[0]) << std::endl;
+    }
+    std::cout << tmp.str() << std::endl;
+    Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
+    // std::cout << recover.str() << std::endl;
+}
+
+inline void testEigenvalues()
+{
+    size_t n = 5;
+    Mat mat_a({n,n}, {
+        0.0028910405, 0.2797538283, 0.9771945489, 0.2228983867, 0.6710390525,
+        0.6567445086, 0.0454680832, 0.9139623576, 0.7276380447, 0.0890351175,
+        0.7236019741, 0.6144312151, 0.5533828464, 0.4187292391, 0.0462407111,
+        0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
+        0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
+
+    Matrix<Complex> eigvals = mat_a.eigvals();
+    // std::cout << eigvals.str() << std::endl;
+    // for(size_t i = 0; i < n ;i++)
+    // {
+    //     std::cout << eigvals(i,0).str() << std::endl;
+    // }
+    Matrix<Complex> expected({n,1}, {
+        Complex({2.0937458093, 0}),
+        Complex({-0.6786741964, 0}),
+        Complex({-0.1648492118, 0.3498644439}),
+        Complex({-0.1648492118, -0.3498644439}),
+        Complex({0.3486058443, 0})});
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if((expected(i,0) - eigvals(i,0)).norm() > 20 * eps())
+        {
+            std::cout << "i: " << i << ", error: " << (expected(i,0) - eigvals(i,0)).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    // 2.0937458093+0.j, -0.6786741964+0.j, -0.1648492118+0.3498644439j, -0.1648492118-0.3498644439j,  0.3486058443+0.j])
+
+
 }
 
 inline void testTridiagonalizeSkewSymmetric()
@@ -393,8 +479,9 @@ inline void testLinearAlgebra()
     // testComplexBase();
     testTridiagonalizeSkewSymmetric();
     // testQRIteration();
-    // testUnsymmetrixEigenvaluePipeline();
-
+    // testUnsymmetrixEigenvaluePipeline01();
+    // testUnsymmetrixEigenvaluePipeline02();
+    testEigenvalues();
 
 }
 

@@ -106,6 +106,12 @@ ComplexNumber<DType, 4> complexMul(const ComplexNumber<DType, 4>& lhs, const Com
 using Quaternion = ComplexNumber<FloatType, 4>;
 using Complex = ComplexNumber<FloatType, 2>;
 
+// template<typename DType, unsigned int N>
+// std::string to_string(const ComplexNumber<DType, N>& v)
+// {
+//     return v.str();
+// }
+
 } // namespace mxm
 
 #endif // _LINALG_COMPLEX_H_
