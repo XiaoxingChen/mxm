@@ -63,6 +63,9 @@ public:
     // ThisType operator - (DType scalar) const { return ThisType(*this) -= scalar; }
     // ThisType operator * (DType scalar) const { return ThisType(*this) *= scalar; }
 
+    ThisType& operator -= (const ThisType& rhs) { this->traverse([&](size_t i) {data_.at(i) -= rhs(i);}); return *this; }
+    ThisType operator - (const ThisType& rhs) const { return ThisType(*this) -= rhs; }
+
     ThisType operator - () const { return (*this) * -1; }
 
     ThisType& operator *= (const ThisType& rhs)  { (*this) = complexMul(*this, rhs); return *this;}
@@ -140,6 +143,18 @@ template<typename DType, unsigned int N>
 typename NormTraits<Hypercomplex<DType, N>>::type norm(const Hypercomplex<DType, N>& in)
 {
     return in.norm();
+}
+
+template<typename DType>
+typename std::enable_if<
+    std::is_same<
+        Hypercomplex<typename NormTraits<DType>::type, DType::size()>, DType
+    >::value, DType
+>::type
+inv(const DType& val)
+{
+    auto norm_v = val.norm();
+    return val.conj() * (decltype(norm_v)(1) / (norm_v * norm_v));
 }
 
 } // namespace mxm

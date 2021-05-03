@@ -24,12 +24,12 @@ Matrix<DType> solveLUTriangle(const Matrix<DType>& mat, const Matrix<DType>& b, 
     {
         for(size_t i = idx_start, _1 = 0; _1 < b.shape(0); _1 ++, i += step)
         {
-            FloatType off_diag_sum = 0;
+            DType off_diag_sum(0);
             for(size_t j = idx_start, _2 = 0; _2 < _1; _2 ++, j += step)
             {
                 off_diag_sum += mat(i, j) * x(j,w);
             }
-            x(i,w) = (b(i,w) - off_diag_sum) / mat(i,i);
+            x(i,w) = (b(i,w) - off_diag_sum) * inv(mat(i,i));
         }
     }
 
@@ -110,7 +110,11 @@ givensRotation(const Matrix<DType>& v2)
 }
 
 template<typename DType>
-typename std::enable_if<std::is_same<Hypercomplex< typename NormTraits<DType>::type, DType::size()>, DType>::value, Matrix<DType>>::type
+typename std::enable_if<
+    std::is_same<
+        Hypercomplex< typename NormTraits<DType>::type, DType::size()>, DType
+    >::value, Matrix<DType>
+>::type
 givensRotation(const Matrix<DType>& v2)
 {
     auto norm_v = v2.norm();
@@ -215,7 +219,7 @@ Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
     }
 
     // Matrix<DType> mat_r(mat_q.T().matmul(mat_a));
-    Matrix<DType> x(solveUpperTriangle(q_r[1], q_r[0].T().matmul(b)));
+    Matrix<DType> x(solveUpperTriangle(q_r[1], conj(q_r[0].T()).matmul(b)));
     return x;
 }
 

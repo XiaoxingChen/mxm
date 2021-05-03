@@ -159,6 +159,28 @@ inline void testQRSolve()
         std::cout << "err: " << (mat_a.matmul(x) - b).norm() << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+
+    {
+        Matrix<Complex<FloatType>> m({3,3},{
+            {1,3},{2,0},{3,0},
+            {2,2},{3,0},{0,4},
+            {3,0},{3,0},{1,2}});
+
+        Matrix<Complex<FloatType>> b({3,1}, {
+            {1,2},
+            {3,4},
+            {6,2}}, Mat::COL);
+
+        auto x = qr::solve(m, b);
+
+        if((m.matmul(x) - b).norm() > 10 * eps())
+        {
+            std::cout << "error: " << (m.matmul(x) - b).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+
+    }
 }
 
 // Reference: https://www.cs.utexas.edu/users/flame/laff/alaff-beta/chapter10-QR1-simple-shifted-QR.html

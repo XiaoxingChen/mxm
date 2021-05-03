@@ -24,6 +24,10 @@ typename NormTraits<InType>::type norm(const InType& in)
 }
 #endif
 
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type
+inv(const DType& val) { return DType(1) / val; }
+
 } // namespace mxm
 
 
