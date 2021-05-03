@@ -98,6 +98,30 @@ enum TraverseSeq{
 };
 
 template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, Matrix<DType>>::type
+givensRotation(const Matrix<DType>& v2)
+{
+    auto norm_v = v2.norm();
+    Matrix<DType> so2({2,2},{
+        v2(0,0), v2(1,0),
+        -v2(1,0), v2(0,0) });
+    so2 *= (decltype(norm_v)(1) / norm_v);
+    return so2;
+}
+
+template<typename DType>
+typename std::enable_if<std::is_same<Hypercomplex< typename NormTraits<DType>::type, DType::size()>, DType>::value, Matrix<DType>>::type
+givensRotation(const Matrix<DType>& v2)
+{
+    auto norm_v = v2.norm();
+    Matrix<DType> su2({2,2},{
+        v2(0,0).conj(), v2(1,0).conj(),
+        -v2(1,0), v2(0,0) });
+    su2 *= (decltype(norm_v)(1) / norm_v);
+    return su2;
+}
+
+template<typename DType>
 // Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in, bool hessenberg=false)
 std::array<Matrix<DType>, 2>
 decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrianglize, bool symmetric=false)
@@ -122,24 +146,26 @@ decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrian
     {
         auto i = idx[0];
         auto j = idx[1];
-        // std::cout << "(i,j): " << i << "," << j << std::endl;
-        DType theta = -atan2(mat(i,j), mat(i-1,j));
-        // std::cout << "theta: " << theta << std::endl;
+        if(norm(mat(i,j)) < eps() * eps()) { continue; }
+
         Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
 
-        Matrix<DType> so2({2,2},
-            {cos(theta), -sin(theta),
-            sin(theta), cos(theta)});
+        auto so2 = givensRotation(mat(Block({i-1, i+1}, {j, j+1})));
 
         sub_rot.setBlock(i-1, i-1, so2);
-        // std::cout << sub_rot.str() << std::endl;
 
         rot = sub_rot.matmul(rot);
         mat = sub_rot.matmul(mat);
         if(symmetric)
             mat = mat.matmul(sub_rot.T());
+
+        // if(std::is_same<DType, Complex<FloatType>>::value)
+        // {
+        //     // std::cout << "mat: \n" << mat.str() << std::endl;
+        //     std::cout << "recover: \n" << (conj(rot.T())).matmul(mat).str() << std::endl;
+        // }
     }
-    rot = rot.T();
+    rot = conj(rot.T());
     return ret;
 }
 
@@ -178,17 +204,18 @@ Matrix<DType> calcMatQ(const Matrix<DType>& mat)
 template<typename DType>
 Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
 {
-    Matrix<DType> mat_q(calcMatQ(mat_a));
+    // Matrix<DType> mat_q(calcMatQ(mat_a));
+    auto q_r = decomposeByRotation(mat_a);
 
-    if((mat_q.matmul(mat_q)).norm() - mat_q.shape(0) > eps())
+    if((q_r[0].matmul(q_r[0])).norm() - q_r[0].shape(0) > eps())
     {
         // singular
         std::cout << "Singular Matrix!" << std::endl;
         return Matrix<DType>::zeros(b.shape());
     }
 
-    Matrix<DType> mat_r(mat_q.T().matmul(mat_a));
-    Matrix<DType> x(solveUpperTriangle(mat_r, mat_q.T().matmul(b)));
+    // Matrix<DType> mat_r(mat_q.T().matmul(mat_a));
+    Matrix<DType> x(solveUpperTriangle(q_r[1], q_r[0].T().matmul(b)));
     return x;
 }
 

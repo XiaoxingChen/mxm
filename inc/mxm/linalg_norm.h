@@ -6,8 +6,15 @@ namespace mxm
 template<typename T>
 struct NormTraits { using type = void; };
 
-template<> struct NormTraits<double> { using type = double; };
+// template<T> struct NormTraits<T> { using type = typename std::enable_if<std::is_floating_point<T>::value, T>::type; };
 template<> struct NormTraits<float> { using type = float; };
+template<> struct NormTraits<double> { using type = double; };
+
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type norm(const DType& in)
+{
+    return abs(in);
+}
 
 #if 0
 template<typename InType>

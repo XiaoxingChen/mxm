@@ -108,6 +108,31 @@ inline void testQRcalcMatQ()
         }
 
     }
+
+    {
+        Matrix<Complex<FloatType>> m({3,3},{
+            {1,2},{2,0},{3,0},
+            {2,0},{3,0},{0,4},
+            {3,0},{3,0},{1,2}});
+
+        auto q_r = qr::decomposeByRotation(m);
+        // std::cout << q_r[1].str() << std::endl;
+
+        // std::cout << (q_r[0].matmul(q_r[1])).str() << std::endl;
+
+        if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::Identity(3)).norm() > 2 * eps())
+        {
+            std::cout << "error: " << (conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::Identity(3)).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if((q_r[0].matmul(q_r[1]) - m).norm() > 15 * eps())
+        {
+            std::cout << "error: " << (q_r[0].matmul(q_r[1]) - m).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
 }
 
 inline void testQRSolve()
@@ -127,10 +152,11 @@ inline void testQRSolve()
     Vec expect({-0.10244898, -0.08359184, -0.25844898});
     Vec x(qr::solve(mat_a, b));
 
-    if((x - expect).norm() > eps())
+    // if((x - expect).norm() > eps())
+    if((mat_a.matmul(x) - b).norm() > 10 * eps())
     {
         std::cout << x.T().str() << std::endl;
-        // std::cout << "norm: " << (mat_q - expect_q).norm() << std::endl;
+        std::cout << "err: " << (mat_a.matmul(x) - b).norm() << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
@@ -256,7 +282,7 @@ inline void testEigenvalues()
         0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
 
     Matrix<Complex<FloatType>> eigvals = mat_a.eigvals();
-    std::cout << eigvals.str() << std::endl;
+    // std::cout << eigvals.str() << std::endl;
     Matrix<Complex<FloatType>> expected({n,1}, {
         {2.0937458093, 0},
         {-0.6786741964, 0},
@@ -470,7 +496,7 @@ inline void testLinearAlgebra()
     testMatInv();
     testRvalueReference();
     // testComplexBase();
-    testTridiagonalizeSkewSymmetric();
+    // testTridiagonalizeSkewSymmetric();
     // testQRIteration();
     // testUnsymmetrixEigenvaluePipeline01();
     // testUnsymmetrixEigenvaluePipeline02();

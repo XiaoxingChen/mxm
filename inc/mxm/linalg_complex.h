@@ -38,6 +38,7 @@ public:
             data_.at(i) = *(v.begin() + i);
         }
     }
+    Hypercomplex(DType val){ for(auto & d : data_) d = 0; data_.at(0) = val;}
     Hypercomplex(const ThisType& rhs)
     {
         (*this) = rhs;
@@ -48,20 +49,26 @@ public:
     const DType& operator () (size_t i) const { return data_.at(i); }
     DType& operator () (size_t i) { return const_cast<DType&>(static_cast<const ThisType&>(*this)(i)); }
 
-    constexpr size_t size() const { return N; }
+    static constexpr size_t size() { return N; }
 
     void operator = (const ThisType& rhs)
     {
         this->traverse([&](size_t i){ (*this)(i) = rhs(i); });
     }
 
-    ThisType& operator *= (DType scalar)  { traverse([&](size_t i){(*this)(i) *= scalar;}); return *this;}
-    ThisType operator * (DType scalar) const { return ThisType(*this) *= scalar; }
+    // ThisType& operator += (DType scalar)  { (*this)(0) += scalar; return *this;}
+    // ThisType& operator -= (DType scalar)  { (*this)(0) -= scalar; return *this;}
+    // ThisType& operator *= (DType scalar)  { traverse([&](size_t i){(*this)(i) *= scalar;}); return *this;}
+    // ThisType operator + (DType scalar) const { return ThisType(*this) += scalar; }
+    // ThisType operator - (DType scalar) const { return ThisType(*this) -= scalar; }
+    // ThisType operator * (DType scalar) const { return ThisType(*this) *= scalar; }
+
+    ThisType operator - () const { return (*this) * -1; }
 
     ThisType& operator *= (const ThisType& rhs)  { (*this) = complexMul(*this, rhs); return *this;}
-    ThisType& operator * (const ThisType& rhs)  { return ThisType(*this) *= rhs;}
+    ThisType operator * (const ThisType& rhs) const { return ThisType(*this) *= rhs;}
 
-    ThisType conjugate() const { ThisType ret(-(*this)); ret(0) *= -1; return ret;}
+    ThisType conj() const { ThisType ret(-(*this)); ret(0) *= -1; return ret;}
 
     std::string str() const;
 
@@ -128,6 +135,12 @@ std::string Hypercomplex<DType, N>::str() const
 
 template<typename DType, unsigned int N>
 struct NormTraits<Hypercomplex<DType, N>>{using type=DType;};
+
+template<typename DType, unsigned int N>
+typename NormTraits<Hypercomplex<DType, N>>::type norm(const Hypercomplex<DType, N>& in)
+{
+    return in.norm();
+}
 
 } // namespace mxm
 

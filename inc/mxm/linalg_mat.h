@@ -138,8 +138,8 @@ public:
     static ThisType ones(const Shape& _shape) { return ThisType(_shape) + 1; }
     static ThisType Identity(size_t n)
     {
-        ThisType mat({n,n});
-        for(int i = 0; i < n; i++) mat(i,i) = 1;
+        ThisType mat = zeros({n,n});
+        for(int i = 0; i < n; i++) mat(i,i) += DType(1);
         return mat;
     }
 
@@ -222,7 +222,7 @@ public:
         const ThisType& lhs(*this);
         if(lhs.shape(1) != rhs.shape(0))
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        ReturnType ret({lhs.shape(0), rhs.shape(1)});
+        ReturnType ret = ReturnType::zeros({lhs.shape(0), rhs.shape(1)});
         ret.traverse([&](size_t i, size_t j)
             {
                 for(int k = 0; k < lhs.shape(1); k++)
@@ -334,6 +334,22 @@ typename NormTraits<DType>::type Matrix<DType>::norm(uint8_t p) const
 {
     return mxm::norm(*this);
 }
+
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, Matrix<DType>>::type
+conj(const Matrix<DType>& in)
+{
+    return in;
+}
+
+template<typename DType, unsigned int N>
+Matrix<Hypercomplex<DType, N>> conj(const Matrix<Hypercomplex<DType, N>>& in)
+{
+    Matrix<Hypercomplex<DType, N>> ret(in);
+    ret.traverse([&](auto i, auto j){ret(i,j) = ret(i,j).conj();});
+    return ret;
+}
+
 } // namespace mxm
 
 #ifdef MXM_HEADER_ONLY
