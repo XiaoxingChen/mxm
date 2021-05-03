@@ -30,21 +30,15 @@ inline constexpr FloatType tMax() {return 10000.;}
 // template<typename DType>
 
 template<typename DType>
-std::string to_string(const DType& v, size_t prec=6)
+inline typename std::enable_if<std::is_integral<DType>::value , std::string>::type
+to_string(const DType& v, size_t prec=6)
 {
-    std::stringstream stream;
-    stream << v;
-    return stream.str();
+    return std::to_string(v);
 }
 
-inline std::string to_string(const float& v, size_t prec=6)
-{
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(prec) << v;
-    return stream.str();
-}
-
-inline std::string to_string(const double& v, size_t prec=6)
+template<typename DType>
+inline typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
+to_string(const DType& v, size_t prec=6)
 {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(prec) << v;

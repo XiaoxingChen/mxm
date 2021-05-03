@@ -256,7 +256,7 @@ inline void testEigenvalues()
         0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
 
     Matrix<Complex<FloatType>> eigvals = mat_a.eigvals();
-    // std::cout << eigvals.str() << std::endl;
+    std::cout << eigvals.str() << std::endl;
     Matrix<Complex<FloatType>> expected({n,1}, {
         {2.0937458093, 0},
         {-0.6786741964, 0},
