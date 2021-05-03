@@ -199,17 +199,11 @@ public:
         return ret;
     }
 
-    DType norm(uint8_t p = 2) const;
-    DType norm(const std::string& p) const
-    {
-        if(p == std::string("F")) return norm(2);
-        if(p == std::string("inf")) return norm(255);
-        return 0;
-    }
+    typename NormTraits<DType>::type norm(uint8_t p = 2) const;
 
     const ThisType& normalize(uint8_t p = 2)
     {
-        DType n = norm(p);
+        auto n = norm(p);
         if(n < eps()*eps()) { return *this; }
         return ((*this) *= (1./n));
     }
@@ -291,7 +285,7 @@ inline void updateOffset(
         abs_offset[1] += inc_offset[0];
     }
 }
-
+#if 0
 template <typename DType>
 DType Matrix<DType>::norm(uint8_t p) const
 {
@@ -317,7 +311,29 @@ DType Matrix<DType>::norm(uint8_t p) const
     throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     return 0.;
 }
+#endif
 
+template<typename DType>
+inline typename NormTraits<DType>::type norm(const Matrix<DType>& in)
+{
+    DType sum2(0);
+    in.traverse([&](size_t i, size_t j){sum2 += in(i,j) * in(i,j);});
+    return sqrt(sum2);
+}
+
+template<typename DType, unsigned int N>
+DType norm(const Matrix<Hypercomplex<DType, N>>& in)
+{
+    DType sum2(0);
+    in.traverse([&](size_t i, size_t j){ DType n = in(i,j).norm(); sum2 += n*n; });
+    return sqrt(sum2);
+}
+
+template <typename DType>
+typename NormTraits<DType>::type Matrix<DType>::norm(uint8_t p) const
+{
+    return mxm::norm(*this);
+}
 } // namespace mxm
 
 #ifdef MXM_HEADER_ONLY

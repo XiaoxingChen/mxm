@@ -264,13 +264,10 @@ inline void testEigenvalues()
         {-0.1648492118, -0.3498644439},
         {0.3486058443, 0}});
 
-    for(size_t i = 0; i < n; i++)
+    if((eigvals - expected).norm() > 20*eps())
     {
-        if((expected(i,0) - eigvals(i,0)).norm() > 20 * eps())
-        {
-            std::cout << "i: " << i << ", error: " << (expected(i,0) - eigvals(i,0)).norm() << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
+        std::cout << "error: " << (eigvals - expected).norm() << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
     // 2.0937458093+0.j, -0.6786741964+0.j, -0.1648492118+0.3498644439j, -0.1648492118-0.3498644439j,  0.3486058443+0.j])

@@ -6,6 +6,7 @@
 #include <cmath>
 #include "common.h"
 #include "accessor.h"
+#include "linalg_norm.h"
 #include <initializer_list>
 
 namespace mxm
@@ -124,6 +125,9 @@ std::string Hypercomplex<DType, N>::str() const
 {
     return to_string(*this);
 }
+
+template<typename DType, unsigned int N>
+struct NormTraits<Hypercomplex<DType, N>>{using type=DType;};
 
 } // namespace mxm
 

@@ -32,9 +32,10 @@ inline bool validIntersect(const Vec& x)
 {
     for(size_t i = 1; i < x.size(); i++)
     {
-        if(x(i) < 0) return false;
+        if(x(i) < 0 || x(i) > 1) return false;
     }
-    FloatType sum_k = x.norm(1) - fabs(x(0));
+    // FloatType sum_k = x.norm(1) - fabs(x(0));
+    FloatType sum_k = x.sum() - x(0);
     return sum_k < 1 + eps();
 }
 
