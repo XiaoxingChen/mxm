@@ -3,6 +3,7 @@
 
 #include "mxm/linalg_mat_ref.h"
 #include <iostream>
+#include <algorithm>
 
 
 namespace mxm
@@ -272,20 +273,20 @@ Matrix<DType> Matrix<DType>::inv() const
 }
 
 template <typename DType>
-Matrix<Complex<DType>> eigvals2x2(const Matrix<DType> mat)
+std::vector<Complex<DType>> eigvals2x2(const Matrix<DType>& mat)
 {
-    Matrix<Complex<DType>> ret({2,1});
+    std::vector<Complex<DType>> ret(2);
     DType tr = mat.trace();
     DType det = mat.det();
     DType delta = tr*tr - 4 * det;
     if(delta >= 0)
     {
-        ret(0,0) = Complex<DType>({DType(0.5) * (tr + sqrt(delta)), 0});
-        ret(1,0) = Complex<DType>({DType(0.5) * (tr - sqrt(delta)), 0});
+        ret.at(0) = Complex<DType>({DType(0.5) * (tr + sqrt(delta)), 0});
+        ret.at(1) = Complex<DType>({DType(0.5) * (tr - sqrt(delta)), 0});
     }else
     {
-        ret(0,0) = Complex<DType>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
-        ret(1,0) = Complex<DType>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
+        ret.at(0) = Complex<DType>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
+        ret.at(1) = Complex<DType>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
     }
     return ret;
 }
@@ -294,17 +295,17 @@ Matrix<Complex<DType>> eigvals2x2(const Matrix<DType> mat)
 // http://www.math.usm.edu/lambers/mat610/sum10/lecture15.pdf
 // https://www.cs.purdue.edu/homes/skeel/CS515/4.pdf
 template <typename DType>
-Matrix<Complex<DType>> Matrix<DType>::eigvals() const
+std::vector<Complex<DType>> eigvals(const Matrix<DType>& mat)
 {
-    if(!square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    if(!mat.square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-    size_t n = shape(0);
+    size_t n = mat.shape(0);
     DType tol = 1e-13;
     size_t max_it = 30;
 
-    if(2 == n) return eigvals2x2(*this);
+    if(2 == n) return eigvals2x2(mat);
 
-    Matrix<DType> hessenberg = qr::decomposeByRotation(*this, qr::eUpperHessenbergize, true)[1];
+    Matrix<DType> hessenberg = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true)[1];
     Matrix<DType> quasi = hessenberg;
 
     std::array<Matrix<DType>, 2> q_r;
@@ -312,8 +313,8 @@ Matrix<Complex<DType>> Matrix<DType>::eigvals() const
     for(size_t i = 0; i < max_it; i++)
     {
         // FloatType rho = 1;
-        FloatType rho = qr::wilkinsonShiftStrategy(quasi);
-        Mat shift = Mat::Identity(n) * rho;
+        DType rho = qr::wilkinsonShiftStrategy(quasi);
+        Matrix<DType> shift = Matrix<DType>::Identity(n) * rho;
         q_r = qr::decomposeByRotation(quasi - shift, qr::eSubdiagonal);
         quasi = q_r[1].matmul(q_r[0]) + shift;
         if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
@@ -321,22 +322,90 @@ Matrix<Complex<DType>> Matrix<DType>::eigvals() const
 
     // std::cout << quasi.str() << std::endl;
 
-    Matrix<Complex<DType>> ret({n, 1});
+    std::vector<Complex<DType>> ret(n);
     for(size_t i = 0; i < n;)
     {
         if(i < n-1 && abs(q_r[0](i,i) - q_r[0](i+1, i+1)) < tol && abs(q_r[0](i+1,i)) > tol)
         {
-            ret.setBlock(i,0, eigvals2x2(quasi(Block({i,i+2},{i,i+2}))));
+            // ret.setBlock(i,0, eigvals2x2(quasi(Block({i,i+2},{i,i+2}))));
+            auto eig_pair = eigvals2x2(quasi(Block({i,i+2},{i,i+2})));
+            ret.at(i) = eig_pair.at(0);
+            ret.at(i+1) = eig_pair.at(1);
             i += 2;
         }else
         {
-            ret(i,0) = Complex<DType>({quasi(i,i), 0});
+            ret.at(i) = Complex<DType>({quasi(i,i), 0});
             i++;
         }
     }
 
     return ret;
 }
+
+// References:
+// https://en.wikipedia.org/wiki/Inverse_iteration
+template<typename DType>
+Matrix<DType> inverseIteration(
+    const Matrix<DType>& mat_a,
+    const DType& eigenvalue,
+    const Matrix<DType>& guess)
+{
+    Matrix<DType> bk = guess;
+    size_t n = guess.shape(0);
+    typename NormTraits<DType>::type tol = eps() * 20;
+    size_t max_it = 20;
+    for(size_t i = 0; i < max_it; i++)
+    {
+        bk = qr::solve(mat_a - eigenvalue * Matrix<DType>::Identity(n), bk);
+        bk.normalize();
+        auto err = (mat_a.matmul(bk) - eigenvalue * bk).norm();
+        // std::cout << "bk: " << bk.T().str() << ", err: " << err << std::endl;
+        if(err < tol) break;
+    }
+    return bk;
+}
+
+template<typename DType>
+std::array<Matrix<Complex<DType>>, 2>
+eig(const Matrix<DType>& mat)
+{
+    if(!mat.square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    size_t n = mat.shape(0);
+    std::array<Matrix<Complex<DType>>, 2> ret;
+    auto & eig_vals = ret[0];
+    auto & eig_vecs = ret[1];
+    eig_vals = Matrix<Complex<DType>>({n,1});
+    eig_vecs = Matrix<Complex<DType>>({n,n});
+
+    Matrix<Complex<FloatType>> cmat = Matrix<Complex<FloatType>>::zeros({n,n});
+    cmat.traverse([&](auto i, auto j){cmat(i,j)(0) = mat(i,j);});
+
+    std::vector<Complex<DType>> prio_que = eigvals(mat);
+    std::sort(prio_que.begin(), prio_que.end(), [](auto lhs, auto rhs){return lhs.norm() > rhs.norm();});
+    Matrix<Complex<DType>> guess = Matrix<Complex<DType>>::zeros({n,1});
+    guess(0,0) = 1;
+    for(size_t i = 0;i < prio_que.size(); i++)
+    {
+        eig_vals(i,0) = prio_que.at(i);
+        eig_vecs.setBlock(0,i, inverseIteration(cmat, prio_que.at(i), guess));
+    }
+    return ret;
+}
+
+#if 0
+template<typename DType>
+std::array<Matrix<Complex<DType>>, 3>
+svd(const Matrix<DType>& mat)
+{
+    std::array<Matrix<Complex<DType>>, 3> ret;
+    auto & mat_u = ret[0];
+    auto & diag = ret[1];
+    auto & mat_vh = ret[2];
+    mat_u = Matrix<Complex<DType>>({mat.shape(0), mat.shape(0)});
+    diag = Matrix<Complex<DType>>({std::min(mat.shape(0), mat.shape(1))});
+    mat_vh = Matrix<Complex<DType>>({n,n});
+}
+#endif
 
 // References:
 // https://www.cs.cornell.edu/courses/cs6210/2010fa/A6/A6.pdf

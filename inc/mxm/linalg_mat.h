@@ -135,7 +135,7 @@ public:
     // static methods
     //
     static ThisType zeros(const Shape& _shape) { return ThisType(_shape) *= 0; }
-    static ThisType ones(const Shape& _shape) { return ThisType(_shape) + 1; }
+    static ThisType ones(const Shape& _shape) { return zeros(_shape) += 1; }
     static ThisType Identity(size_t n)
     {
         ThisType mat = zeros({n,n});
@@ -189,7 +189,7 @@ public:
 
     DType det() const;
     ThisType inv() const;
-    Matrix<Complex<DType>> eigvals() const;
+    // Matrix<Complex<DType>> eigvals() const;
 
     DType trace() const
     {
@@ -205,7 +205,7 @@ public:
     {
         auto n = norm(p);
         if(n < eps()*eps()) { return *this; }
-        return ((*this) *= (1./n));
+        return ((*this) *= mxm::inv(n));
     }
 
     ThisType normalized() const { return ThisType(*this).normalize(); }
@@ -235,7 +235,7 @@ public:
     {
         std::string ret;
         traverse([&](size_t i, size_t j){
-            ret += (mxm::to_string((*this)(i,j), 6) + (j == shape(1) - 1 ? "\n" : " ")); });
+            ret += (mxm::to_string((*this)(i,j), 8) + (j == shape(1) - 1 ? "\n" : " ")); });
         return ret;
     }
 
