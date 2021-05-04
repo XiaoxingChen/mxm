@@ -145,13 +145,8 @@ typename NormTraits<Hypercomplex<DType, N>>::type norm(const Hypercomplex<DType,
     return in.norm();
 }
 
-template<typename DType>
-typename std::enable_if<
-    std::is_same<
-        Hypercomplex<typename NormTraits<DType>::type, DType::size()>, DType
-    >::value, DType
->::type
-inv(const DType& val)
+template<typename DType, unsigned int N>
+Hypercomplex<DType, N> inv(const Hypercomplex<DType, N>& val)
 {
     auto norm_v = val.norm();
     return val.conj() * (decltype(norm_v)(1) / (norm_v * norm_v));

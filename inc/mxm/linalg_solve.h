@@ -109,16 +109,12 @@ givensRotation(const Matrix<DType>& v2)
     return so2;
 }
 
-template<typename DType>
-typename std::enable_if<
-    std::is_same<
-        Hypercomplex< typename NormTraits<DType>::type, DType::size()>, DType
-    >::value, Matrix<DType>
->::type
-givensRotation(const Matrix<DType>& v2)
+template<typename DType, unsigned int N>
+Matrix<Hypercomplex<DType, N>>
+givensRotation(const Matrix<Hypercomplex<DType, N>>& v2)
 {
     auto norm_v = v2.norm();
-    Matrix<DType> su2({2,2},{
+    Matrix<Hypercomplex<DType, N>> su2({2,2},{
         v2(0,0).conj(), v2(1,0).conj(),
         -v2(1,0), v2(0,0) });
     su2 *= (decltype(norm_v)(1) / norm_v);
