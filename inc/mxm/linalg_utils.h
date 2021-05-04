@@ -116,5 +116,13 @@ Matrix<DType> boundary(const Matrix<DType>& pts)
     return min_max;
 }
 
+template<typename DType>
+Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
+{
+    Matrix<DType> ret = Matrix<DType>::Identity(vec.shape(0));
+    for(size_t i = 0; i < vec.shape(0); i++) ret(i,i) = vec(i,0);
+    return ret;
+}
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H

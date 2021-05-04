@@ -303,43 +303,83 @@ inline void testEigenvalues()
         0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
         0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
 
-    auto eigvals_std_vec = eigvals(mat_a);
-    Matrix<Complex<FloatType>> eigvals({n,1});
-    for(size_t i = 0; i < n; i++) eigvals(i,0) = eigvals_std_vec.at(i);
-    // std::cout << eigvals.str() << std::endl;
-    Matrix<Complex<FloatType>> expected({n,1}, {
-        {2.0937458093, 0},
-        {-0.6786741964, 0},
-        {-0.1648492118, 0.3498644439},
-        {-0.1648492118, -0.3498644439},
-        {0.3486058443, 0}});
-
-    if((eigvals - expected).norm() > 20*eps())
     {
-        std::cout << "error: " << (eigvals - expected).norm() << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        auto eigvals_std_vec = eigvals(mat_a);
+        Matrix<Complex<FloatType>> eigvals({n,1});
+        for(size_t i = 0; i < n; i++) eigvals(i,0) = eigvals_std_vec.at(i);
+        // std::cout << eigvals.str() << std::endl;
+        Matrix<Complex<FloatType>> expected({n,1}, {
+            {2.0937458093, 0},
+            {-0.6786741964, 0},
+            {-0.1648492118, 0.3498644439},
+            {-0.1648492118, -0.3498644439},
+            {0.3486058443, 0}});
+
+        if((eigvals - expected).norm() > 20*eps())
+        {
+            std::cout << "error: " << (eigvals - expected).norm() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        Matrix<Complex<FloatType>> cmat_a = Matrix<Complex<FloatType>>::zeros({n,n});
+        cmat_a.traverse([&](auto i, auto j){cmat_a(i,j)(0) = mat_a(i,j);});
+
+        auto eig_val_vec = eig(mat_a);
+
+        for(size_t i = 0; i < n; i++)
+        {
+            auto eig_vec = eig_val_vec[1](Col(i));
+            auto err = (cmat_a.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
+            if(err > 20 * eps())
+            {
+                std::cout << "Error! " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cout << "i: " << i << ", error: " << err << std::endl;
+            }
+        }
+        // std::cout << mxm::to_string(eig_val_vec) << std::endl;
     }
 
-    Matrix<Complex<FloatType>> cmat_a = Matrix<Complex<FloatType>>::zeros({n,n});
-    cmat_a.traverse([&](auto i, auto j){cmat_a(i,j)(0) = mat_a(i,j);});
-
-    auto eig_val_vec = eig(mat_a);
-
-    for(size_t i = 0; i < n; i++)
     {
-        auto eig_vec = eig_val_vec[1](Col(i));
-        auto err = (cmat_a.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
-        if(err > 20 * eps())
+        Mat mat_b = mat_a.T().matmul(mat_a);
+
+        auto eig_val_vec = symmetricEig(mat_b);
+
+        // std::cout << mxm::to_string(eig_val_vec) << std::endl;
+        // std::cout << eig_val_vec[1](Col(0)).norm() << std::endl;
+
+        for(size_t i = 0; i < n; i++)
         {
-            std::cout << "Error! " << __FILE__ << ":" << __LINE__ << std::endl;
-            std::cout << "i: " << i << ", error: " << err << std::endl;
+            auto eig_vec = eig_val_vec[1](Col(i));
+            auto err = (mat_b.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
+            if(err > 15 * eps())
+            {
+                std::cout << "Error! " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cout << "i: " << i << ", error: " << err << std::endl;
+            }
         }
     }
-    // std::cout << eig_val_vec[0].str() << std::endl;
-    // std::cout << eig_val_vec[1].str() << std::endl;
-    // std::cout << mxm::to_string(eig_val_vec) << std::endl;
+
+    if(0){
+        auto u_s_vh = svd(mat_a);
+        // u_s_vh[2](Row(0)) *= -1;
+        std::cout << mxm::to_string(u_s_vh) << std::endl;
+        auto err = (u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2]) - mat_a).norm();
+        // std::cout << u_s_vh[0].det() << std::endl;
+        // std::cout << u_s_vh[2].det() << std::endl;
+
+        if(err > eps())
+        {
+            std::cout << err << std::endl;
+            std::cout << "recover: \n" << u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2]).str() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+
+
 
 }
+
 
 inline void testTridiagonalizeSkewSymmetric()
 {

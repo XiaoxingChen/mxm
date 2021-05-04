@@ -342,6 +342,63 @@ std::vector<Complex<DType>> eigvals(const Matrix<DType>& mat)
     return ret;
 }
 
+// DType is required to be double or float
+// std::is_float_point<DType>::value == true
+// todo: consider reducing `max_it` according to [2]
+// Reference:
+// [1] https://dspace.mit.edu/bitstream/handle/1721.1/75282/18-335j-fall-2006/contents/lecture-notes/lec16handout6pp.pdf
+// [2] https://www5.in.tum.de/lehre/vorlesungen/konkr_math/WS_11_12/vorl/NumPro_WS1112_Vorlesung_Kapitel_7.pdf#page=18
+template <typename DType>
+std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
+{
+    if(!mat.square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+    size_t n = mat.shape(0);
+    DType tol = 1e-13;
+    size_t max_it = 100;
+
+    std::array<Matrix<DType>, 2> val_vec{Matrix<DType>({n,1}), Matrix<DType>({n,n})};
+
+    auto eig_vecs = Matrix<DType>::Identity(n);
+
+    Matrix<DType> mat_k = mat;
+    if(n > 2)
+    {
+        auto q_r = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
+        eig_vecs = q_r[0].matmul(eig_vecs);
+        mat_k = q_r[1];
+    }
+
+    // std::cout << mat_k.str() << std::endl;
+
+    for(size_t i = 0; i < max_it; i++)
+    {
+        DType rho = qr::wilkinsonShiftStrategy(mat_k);
+        Matrix<DType> shift = Matrix<DType>::Identity(n) * rho;
+        auto q_r = qr::decomposeByRotation(mat_k - shift, qr::eSubdiagonal);
+        mat_k = q_r[1].matmul(q_r[0]) + shift;
+        eig_vecs = eig_vecs.matmul(q_r[0]);
+        if(qr::errorOrthogonalBlockDiagonal(mat_k) < tol) break;
+        // std::cout << "i: " << i << ", err: " << qr::errorOrthogonalBlockDiagonal(mat_k) << std::endl;
+    }
+
+    // std::cout << mat_k.str() << std::endl;
+    std::vector<size_t> idx_buffer;
+    for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
+    std::sort(idx_buffer.begin(), idx_buffer.end(), [&](size_t i, size_t j) { return mat_k(i,i) > mat_k(j,j); });
+
+    // std::cout << mxm::to_string(idx_buffer) << std::endl;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        size_t idx = idx_buffer.at(i);
+        val_vec[0](i,0) = mat_k(idx,idx);
+        val_vec[1](Col(i)) = eig_vecs(Col(idx));
+    }
+
+    return val_vec;
+}
+
 // References:
 // https://en.wikipedia.org/wiki/Inverse_iteration
 template<typename DType>
@@ -392,18 +449,35 @@ eig(const Matrix<DType>& mat)
     return ret;
 }
 
-#if 0
+#if 1
 template<typename DType>
-std::array<Matrix<Complex<DType>>, 3>
+std::array<Matrix<DType>, 3>
 svd(const Matrix<DType>& mat)
 {
-    std::array<Matrix<Complex<DType>>, 3> ret;
-    auto & mat_u = ret[0];
-    auto & diag = ret[1];
-    auto & mat_vh = ret[2];
-    mat_u = Matrix<Complex<DType>>({mat.shape(0), mat.shape(0)});
-    diag = Matrix<Complex<DType>>({std::min(mat.shape(0), mat.shape(1))});
-    mat_vh = Matrix<Complex<DType>>({n,n});
+    std::array<Matrix<DType>, 3> u_s_vh;
+
+    size_t n = std::min(mat.shape(0), mat.shape(1));
+    u_s_vh[1] = Matrix<DType>({n,1});
+
+    std::vector<size_t> idx_buffer(n);
+    for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
+
+    {
+        auto val_vec = symmetricEig(mat.matmul(mat.T()));
+        u_s_vh[0] = val_vec[1];
+        for(size_t i = 0; i < n; i++)
+        {
+            u_s_vh[1](i,0) = sqrt(val_vec[0](i,0));
+        }
+        // std::cout << val_vec[0].str() << std::endl;
+    }
+
+    {
+        auto val_vec = symmetricEig(mat.T().matmul(mat));
+        u_s_vh[2] = val_vec[1].T();
+        // std::cout << val_vec[0].str() << std::endl;
+    }
+    return u_s_vh;
 }
 #endif
 

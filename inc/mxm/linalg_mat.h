@@ -350,6 +350,15 @@ Matrix<Hypercomplex<DType, N>> conj(const Matrix<Hypercomplex<DType, N>>& in)
     return ret;
 }
 
+template<typename DType>
+std::string to_string(const Matrix<DType>& mat, size_t prec=6)
+{
+    std::string ret;
+    mat.traverse([&](size_t i, size_t j){
+        ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
+    return ret;
+}
+
 } // namespace mxm
 
 #ifdef MXM_HEADER_ONLY
