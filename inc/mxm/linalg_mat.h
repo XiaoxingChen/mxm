@@ -134,8 +134,8 @@ public:
     //
     // static methods
     //
-    static ThisType zeros(const Shape& _shape) { return ThisType(_shape) *= 0; }
-    static ThisType ones(const Shape& _shape) { return zeros(_shape) += 1; }
+    static ThisType zeros(const Shape& _shape) { return ThisType(_shape) *= DType(0); }
+    static ThisType ones(const Shape& _shape) { return zeros(_shape) += DType(1); }
     static ThisType Identity(size_t n)
     {
         ThisType mat = zeros({n,n});

@@ -11,7 +11,7 @@
 #include "test_rigid_transform.h"
 #include "test_bazier.h"
 #include "test_camera.h"
-// #include "test_pixel.h"
+#include "test_cv_basic.h"
 // #include "test_image_processing.h"
 #include "test_bsp_tree.h"
 #include "test_graph.h"
@@ -35,6 +35,7 @@ int main(int argc, char const *argv[])
   testBazier();
   testCamera();
   // testImageProcessing();
+  testCvBasic();
   testBspTree();
   testGraph();
   testGridMap();
