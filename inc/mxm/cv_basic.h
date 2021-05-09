@@ -14,7 +14,7 @@ resize(const Matrix<PixelType<DType, NChannel>>& img, const Shape& shape)
 
     FloatType k_h = FloatType(img.shape(0) - 1) / (ret.shape(0) - 1);
     FloatType k_w = FloatType(img.shape(1) - 1) / (ret.shape(1) - 1);
-    std::cout << "k_w: " << k_w << ", k_h: " << k_h << std::endl;
+    // std::cout << "k_w: " << k_w << ", k_h: " << k_h << std::endl;
 
     ret.traverse([&](auto i, auto j){
         Matrix<PixelType<DType, NChannel>> unit_mat({2,2});

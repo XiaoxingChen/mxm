@@ -45,12 +45,17 @@ inline void testImageResize()
     img(1,1) = Pixel::white();
 
     auto img3x3 = resize(img, Shape({3,3}));
+    if(img3x3(1,1) != Pixel({.5, .5, .5}))
+    {
+        std::cout << to_string(img3x3,2) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
 
     // img3x3.traverse([&](auto i, auto j){
     //     std::cout << to_string(img3x3(i,j)) << std::endl;
     // });
-    std::cout << "TODO: to_string(const Matrix<Pixel>&) doesn't work well!" << std::endl;
-    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    // std::cout << "TODO: to_string(const Matrix<Pixel>&) doesn't work well!" << std::endl;
+    // std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 }
 
 inline void testCvBasic()

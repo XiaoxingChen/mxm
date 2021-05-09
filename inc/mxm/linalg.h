@@ -13,6 +13,8 @@
 #include "linalg_utils.h"
 #include "linalg_complex.h"
 
+#include "string.h"
+
 
 
 #endif // _LINALG_H_

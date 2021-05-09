@@ -13,6 +13,14 @@ namespace mxm
 {
 
 template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
+to_string(const DType& v, size_t prec);
+
+template<typename DType>
+typename std::enable_if<std::is_integral<DType>::value , std::string>::type
+to_string(const DType& v, size_t prec);
+
+template<typename DType>
 typename std::enable_if<std::is_floating_point<DType>::value, uint8_t>::type
 quantizeToU8(DType val)
 {

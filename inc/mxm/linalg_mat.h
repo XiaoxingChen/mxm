@@ -20,18 +20,12 @@ namespace mxm
 {
 
 size_t indexConvert2D(size_t i, size_t j, bool major, size_t shape_i, size_t shape_j);
-// inline std::string to_string(const FloatType& v, size_t prec=6)
-// {
-//     std::stringstream stream;
-//     stream << std::fixed << std::setprecision(prec) << v;
-//     return stream.str();
-// }
 
-// inline std::string to_string(const std::array<size_t, 2>& s)
-// {
-//     return std::to_string(s[0]) + " "  + std::to_string(s[1]);
-// }
-// class Vec;
+template<typename DType> class Matrix;
+
+template<typename DType>
+std::string to_string(const Matrix<DType>& mat, size_t prec=6);
+
 class Block;
 template<typename DType> class MatrixRef;
 // using MatRef = MatrixRef<FloatType>;
@@ -231,13 +225,7 @@ public:
         return ret;
     }
 
-    std::string str() const
-    {
-        std::string ret;
-        traverse([&](size_t i, size_t j){
-            ret += (mxm::to_string((*this)(i,j), 8) + (j == shape(1) - 1 ? "\n" : " ")); });
-        return ret;
-    }
+    std::string str() const { return to_string(*this); }
 
     ThisType& setBlock(size_t i0, size_t j0, const ThisType& mat)
     {
@@ -347,15 +335,6 @@ Matrix<Hypercomplex<DType, N>> conj(const Matrix<Hypercomplex<DType, N>>& in)
 {
     Matrix<Hypercomplex<DType, N>> ret(in);
     ret.traverse([&](auto i, auto j){ret(i,j) = ret(i,j).conj();});
-    return ret;
-}
-
-template<typename DType>
-std::string to_string(const Matrix<DType>& mat, size_t prec=6)
-{
-    std::string ret;
-    mat.traverse([&](size_t i, size_t j){
-        ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
     return ret;
 }
 
