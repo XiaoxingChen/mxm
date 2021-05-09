@@ -362,7 +362,7 @@ std::string to_string(const Matrix<DType>& mat, size_t prec=6)
 } // namespace mxm
 
 #ifdef MXM_HEADER_ONLY
-#include "linalg_mat_inl.h"
+// #include "linalg_mat_inl.h"
 #endif
 
 #endif // _LINALG_MAT_H

@@ -31,13 +31,13 @@ transform(Block({0,3},{0,3})) = Mat::Identity(3);
 - Random matrix
 
 ```cpp
-Mat mat_a = random::random({5,5});
+Mat mat_a = random::uniform({5,5});
 ```
 
 - Common operations: matrix multiplication, transpose, inversion
 
 ```cpp
-Mat mat_a = random::random({3,3});
+Mat mat_a = random::uniform({3,3});
 Mat mat_b = Mat::Identity({3,3});
 Mat mat_c = mat_a.matmul(mat_b);
 mat_a = mat_a.T() // O(1) time complexity
@@ -53,8 +53,8 @@ Mat inv_b = mat_a.inv();
 - QR decomposition and linear equation
 
 ```cpp
-Mat mat_a = random::random({5,5});
-Vec vec_b = random::random({5,1});
+Mat mat_a = random::uniform({5,5});
+Vec vec_b = random::uniform({5,1});
 auto qr = qr::decomposeByRotation(mat_a);
 Vec vec_x = qr::solve(mat_a, vec_b);
 ```
@@ -120,7 +120,7 @@ auto records = tree.hit(ray, bvh::eMultiHit);
 
 ```cpp
 size_t dim = 2;
-std::shared_ptr<Mat> pts(new Mat(random::random<FloatType>({dim, 100})));
+std::shared_ptr<Mat> pts(new Mat(random::uniform<FloatType>({dim, 100})));
 
 bvh::PointCloudTree tree(pts);
 tree.build(4, false);

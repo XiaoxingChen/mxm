@@ -27,6 +27,13 @@ inline void testPixel()
     if(img.back().rU8() != 0xff)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
+
+    {
+        auto mat_a = random::uniform<Pixel>({3,3});
+        if(mat_a(0,0).r() > 1)
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
 }
 
 inline void testImageResize()

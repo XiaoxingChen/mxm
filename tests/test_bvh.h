@@ -169,7 +169,7 @@ inline void testMultiHit()
 void testRadiusSearch()
 {
     size_t dim = 2;
-    std::shared_ptr<Mat> pts(new Mat(random::random<FloatType>({dim, 100})));
+    std::shared_ptr<Mat> pts(new Mat(random::uniform<FloatType>({dim, 100})));
 
     bvh::PointCloudTree tree(pts);
     tree.build(4, false);
@@ -196,7 +196,7 @@ void testRadiusSearch()
 void testNearestNeighborSearch()
 {
     size_t dim = 2;
-    std::shared_ptr<Mat> pts(new Mat(random::random<FloatType>({dim, 100})));
+    std::shared_ptr<Mat> pts(new Mat(random::uniform<FloatType>({dim, 100})));
 
     bvh::PointCloudTree tree(pts);
     tree.build(4, false);

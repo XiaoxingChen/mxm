@@ -4,6 +4,7 @@
 #include <functional>
 #include <random>
 #include "linalg_mat.h"
+#include "cv_pixel.h"
 
 namespace mxm
 {
@@ -11,7 +12,8 @@ namespace random
 {
 
 template<typename DType>
-DType unitFloat()
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type
+uniform()
 {
     static std::uniform_real_distribution<DType> distribution(0.0, 1.0);
     static std::mt19937 generator;
@@ -20,10 +22,10 @@ DType unitFloat()
 }
 
 template<typename DType>
-Matrix<DType> random(const Shape& shape)
+Matrix<DType> uniform(const Shape& shape)
 {
     Matrix<DType> ret(shape);
-    ret.traverse([&](auto i, auto j) { ret(i,j) = unitFloat<DType>(); });
+    ret.traverse([&](auto i, auto j) { ret(i,j) = uniform<DType>(); });
     return ret;
 }
 
@@ -34,7 +36,7 @@ inline Matrix<DType> unitSphere(size_t dim=3, size_t num=1)
     for(size_t i = 0; i < num; i++)
     {
         do{
-            p(Col(i)) = random<DType>({dim, 1});
+            p(Col(i)) = uniform<DType>({dim, 1});
         } while(p(Col(i)).norm() > 1);
     }
 

@@ -26,6 +26,7 @@ template<typename DeriveType, typename DType>
 class LinearData
 {
 public:
+    using EntryType = DType;
     void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < deriveThis()->size(); i++) f(i); }
 
     DeriveType* deriveThis() {return reinterpret_cast<DeriveType*>(this);}

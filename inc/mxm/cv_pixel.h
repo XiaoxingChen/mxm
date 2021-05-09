@@ -118,6 +118,29 @@ std::string to_string(const PixelType<DType, N>& px, size_t prec=6)
     return ret;
 }
 
+namespace random
+{
+
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type
+uniform();
+
+template<typename DType>
+typename std::enable_if<
+    std::is_same<
+        DType, PixelType< typename DType::EntryType , DType::size()>
+    >::value, DType
+>::type
+uniform()
+{
+    DType ret(0);
+    for(size_t i = 0; i < DType::size(); i++) ret(i) = uniform<typename DType::EntryType>();
+    return ret;
+}
+
+} // namespace random
+
+
 } // namespace mxm
 
 
