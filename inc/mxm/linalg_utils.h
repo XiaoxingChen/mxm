@@ -124,5 +124,18 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
     return ret;
 }
 
+template<typename DType>
+Matrix<DType> convolute(const Matrix<DType>& src, const Matrix<DType>& core)
+{
+    Matrix<DType> ret({src.shape(0) - core.shape(0), src.shape(1) - core.shape(1)});
+
+    ret.traverse([&](auto i, auto j){
+        auto mul = core * src(Block({i, i + core.shape(0)}, {j, j+ core.shape(1)}));
+        ret(i,j) = 0;
+        mul.traverse([&](auto u, auto v) {ret(i,j) += mul(u,v);});
+    });
+    return ret;
+}
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H
