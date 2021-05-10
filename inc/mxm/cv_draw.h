@@ -41,7 +41,7 @@ Matrix<size_t> pixelsOnLine(const Matrix<float>& pts, float width=5)
         // std::cout << "t: " << t << std::endl;
     }
 
-    Matrix<size_t> ret({2, ret_data.size() / 2}, ret_data, Mat::COL);
+    Matrix<size_t> ret({2, ret_data.size() / 2}, std::move(ret_data), Mat::COL);
     return ret;
 }
 

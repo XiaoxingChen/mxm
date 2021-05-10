@@ -26,6 +26,20 @@ template<typename DType> class Matrix;
 template<typename DType>
 std::string to_string(const Matrix<DType>& mat, size_t prec=6);
 
+class AutoShape
+{
+public:
+    AutoShape(const std::array<size_t, 2>& shape) { for(auto & i : {0,1}) raw_shape_[i] = static_cast<int64_t>(shape[i]); }
+    AutoShape(std::initializer_list<size_t> shape) { for(auto & i : {0,1}) raw_shape_[i] = static_cast<int64_t>(*(shape.begin() + i)); }
+    AutoShape(int64_t row, int64_t col): raw_shape_{row, col} {}
+    std::array<size_t, 2> deduct(size_t total_num) const;
+
+private:
+    std::array<int64_t, 2> raw_shape_;
+};
+AutoShape fixRow(size_t n);
+AutoShape fixCol(size_t n);
+
 class Block;
 template<typename DType> class MatrixRef;
 // using MatRef = MatrixRef<FloatType>;
@@ -56,14 +70,15 @@ public:
     // constructors
     Matrix():shape_({0,0}), data_(), major_(ROW) {}
 
-    Matrix(const Shape& _shape, const std::vector<DType>& data={}, bool major=ROW)
-        :shape_(_shape), data_(_shape[0] * _shape[1]), major_(major)
+    Matrix(const AutoShape& _shape, const std::vector<DType>& data={}, bool major=ROW)
+        :shape_(_shape.deduct(data.size())), data_(shape_[0] * shape_[1]), major_(major)
     {
-        if(data.size() == 0)  return;
-        if(shape(0) * shape(1) != data.size())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        data_ = data;
+        if(data.size() > 0)
+            data_ = data;
     }
+
+    Matrix(const AutoShape& _shape, std::vector<DType>&& data, bool major=ROW)
+        :shape_(_shape.deduct(data.size())), data_(std::move(data)), major_(major) {}
 
     Matrix(const ThisType& rhs)
         :shape_(rhs.shape()), data_(rhs.shape(0) * rhs.shape(1)), major_(rhs.majorAxis())
