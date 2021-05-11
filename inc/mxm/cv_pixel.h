@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <string>
+#include <limits>
 #include "common.h"
 #include "accessor.h"
 #include "linalg_mat.h"
@@ -72,6 +73,11 @@ public:
     static ThisType black() {return ThisType(0);}
     static ThisType white() {return ThisType(1);}
     static constexpr size_t size() {return NChannel;}
+
+    operator DType() const
+    {
+        return data_[0];
+    }
 
     enum{
         N_CHANNEL = NChannel

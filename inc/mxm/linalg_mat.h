@@ -66,6 +66,8 @@ public:
     virtual const ThisType& owner() const { return *this; }
     virtual const Shape& absOffset() const { static Shape zero({0,0});  return zero; }
 
+    void moveData(std::vector<DType>& dst) { shape_ = Shape{0,0}; dst.swap(data_); }
+
     //
     // constructors
     Matrix():shape_({0,0}), data_(), major_(ROW) {}
@@ -84,6 +86,15 @@ public:
         :shape_(rhs.shape()), data_(rhs.shape(0) * rhs.shape(1)), major_(rhs.majorAxis())
     {
         (*this) = rhs;
+    }
+
+    template<typename T>
+    Matrix(const Matrix<T>& rhs)
+        :shape_(rhs.shape()), data_(rhs.shape(0) * rhs.shape(1)), major_(rhs.majorAxis())
+    {
+        traverse([&](auto i, auto j){
+            (*this)(i,j) = DType(rhs(i,j));
+        });
     }
 
     Matrix(ThisType&& rhs)
