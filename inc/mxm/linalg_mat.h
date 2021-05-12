@@ -54,6 +54,7 @@ public:
     static const bool COL = 1;
     using ThisType = Matrix<DType>;
     using DataPtr = std::vector<DType>*;
+    using EntryType = DType;
 
     //
     // interfaces
@@ -66,7 +67,7 @@ public:
     virtual const ThisType& owner() const { return *this; }
     virtual const Shape& absOffset() const { static Shape zero({0,0});  return zero; }
 
-    void moveData(std::vector<DType>& dst) { shape_ = Shape{0,0}; dst.swap(data_); }
+    const DType* data() { return data_.data(); }
 
     //
     // constructors
@@ -206,6 +207,15 @@ public:
     bool operator == (const ThisType& rhs) { bool ret(true); traverse([&](size_t i, size_t j){ret = (ret && (*this)(i,j) == rhs(i,j));}); return ret;}
     bool operator != (const ThisType& rhs) { return ! (*this == rhs); }
 
+#if 0
+    template<typename DTypeRHS>
+    Matrix<decltype(DType() * DTypeRHS())> operator * (const Matrix<DTypeRHS>& rhs) const
+    {
+        Matrix<decltype(DType() * DTypeRHS())> ret(shape());
+        ret.traverse([&](size_t i, size_t j){ret(i,j) = (*this)(i,j) * rhs(i,j);});
+        return ret;
+    }
+#endif
 
     DType det() const;
     ThisType inv() const;
@@ -276,8 +286,8 @@ protected:
 
 using Mat = Matrix<FloatType>;
 
-template<typename LType, typename DType> Mat operator + (LType lhs, const Mat& rhs) { return rhs + lhs;}
-template<typename LType, typename DType> Mat operator - (LType lhs, const Mat& rhs) { return -rhs + lhs;}
+template<typename LType, typename DType> Matrix<DType> operator + (LType lhs, const Matrix<DType>& rhs) { return rhs + lhs;}
+template<typename LType, typename DType> Matrix<DType> operator - (LType lhs, const Matrix<DType>& rhs) { return -rhs + lhs;}
 template<typename LType, typename DType> Matrix<DType> operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
 
 inline size_t indexConvert2D(size_t i, size_t j, bool major, size_t shape_i, size_t shape_j)

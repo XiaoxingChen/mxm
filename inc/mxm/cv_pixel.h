@@ -5,6 +5,7 @@
 #include <cmath>
 #include <string>
 #include <limits>
+#include <type_traits>
 #include "common.h"
 #include "accessor.h"
 #include "linalg_mat.h"
@@ -67,6 +68,9 @@ public:
     PixelType(){ }
     PixelType(DType val){ BaseType0::traverse([&](size_t i){(*this)(i) = val;}); }
 
+    template<typename DTypeRHS>
+    PixelType(const PixelType<DTypeRHS, NChannel>& rhs){ BaseType0::traverse([&](size_t i){(*this)(i) = DType(rhs(i));}); }
+
     const DType& operator () (size_t i) const { return data_.at(i); }
     DType& operator () (size_t i) { return data_.at(i); }
 
@@ -74,10 +78,25 @@ public:
     static ThisType white() {return ThisType(1);}
     static constexpr size_t size() {return NChannel;}
 
-    operator DType() const
+#if 0
+    template<typename Tin=DType, typename Tout=float>
+    operator typename std::enable_if_t<std::is_integral<Tin>::value, Tout>() const
+    {
+        return Tout(data_[0])/Tout(std::numeric_limits<Tin>::max());
+    }
+
+    template<typename Tin=DType, typename Tout=uint8_t>
+    operator typename std::enable_if_t<std::is_floating_point<Tin>::value, Tout>() const
+    {
+        return Tout(data_[0] * std::numeric_limits<Tout>::max() + 0.5);
+    }
+
+    template<typename Tin=DType, typename Tout=float>
+    operator typename std::enable_if_t<std::is_same<Tin, Tout>::value, Tout>() const
     {
         return data_[0];
     }
+#endif
 
     enum{
         N_CHANNEL = NChannel
@@ -90,32 +109,18 @@ private:
     std::array<DType, NChannel> data_;
 };
 
-template<typename DType, size_t NChannel>
-inline typename std::enable_if<std::is_same<DType, uint8_t>::value, std::vector<uint8_t>>::type
-serialize(const Matrix<PixelType<DType, NChannel>>& img)
-{
-    std::vector<uint8_t> src_mem(NChannel * img.shape(0) * img.shape(1));
-    img.traverse([&](auto i, auto j){
-        for(size_t k = 0; k < NChannel; k++)
-        {
-            src_mem.at(i * img.shape(1) * NChannel + j * NChannel + k) = img(i,j)(k);
-        }
-    });
-    return src_mem;
-}
+template<typename T>
+constexpr std::enable_if_t<std::is_arithmetic<T>::value, size_t> channelNum() { return 1; }
 
-template<typename DType, size_t NChannel>
-inline typename std::enable_if<std::is_floating_point<DType>::value, std::vector<uint8_t>>::type
-serialize(const Matrix<PixelType<DType, NChannel>>& img)
+template<typename PType>
+constexpr std::enable_if_t<std::is_same<PType, PixelType< typename PType::EntryType, PType::size()>>::value, size_t> channelNum() { return PType::size(); }
+
+template<typename PType>
+Matrix<PixelType<uint8_t, channelNum<PType>()>> quantize(const Matrix<PType>& img)
 {
-    std::vector<uint8_t> src_mem(NChannel * img.shape(0) * img.shape(1));
-    img.traverse([&](auto i, auto j){
-        for(size_t k = 0; k < NChannel; k++)
-        {
-            src_mem.at(i * img.shape(1) * NChannel + j * NChannel + k) = quantizeToU8(img(i,j)(k));
-        }
-    });
-    return src_mem;
+    Matrix<PixelType<uint8_t, channelNum<PType>()>> tmp(img.shape(), {}, Mat::ROW);
+    tmp = img;
+    return tmp;
 }
 
 using Pixel = PixelType<float, 3>;

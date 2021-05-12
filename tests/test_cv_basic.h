@@ -58,10 +58,34 @@ inline void testImageResize()
     // std::cout << __FILE__ << ":" << __LINE__ << std::endl;
 }
 
+inline void testPixelMemory()
+{
+    std::vector<Pixel> pxs;
+    pxs.push_back(Pixel({0.5,0.25,0.125}));
+    pxs.push_back(Pixel({0.5,0.25,0.125}));
+    pxs.push_back(Pixel({0.5,0.25,0.125}));
+
+    for(size_t i = 0;i < 9; i+= Pixel::size())
+    {
+        if(
+            ((float*)pxs.data())[i+0] != 0.5 ||
+            ((float*)pxs.data())[i+1] != 0.25 ||
+            ((float*)pxs.data())[i+2] != 0.125)
+        {
+            std::cout << ((float*)pxs.data())[i+0] << ","
+                << ((float*)pxs.data())[i+1] << ","
+                << ((float*)pxs.data())[i+2] << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+}
+
 inline void testCvBasic()
 {
     testPixel();
     testImageResize();
+    testPixelMemory();
 }
 
 #endif // _TEST_PIXEL_H_
