@@ -1,0 +1,19 @@
+<mxfile host="" modified="2021-05-15T14:42:21.970Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Code/1.45.1 Chrome/78.0.3904.130 Electron/7.2.4 Safari/537.36" etag="Y21h1n1PG-FUdGtuP_PL" version="13.1.3">
+    <diagram id="6hGFLwfOUW9BJ-s0fimq" name="Page-1">
+        <mxGraphModel dx="925" dy="408" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="13" value="&lt;b&gt;accessor.h&lt;/b&gt;&lt;br&gt;class LinearData;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="330" y="40" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="&lt;b&gt;linalg_complex.h&lt;/b&gt;&lt;br&gt;class Hypercomplex;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="150" y="130" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="&lt;b&gt;cv_pixel.h&lt;/b&gt;&lt;br&gt;class PixelType;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="460" y="130" width="120" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

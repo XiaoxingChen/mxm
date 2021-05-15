@@ -78,21 +78,21 @@ public:
     static ThisType white() {return ThisType(1);}
     static constexpr size_t size() {return NChannel;}
 
-#if 0
+#if 1
     template<typename Tin=DType, typename Tout=float>
-    operator typename std::enable_if_t<std::is_integral<Tin>::value, Tout>() const
+    operator typename std::enable_if_t<std::is_integral<Tin>::value && NChannel == 1, Tout>() const
     {
-        return Tout(data_[0])/Tout(std::numeric_limits<Tin>::max());
+        return Tout(data_[0]);
     }
 
     template<typename Tin=DType, typename Tout=uint8_t>
-    operator typename std::enable_if_t<std::is_floating_point<Tin>::value, Tout>() const
+    operator typename std::enable_if_t<std::is_floating_point<Tin>::value && NChannel == 1, Tout>() const
     {
-        return Tout(data_[0] * std::numeric_limits<Tout>::max() + 0.5);
+        return Tout(data_[0]);
     }
 
     template<typename Tin=DType, typename Tout=float>
-    operator typename std::enable_if_t<std::is_same<Tin, Tout>::value, Tout>() const
+    operator typename std::enable_if_t<std::is_same<Tin, Tout>::value && NChannel == 1, Tout>() const
     {
         return data_[0];
     }
@@ -136,6 +136,13 @@ std::string to_string(const PixelType<DType, N>& px, size_t prec=6)
     ret += ")";
     return ret;
 }
+
+template<typename LType, typename DType>
+typename std::enable_if_t<
+    std::is_same<
+        typename PixelType< typename LType::EntryType, LType::size()>::value, LType
+    >::value , Matrix<DType>
+> operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
 
 namespace random
 {

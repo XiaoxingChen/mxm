@@ -207,7 +207,7 @@ public:
     bool operator == (const ThisType& rhs) { bool ret(true); traverse([&](size_t i, size_t j){ret = (ret && (*this)(i,j) == rhs(i,j));}); return ret;}
     bool operator != (const ThisType& rhs) { return ! (*this == rhs); }
 
-#if 0
+#if 1
     template<typename DTypeRHS>
     Matrix<decltype(DType() * DTypeRHS())> operator * (const Matrix<DTypeRHS>& rhs) const
     {
@@ -288,7 +288,18 @@ using Mat = Matrix<FloatType>;
 
 template<typename LType, typename DType> Matrix<DType> operator + (LType lhs, const Matrix<DType>& rhs) { return rhs + lhs;}
 template<typename LType, typename DType> Matrix<DType> operator - (LType lhs, const Matrix<DType>& rhs) { return -rhs + lhs;}
+#if 0
 template<typename LType, typename DType> Matrix<DType> operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
+#else
+template<typename LType, typename DType> typename std::enable_if_t< std::is_arithmetic<LType>::value , Matrix<DType>> operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
+template<typename LType, typename DType>
+typename std::enable_if_t<
+    std::is_same<
+        typename mxm::Hypercomplex<typename LType::EntryType, LType::size()>, LType
+    >::value, Matrix<DType>
+>
+operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
+#endif
 
 inline size_t indexConvert2D(size_t i, size_t j, bool major, size_t shape_i, size_t shape_j)
 {
