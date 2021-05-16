@@ -46,10 +46,27 @@ Matrix<size_t> pixelsOnLine(const Matrix<float>& pts, float width=5)
 }
 
 template<typename PType>
-void
-plot(Matrix<PType>& p, const Matrix<float>& pts, const std::string& options="", float width=5)
+void scatter(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PType::black(), float width=5)
 {
-    auto color = PType({0,0,0.8});
+    // auto color = PType({0,0,128});
+    for(size_t i = 0; i < pts.shape(1); i++)
+    {
+        size_t start_x = std::max<float>(pts(0, i)-width*0.5, 0) + 0.5f;
+        size_t start_y = std::max<float>(pts(1, i)-width*0.5, 0) + 0.5f;
+
+        if(start_x > p.shape(0) || start_y > p.shape(1)) continue;
+
+        size_t width_x = std::min<float>(width, p.shape(0) - 1 - start_x) + 0.5f;
+        size_t width_y = std::min<float>(width, p.shape(1) - 1 - start_y) + 0.5f;
+        p.setBlock(start_x, start_y, Matrix<PType>::zeros({width_x, width_y}) + color);
+    }
+}
+
+template<typename PType>
+void
+plot(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PType::black(), float width=5)
+{
+    // auto color = PType({0,0,0.8});
     #if 0
     for(size_t i = 0; i < pts.shape(1); i++)
     {

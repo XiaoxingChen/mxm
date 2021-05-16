@@ -99,7 +99,7 @@ MXM_INLINE void BaseTree::build(size_t primitive_per_leaf, bool verbose)
 
         //
         // find the longest axis
-        size_t target_axis = argMax(target_node.aabb.max() - target_node.aabb.min());
+        size_t target_axis = argMax(target_node.aabb.max() - target_node.aabb.min())[0];
         if(verbose)
             std::cout << "range: [" << target.range[0] << "," << target.range[1] << "), axis: " << target_axis << std::endl;
 

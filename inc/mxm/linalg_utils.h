@@ -33,6 +33,7 @@ inline Matrix<DType> orthogonalComplement(const Matrix<DType>& vs)
 
 }
 
+#if 0
 inline size_t argMax(const Vec& v)
 {
     size_t idx_max(0);
@@ -43,6 +44,23 @@ inline size_t argMax(const Vec& v)
     }
     return idx_max;
 }
+#else
+template<typename DType>
+typename std::enable_if_t<std::is_arithmetic<DType>::value, std::array<size_t, 2>>
+argMax(const Matrix<DType>& mat)
+{
+    std::array<size_t, 2> ret{0,0};
+    DType curr_max = std::numeric_limits<DType>::min();
+    mat.traverse([&](auto i, auto j){
+        if(mat(i,j) > curr_max)
+        {
+            curr_max = mat(i,j);
+            ret = std::array<size_t, 2>{i,j};
+        }
+    });
+    return ret;
+}
+#endif
 
 inline std::vector<size_t> argSort(const Vec& v)
 {

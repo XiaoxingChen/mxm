@@ -38,6 +38,39 @@ resize(const Matrix<PixelType<DType, NChannel>>& img, const Shape& shape)
     return ret;
 }
 
+inline Matrix<size_t> nonMaximumSuppression(const Matrix<float>& mat, const Shape& block_shape)
+{
+    std::vector<size_t> local_maximums;
+    for(size_t i = 0; i < mat.shape(0); i += block_shape[0])
+    {
+        for(size_t j = 0; j < mat.shape(1); j += block_shape[1])
+        {
+            auto block_idx = mxm::argMax(mat(Block(
+                {i, std::min(i+block_shape[0], mat.shape(0))},
+                {j, std::min(j+block_shape[1], mat.shape(1))})));
+
+            local_maximums.push_back(i + block_idx[0]);
+            local_maximums.push_back(j + block_idx[1]);
+
+        }
+    }
+    return Matrix<size_t>(fixRow(2), std::move(local_maximums), Mat::COL);
+}
+
+inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape)
+{
+    std::vector<size_t> corners;
+    for(size_t i = 0; i < mat.shape(0); i += block_shape[0])
+    {
+        for(size_t j = 0; j < mat.shape(1); j += block_shape[1])
+        {
+            corners.push_back(i);
+            corners.push_back(j);
+        }
+    }
+    return Matrix<size_t>(fixRow(2), std::move(corners), Mat::COL);
+}
+
 } // namespace mxm
 
 #endif // _CV_BASIC_H_
