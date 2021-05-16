@@ -385,6 +385,16 @@ Matrix<Hypercomplex<DType, N>> conj(const Matrix<Hypercomplex<DType, N>>& in)
     return ret;
 }
 
+template<typename DType>
+DType sum(const Matrix<DType>& src)
+{
+    DType ret(0);
+    src.traverse([&](auto i, auto j){
+        ret += src(i,j);
+    });
+    return ret;
+}
+
 } // namespace mxm
 
 #ifdef MXM_HEADER_ONLY

@@ -16,6 +16,7 @@
 #include "test_bsp_tree.h"
 #include "test_graph.h"
 #include "test_grid_map.h"
+#include "test_harris_corner.h"
 
 
 int main(int argc, char const *argv[])
@@ -39,6 +40,7 @@ int main(int argc, char const *argv[])
   testBspTree();
   testGraph();
   testGridMap();
+  testHarrisCorner();
   std::cout << "done" << std::endl;
   return 0;
 }
