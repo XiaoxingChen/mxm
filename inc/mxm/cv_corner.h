@@ -12,9 +12,9 @@ Matrix<float> harrisDetectorPass01(const Matrix<float>& src, size_t window_width
     auto sobel_x = convolute(src, sobel.T());
     auto sobel_y = convolute(src, sobel);
 
-    Matrix<float> result(sobel_x.shape());
+    Matrix<float> result(src.shape());
     result.traverse([&](auto i, auto j){
-        if(i+window_width >= result.shape(0) || j+window_width >= result.shape(1)) return;
+        if(i+window_width >= sobel_x.shape(0) || j+window_width >= sobel_x.shape(1)) return;
 
         Matrix<float> M({2,2});
         auto Ix = sobel_x(Block({i, i+window_width}, {j, j+window_width}));
@@ -27,7 +27,7 @@ Matrix<float> harrisDetectorPass01(const Matrix<float>& src, size_t window_width
         float det = M.det();
         float tr = M.trace();
 
-        result(i,j) = det - k * tr*tr;
+        result(i+1,j+1) = det - k * tr*tr;
     });
     return result;
 }

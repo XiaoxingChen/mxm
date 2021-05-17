@@ -145,7 +145,7 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
-    Matrix<decltype(DType()*CoreType())> ret({src.shape(0) - core.shape(0), src.shape(1) - core.shape(1)});
+    Matrix<decltype(DType()*CoreType())> ret({src.shape(0) - core.shape(0) + 1, src.shape(1) - core.shape(1) + 1});
 
     ret.traverse([&](auto i, auto j){
         auto mul = core * src(Block({i, i + core.shape(0)}, {j, j+ core.shape(1)}));
