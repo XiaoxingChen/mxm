@@ -113,6 +113,26 @@ inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape
     return Matrix<size_t>(fixRow(2), std::move(corners), Mat::COL);
 }
 
+template<typename PType>
+Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
+{
+    Matrix<PType> ret({pts.shape(1), 1});
+    for(size_t i = 0;i < pts.shape(1); i++)
+    {
+        size_t x0(pts(0, i));
+        size_t y0(pts(1, i));
+        if(pts(0,i) + 1 > img.shape(0) || pts(1,i) + 1 > img.shape(1))
+        {
+            ret(i,0) = img(x0, y0);
+            continue;
+        }
+
+        Matrix<PType> t = pts(Col(i)) - Matrix<float>({2,1}, {std::floor(pts(0, i)), std::floor(pts(1, i))});
+        ret(i, 0) = interp::bilinearUnitSquare(t, img(Block({x0, x0+2},{y0, y0+2})));
+    }
+    return ret;
+}
+
 } // namespace mxm
 
 #endif // _CV_BASIC_H_

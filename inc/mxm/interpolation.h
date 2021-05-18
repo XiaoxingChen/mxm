@@ -13,18 +13,20 @@ namespace interp
 //
 // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
 //
-// PType: should be either float or double
+// FType: should be either float or double
 // DType: can be any type that overloaded with DType::operator*(PType scalar)
 //      for example: PixelRGB, Complex, Quaternion
 // square: matrix with shape {2,2}
 //      | f(0,0), f(0,1) |
 //      | f(1,0), f(1,1) |
 // pos: (x,y) position
-template<typename PType, typename DType>
-DType bilinearUnitSquare(const Vector<PType>& pos, const Matrix<DType>& square)
+template<typename FType, typename DType>
+DType bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square)
 {
-    Vector<PType> vx({1 - pos(0), pos(0)});
-    Vector<PType> vy({1 - pos(1), pos(1)});
+    if(square.shape() != Shape{2,2})
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    Matrix<FType> vx({2,1},{FType(1) - pos(0,0), pos(0,0)});
+    Matrix<FType> vy({2,1},{FType(1) - pos(1,0), pos(1,0)});
     return vx.T().matmul(square).matmul(vy)(0,0);
 }
 
