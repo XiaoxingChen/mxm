@@ -509,6 +509,24 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }
+
+    {//test 10
+        Matrix<uint32_t> mat({4,4},{
+            0,1,2,3,
+            4,5,6,7,
+            8,9,10,11,
+            12,13,14,15});
+
+        Matrix<uint32_t> expected({3,3}, {5,9,13, 6,10,14, 7,11,15});
+
+        mat = mat(Block({1,end()}, {1,end()})).T();
+        if(mat != expected)
+        {
+            std::cout << mat.str() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
 }
 
 inline void testMatInv()

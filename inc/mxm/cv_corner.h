@@ -6,7 +6,7 @@
 
 namespace mxm
 {
-Matrix<float> harrisDetectorPass01(const Matrix<float>& src, size_t window_width=5, float k=0.06)
+Matrix<float> harrisCornernessMap(const Matrix<float>& src, size_t window_width=5, float k=0.06)
 {
     Matrix<float> sobel = Matrix<float>({3,3}, {-1,0,1, -2,0,2, -1,0,1});
     auto sobel_x = convolute(src, sobel.T());
@@ -27,7 +27,7 @@ Matrix<float> harrisDetectorPass01(const Matrix<float>& src, size_t window_width
         float det = M.det();
         float tr = M.trace();
 
-        result(i+1,j+1) = det - k * tr*tr;
+        result(i+window_width/2, j+window_width/2) = det - k * tr*tr;
     });
     return result;
 }

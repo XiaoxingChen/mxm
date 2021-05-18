@@ -38,24 +38,35 @@ inline void testPixel()
 
 inline void testImageResize()
 {
-    Matrix<Pixel> img({2,2});
-    img(0,0) = Pixel::black();
-    img(0,1) = Pixel::white();
-    img(1,0) = Pixel::black();
-    img(1,1) = Pixel::white();
+    {// case 1
+        Matrix<Pixel> img({2,2});
+        img(0,0) = Pixel::black();
+        img(0,1) = Pixel::white();
+        img(1,0) = Pixel::black();
+        img(1,1) = Pixel::white();
 
-    auto img3x3 = resize(img, Shape({3,3}));
-    if(img3x3(1,1) != Pixel({.5, .5, .5}))
-    {
-        std::cout << to_string(img3x3,2) << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        auto img3x3 = resize(img, Shape({3,3}));
+        if(img3x3(1,1) != Pixel({.5, .5, .5}))
+        {
+            std::cout << to_string(img3x3,2) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 
-    // img3x3.traverse([&](auto i, auto j){
-    //     std::cout << to_string(img3x3(i,j)) << std::endl;
-    // });
-    // std::cout << "TODO: to_string(const Matrix<Pixel>&) doesn't work well!" << std::endl;
-    // std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    {//case 2
+        Matrix<float> img({2,2},{0,1,2,3});
+        Matrix<float> expected = Matrix<float>::ones({8,8});
+        expected(Block({0,4},{0,4}))*=0;
+        expected(Block({0,4},{4,8}))*=1;
+        expected(Block({4,8},{0,4}))*=2;
+        expected(Block({4,8},{4,8}))*=3;
+
+        if(mxm::resize(img, 4, "nearest") != expected)
+        {
+            std::cout << to_string(mxm::resize(img, 4, "nearest"),2) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 
 inline void testPixelMemory()

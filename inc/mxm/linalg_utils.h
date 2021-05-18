@@ -135,6 +135,17 @@ Matrix<DType> boundary(const Matrix<DType>& pts)
 }
 
 template<typename DType>
+std::array<DType, 2> elementwiseBounds(const Matrix<DType>& mat)
+{
+    std::array<DType, 2> min_max{std::numeric_limits<DType>::max(), std::numeric_limits<DType>::min()};
+    mat.traverse([&](auto i, auto j){
+        min_max[0] = std::min(min_max[0], mat(i,j));
+        min_max[1] = std::max(min_max[1], mat(i,j));
+    });
+    return min_max;
+}
+
+template<typename DType>
 Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 {
     Matrix<DType> ret = Matrix<DType>::Identity(vec.shape(0));
@@ -145,14 +156,38 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
+#if 1 // padding
+    if(core.shape(0) % 2 != 1 || core.shape(1) % 2 != 1)
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    Matrix<decltype(DType()*CoreType())> ret(src.shape());
+
+    Shape half_w{core.shape(0)/2, core.shape(1)/2};
+
+    ret.traverse([&](auto i, auto j){
+        if(i + half_w[0] >= src.shape(0)
+        || j + half_w[1] >= src.shape(1)
+        || i < half_w[0]
+        || j < half_w[1])
+        {
+            ret(i,j) = src(i,j);
+            return;
+        }
+        ret(i, j)
+            = mxm::sum(core * src(Block(
+                {i - half_w[0], i + half_w[0] + 1},
+                {j - half_w[1], j + half_w[1] + 1})));
+    });
+    return ret;
+
+#else
     Matrix<decltype(DType()*CoreType())> ret({src.shape(0) - core.shape(0) + 1, src.shape(1) - core.shape(1) + 1});
 
     ret.traverse([&](auto i, auto j){
-        auto mul = core * src(Block({i, i + core.shape(0)}, {j, j+ core.shape(1)}));
-        ret(i,j) = 0;
-        mul.traverse([&](auto u, auto v) {ret(i,j) += mul(u,v);});
+        ret(i,j) = mxm::sum(core * src(Block({i, i + core.shape(0)}, {j, j+ core.shape(1)})));
     });
     return ret;
+
+#endif
 }
 
 } // namespace mxm

@@ -6,55 +6,97 @@
 
 namespace mxm
 {
-template<typename DType, size_t NChannel>
-Matrix<PixelType<DType, NChannel>>
-resize(const Matrix<PixelType<DType, NChannel>>& img, const Shape& shape)
+template<typename PType>
+Matrix<PType>
+resize(const Matrix<PType>& img, const Shape& shape, const std::string& strategy="bilinear")
 {
-    Matrix<PixelType<DType, NChannel>> ret(shape);
+    Matrix<PType> ret(shape);
 
-    FloatType k_h = FloatType(img.shape(0) - 1) / (ret.shape(0) - 1);
-    FloatType k_w = FloatType(img.shape(1) - 1) / (ret.shape(1) - 1);
+    using DType = typename NormTraits<PType>::type;
     // std::cout << "k_w: " << k_w << ", k_h: " << k_h << std::endl;
 
     ret.traverse([&](auto i, auto j){
-        Matrix<PixelType<DType, NChannel>> unit_mat({2,2});
-        size_t i_0 = size_t(i * k_h);
-        size_t j_0 = size_t(j * k_w);
-        size_t i_1 = (i_0 == img.shape(0) - 1) ? i_0 : i_0 + 1;
-        size_t j_1 = (j_0 == img.shape(1) - 1) ? j_0 : j_0 + 1;
-        FloatType i_float = i * k_h - i_0;
-        FloatType j_float = j * k_w - j_0;
-        // std::cout << "i,j: " << i_int << "," << j_int << std::endl << std::flush;
+        if(strategy == std::string("bilinear"))
+        {
+            DType k_h = DType(img.shape(0) - 1) / (ret.shape(0) - 1);
+            DType k_w = DType(img.shape(1) - 1) / (ret.shape(1) - 1);
 
-        unit_mat(0,0) = img(i_0, j_0);
-        unit_mat(0,1) = img(i_0, j_1);
-        unit_mat(1,0) = img(i_1, j_0);
-        unit_mat(1,1) = img(i_1, j_1);
+            Matrix<PType> unit_mat({2,2});
+            size_t i_0 = size_t(i * k_h);
+            size_t j_0 = size_t(j * k_w);
+            size_t i_1 = (i_0 == img.shape(0) - 1) ? i_0 : i_0 + 1;
+            size_t j_1 = (j_0 == img.shape(1) - 1) ? j_0 : j_0 + 1;
+            DType i_float = i * k_h - i_0;
+            DType j_float = j * k_w - j_0;
+            // std::cout << "i,j: " << i_int << "," << j_int << std::endl << std::flush;
 
-        ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({i_float, j_float}), unit_mat);
+            unit_mat(0,0) = img(i_0, j_0);
+            unit_mat(0,1) = img(i_0, j_1);
+            unit_mat(1,0) = img(i_1, j_0);
+            unit_mat(1,1) = img(i_1, j_1);
+
+            ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({i_float, j_float}), unit_mat);
+        }else if(strategy == std::string("nearest"))
+        {
+            DType k_h = DType(img.shape(0)) / (ret.shape(0));
+            DType k_w = DType(img.shape(1)) / (ret.shape(1));
+            ret(i,j) = img(size_t(i * k_h + 0.), size_t(j * k_w + 0.));
+        }
+
         // ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({0.5, 0.5}), unit_mat);
         // ret(i,j) = unit_mat(0,0);
     });
     return ret;
 }
 
-inline Matrix<size_t> nonMaximumSuppression(const Matrix<float>& mat, const Shape& block_shape)
+template<typename PType>
+Matrix<PType>
+resize(const Matrix<PType>& img, float rate, const std::string& strategy="bilinear")
 {
-    std::vector<size_t> local_maximums;
-    for(size_t i = 0; i < mat.shape(0); i += block_shape[0])
-    {
-        for(size_t j = 0; j < mat.shape(1); j += block_shape[1])
-        {
-            auto block_idx = mxm::argMax(mat(Block(
-                {i, std::min(i+block_shape[0], mat.shape(0))},
-                {j, std::min(j+block_shape[1], mat.shape(1))})));
+    return resize(img, {size_t(img.shape(0) * rate), size_t(img.shape(1) * rate)}, strategy);
+}
 
-            local_maximums.push_back(i + block_idx[0]);
-            local_maximums.push_back(j + block_idx[1]);
+inline Matrix<size_t> nonMaximumSuppression(const Matrix<float>& heat_map, const Shape& block_shape=Shape({50,50}))
+{
+    // float thresh = 10;
+    float thresh = mxm::sum(heat_map) / (heat_map.shape(0) * heat_map.shape(1));
+    std::vector<size_t> local_maximums;
+    for(size_t i = 0; i < heat_map.shape(0); i += block_shape[0])
+    {
+        for(size_t j = 0; j < heat_map.shape(1); j += block_shape[1])
+        {
+            auto maximal_idx = mxm::argMax(heat_map(Block(
+                {i, std::min(i+block_shape[0], heat_map.shape(0))},
+                {j, std::min(j+block_shape[1], heat_map.shape(1))})));
+
+            if(heat_map(i+maximal_idx[0], j+maximal_idx[1]) < thresh) continue;
+
+            local_maximums.push_back(i + maximal_idx[0]);
+            local_maximums.push_back(j + maximal_idx[1]);
 
         }
     }
     return Matrix<size_t>(fixRow(2), std::move(local_maximums), Mat::COL);
+}
+
+inline Matrix<size_t> adaptiveNonMaximalSuppression(const Matrix<float>& heat_map)
+{
+    float thresh = mxm::sum(heat_map) / (heat_map.shape(0) * heat_map.shape(1));
+    // thresh = 0;
+    const size_t window_width = 5;
+    const size_t half_width = window_width / 2;
+    std::vector<size_t> coords;
+    heat_map.traverse([&](auto i, auto j){
+        if(i + window_width > heat_map.shape(0) || j + window_width > heat_map.shape(1)) return;
+        if(heat_map(i+half_width, j+half_width) < thresh) return;
+        if(mxm::argMax(heat_map(Block({i, i+window_width}, {j, j+window_width}))) == std::array<size_t, 2>{half_width, half_width})
+        {
+            coords.push_back(i+half_width);
+            coords.push_back(j+half_width);
+        }
+    });
+    // todo
+    return Matrix<size_t>(fixRow(2), std::move(coords), Mat::COL);
 }
 
 inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape)

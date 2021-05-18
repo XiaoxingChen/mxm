@@ -9,7 +9,7 @@ using namespace mxm;
 inline void testHarrisCorner()
 {
     Mat img = random::uniform<float>({10,10});
-    auto ret = harrisDetectorPass01(img, 5);
+    auto ret = harrisCornernessMap(img, 5);
 }
 
 

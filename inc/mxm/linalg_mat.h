@@ -135,21 +135,29 @@ public:
 
     virtual void operator = (const ThisType& rhs)
     {
-        if(&rhs.owner() == this
-            && rhs.majorAxis() != majorAxis()
-            && rhs.shape() == Shape({shape_[1], shape_[0]})) //deal with mat = mat.T()
-        {
-            major_ = ! major_;
-            return;
-        }
+        if(&rhs == this) return; // deal with `mat = mat;`
 
-        if(this->shape() == Shape{0,0})
+        if(&rhs.owner() == this) // self assignment
+        {
+            if(rhs.majorAxis() != majorAxis()
+                && rhs.shape() == Shape({shape_[1], shape_[0]}))
+            {   //deal with `mat = mat.T();`
+                major_ = ! major_;
+            }else if(rhs.majorAxis() == majorAxis() && rhs.shape() == shape())
+            {   // deal with `mat = mat(Block({0,end()},{0,end()}));
+                return; //pass
+            }else
+            {   // deal with `mat = mat(Block({1,end()}, {1,end()})).T();`
+                ThisType tmp(rhs);
+                (*this) = std::move(tmp);
+            }
+        }else // rhs != this
         {
             shape_ = rhs.shape();
             data_.resize(shape(0) * shape(1));
             major_ = rhs.majorAxis();
+            traverse([&](size_t i, size_t j){ (*this)(i,j) = rhs(i,j); });
         }
-        traverse([&](size_t i, size_t j){ (*this)(i,j) = rhs(i,j); });
     }
 
     //
@@ -251,7 +259,10 @@ public:
         using ReturnType = Matrix<decltype(DType() * RhsDType())>;
         const ThisType& lhs(*this);
         if(lhs.shape(1) != rhs.shape(0))
+        {
+            // std::cout << "lhs.shape(1): " << lhs.shape(1) << ", rhs.shape(0): " << rhs.shape(0) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
         ReturnType ret = ReturnType::zeros({lhs.shape(0), rhs.shape(1)});
         ret.traverse([&](size_t i, size_t j)
             {

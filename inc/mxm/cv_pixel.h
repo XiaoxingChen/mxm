@@ -76,6 +76,9 @@ public:
 
     static ThisType black() {return ThisType(0);}
     static ThisType white() {return ThisType(1);}
+    static ThisType red() {auto ret = black(); ret(0) = 1; return ret;}
+    static ThisType green() {auto ret = black(); ret(1) = 1; return ret;}
+    static ThisType blue() {auto ret = black(); ret(2) = 1; return ret;}
     static constexpr size_t size() {return NChannel;}
 
 #if 1
@@ -115,16 +118,6 @@ constexpr std::enable_if_t<std::is_arithmetic<T>::value, size_t> channelNum() { 
 template<typename PType>
 constexpr std::enable_if_t<std::is_same<PType, PixelType< typename PType::EntryType, PType::size()>>::value, size_t> channelNum() { return PType::size(); }
 
-template<typename PType>
-Matrix<PixelType<uint8_t, channelNum<PType>()>> quantize(const Matrix<PType>& img)
-{
-    Matrix<PixelType<uint8_t, channelNum<PType>()>> tmp(img.shape(), {}, Mat::ROW);
-    tmp = img;
-    return tmp;
-}
-
-using Pixel = PixelType<float, 3>;
-
 template<typename DType, size_t N>
 std::string to_string(const PixelType<DType, N>& px, size_t prec=6)
 {
@@ -137,12 +130,75 @@ std::string to_string(const PixelType<DType, N>& px, size_t prec=6)
     return ret;
 }
 
+template<typename DType, size_t N>
+PixelType<DType, N> inv(const PixelType<DType, N>& val)
+{
+    PixelType<DType, N> ret;
+    ret.traverse([&](size_t i){ret(i) = (DType(1)/val(i));});
+    return ret;
+}
+
+template<typename PType>
+Matrix<PixelType<uint8_t, channelNum<PType>()>> quantize(const Matrix<PType>& img)
+{
+    Matrix<PixelType<uint8_t, channelNum<PType>()>> tmp(img.shape(), {}, Mat::ROW);
+    tmp = img;
+    return tmp;
+}
+
+inline void normalize(Matrix<float>& img, float range=255.)
+{
+    auto min_max = elementwiseBounds(img);
+    img -= min_max[0];
+    img *= (range/ (min_max[1] - min_max[0]));
+}
+
+template<typename PType>
+typename std::enable_if_t<
+    std::is_same<
+        PType, typename mxm::PixelType< typename PType::EntryType, PType::size()>
+    >::value,
+void>
+normalize(Matrix<PType>& img, float range=255.)
+{
+    using DType = typename PType::EntryType;
+    std::array<DType, 2> min_max{
+        std::numeric_limits<DType>::max(),
+        std::numeric_limits<DType>::min()};
+
+    for(size_t ch = 0; ch < PType::size(); ch++)
+    {
+        img.traverse([&](auto i, auto j){
+            min_max[0] = std::min(min_max[0], img(i,j)(ch));
+            min_max[1] = std::max(min_max[1], img(i,j)(ch));
+        });
+    }
+    // auto min_max = elementwiseBounds(img);
+    // std::cout << mxm::to_string(min_max[0]) << "," << mxm::to_string(min_max[1]) << std::endl;
+    img -= min_max[0];
+    img *= (range /(min_max[1] - min_max[0]));
+    // std::cout << mxm::to_string(mxm::inv(min_max[1] - min_max[0]))  << std::endl;
+}
+
+template<typename PType>
+Matrix<PType> normalized(const Matrix<PType>& img, float range=255.)
+{
+    Matrix<PType> ret(img);
+    normalize(ret, range);
+    return ret;
+}
+
+using Pixel = PixelType<float, 3>;
+
 template<typename LType, typename DType>
 typename std::enable_if_t<
     std::is_same<
         typename PixelType< typename LType::EntryType, LType::size()>::value, LType
     >::value , Matrix<DType>
 > operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
+
+template<typename DType, size_t N>
+struct NormTraits<PixelType<DType, N>>{using type = typename PixelType<DType, N>::EntryType;};
 
 namespace random
 {
