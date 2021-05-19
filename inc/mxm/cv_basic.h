@@ -42,6 +42,8 @@ resize(const Matrix<PType>& img, const Shape& shape, const std::string& strategy
             DType k_h = DType(img.shape(0)) / (ret.shape(0));
             DType k_w = DType(img.shape(1)) / (ret.shape(1));
             ret(i,j) = img(size_t(i * k_h + 0.), size_t(j * k_w + 0.));
+        }else{
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
         // ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({0.5, 0.5}), unit_mat);
