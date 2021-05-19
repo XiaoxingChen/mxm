@@ -32,34 +32,36 @@ inline Matrix<float> lkOpticalFlow(
     const Matrix<float>& img_curr,
     const Matrix<float>& img_next,
     const Matrix<float>& pts_curr,
+    const Matrix<float>& pts_init,
     size_t window_width=5)
 {
     Matrix<float> sobel_x = convolute(img_curr, kernel::sobel());
     Matrix<float> sobel_y = convolute(img_curr, kernel::sobel().T());
 
-    const size_t max_it = 40;
+    const size_t max_it = 10;
     float tol = 1e-3;
+    const bool verbose(0);
 
     Matrix<float> pts_next(pts_curr.shape());
 
     for(size_t pt_idx = 0; pt_idx < pts_curr.shape(1); pt_idx++)
     {
-        Matrix<size_t> grids_curr = windowGrids<size_t>(pts_curr(0, pt_idx) + 0.5, pts_curr(1, pt_idx) + 0.5, img_curr.shape(), window_width);
-        Matrix<float> pt_next = pts_curr(Col(pt_idx));
+        // Matrix<size_t> grids_curr = windowGrids<size_t>(pts_curr(0, pt_idx) + 0.5, pts_curr(1, pt_idx) + 0.5, img_curr.shape(), window_width);
+        Matrix<float> grids_curr = windowGrids<float>(pts_curr(0, pt_idx), pts_curr(1, pt_idx), img_curr.shape(), window_width);
+        Matrix<float> pt_next = pts_init(Col(pt_idx));
         float prev_inc = 10.;
-        // if(grids_curr.shape(1) != window_width * window_width) continue;
+        if(grids_curr.shape(1) != window_width * window_width) continue;
+
         for(size_t _i = 0; _i < max_it; _i++)
         {
             Matrix<float> grids_next = windowGrids<float>(pt_next(0,0), pt_next(1,0), img_next.shape(), window_width);
+            if(grids_next.shape(1) != window_width * window_width) break;
             Matrix<float> mat_a({grids_curr.shape(1), 2});
             Matrix<float> vec_b({grids_next.shape(1), 1});
-            for(size_t grid_idx = 0; grid_idx < grids_curr.shape(1); grid_idx++)
-            {
-                std::array<size_t, 2> px_idx{grids_curr(0, grid_idx), grids_curr(1, grid_idx)};
-                mat_a(grid_idx, 0) = sobel_x(px_idx[0], px_idx[1]);
-                mat_a(grid_idx, 1) = sobel_y(px_idx[0], px_idx[1]);
-                vec_b(grid_idx, 0) = img_curr(px_idx[0], px_idx[1]) - bilinear(grids_next(Col(grid_idx)), img_next)(0,0);
-            }
+
+            mat_a(Col(0)) = bilinear(grids_curr, sobel_x);
+            mat_a(Col(1)) = bilinear(grids_curr, sobel_y);
+            vec_b(Col(0)) = bilinear(grids_curr, img_curr) - bilinear(grids_next, img_next);
 
             Matrix<float> solve_a(mat_a.T().matmul(mat_a));
             Matrix<float> solve_b(mat_a.T().matmul(vec_b));
@@ -67,14 +69,39 @@ inline Matrix<float> lkOpticalFlow(
             Matrix<float> increment = qr::solve(solve_a, solve_b);
             if(increment.norm() > prev_inc) { std::cout << "inc inc" << std::endl; break; }
             pt_next += increment;
-            // std::cout << "increment: " << increment.norm() << std::endl;
+            if(verbose) std::cout << "increment: " << increment.norm() << std::endl;
             if(increment.norm() < tol) break;
         }
+        if(verbose) std::cout << "done" << std::endl;
         pts_next(Col(pt_idx)) = pt_next;
     }
     return pts_next;
 }
 
+inline Matrix<float> lkOpticalFlow(
+    const Matrix<float>& img_curr,
+    const Matrix<float>& img_next,
+    const Matrix<float>& pts_curr,
+    size_t window_width=5)
+{
+    return lkOpticalFlow(img_curr, img_next, pts_curr, pts_curr, window_width);
+}
+
+inline Matrix<float> pyramidLKOpticalFlow(
+    const std::vector<Matrix<float>>& img_curr,
+    const std::vector<Matrix<float>>& img_next,
+    const Matrix<float>& pts_curr,
+    size_t window_width=5)
+{
+    Matrix<float> pts_next = pts_curr * (1./ float(1 << (img_curr.size() - 1)));
+    for(int layer = img_curr.size() - 1; layer > 0; layer--)
+    {
+        float scale = (1. / float(1 << layer));
+        pts_next = lkOpticalFlow(img_curr.at(layer), img_next.at(layer), pts_curr * scale, pts_next, window_width);
+        pts_next *= 2;
+    }
+    return pts_next;
+}
 } // namespace mxm
 
 

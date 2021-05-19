@@ -122,7 +122,7 @@ Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
     {
         size_t x0(pts(0, i));
         size_t y0(pts(1, i));
-        if(pts(0,i) + 1 > img.shape(0) || pts(1,i) + 1 > img.shape(1))
+        if(pts(0,i) + 1 >= img.shape(0) || pts(1,i) + 1 >= img.shape(1))
         {
             ret(i,0) = img(x0, y0);
             continue;
@@ -134,6 +134,7 @@ Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
     return ret;
 }
 
+template<typename PType> using ImagePyramid = std::vector<Matrix<PType>>;
 template<typename PType>
 std::vector<Matrix<PType>> gaussPyramid(const Matrix<PType>& img, size_t level, bool return_blured=true)
 {
