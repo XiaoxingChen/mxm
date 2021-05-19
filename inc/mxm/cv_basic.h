@@ -2,6 +2,7 @@
 #define _CV_BASIC_H_
 
 #include "cv_pixel.h"
+#include "cv_kernel.h"
 #include "interpolation.h"
 
 namespace mxm
@@ -131,6 +132,21 @@ Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
         ret(i, 0) = interp::bilinearUnitSquare(t, img(Block({x0, x0+2},{y0, y0+2})));
     }
     return ret;
+}
+
+template<typename PType>
+std::vector<Matrix<PType>> gaussPyramid(const Matrix<PType>& img, size_t level, bool return_blured=true)
+{
+    using DType = typename NormTraits<PType>::type;
+    std::vector<Matrix<PType>> pyramid;
+    Matrix<PType> prev_img(img);
+    for(size_t i = 0; i < level; i++)
+    {
+        auto blured = convolute(prev_img, kernel::gauss<DType>(3));
+        prev_img = std::move(reduce(blured, kernel::average<DType>(2)));
+        pyramid.push_back(std::move(blured));
+    }
+    return pyramid;
 }
 
 } // namespace mxm

@@ -1,7 +1,7 @@
 #if !defined(_LINALG_UTILS_H)
 #define _LINALG_UTILS_H
 
-#include "mxm/linalg_mat.h"
+#include "linalg_mat.h"
 #include <algorithm>
 
 namespace mxm
@@ -150,6 +150,25 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 {
     Matrix<DType> ret = Matrix<DType>::Identity(vec.shape(0));
     for(size_t i = 0; i < vec.shape(0); i++) ret(i,i) = vec(i,0);
+    return ret;
+}
+template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matrix<CoreType>& core)
+{
+    Shape ret_shape;
+    for(auto i : {0,1}) ret_shape[i] = src.shape(i) / core.shape(i) + size_t(src.shape(i) % core.shape(i));
+    Matrix<decltype(DType()*CoreType())> ret(ret_shape);
+    ret.traverse([&](auto i, auto j){
+        size_t i_src = i * core.shape(0);
+        size_t j_src = j * core.shape(1);
+        if(i_src + core.shape(0) > src.shape(0) || j_src + core.shape(1) > src.shape(1))
+        {
+            ret(i,j) = src(i_src, j_src);
+            return;
+        }
+
+        ret(i,j) = mxm::sum(src(Block({i_src, i_src + core.shape(0)}, {j_src, j_src + core.shape(1)})) * core);
+    });
     return ret;
 }
 

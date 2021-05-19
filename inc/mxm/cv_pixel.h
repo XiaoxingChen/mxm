@@ -146,9 +146,11 @@ Matrix<PixelType<uint8_t, channelNum<PType>()>> quantize(const Matrix<PType>& im
     return tmp;
 }
 
+template<typename DType>
+std::array<DType, 2> elementwiseBounds(const Matrix<DType>& mat);
 inline void normalize(Matrix<float>& img, float range=255.)
 {
-    auto min_max = elementwiseBounds(img);
+    auto min_max = mxm::elementwiseBounds(img);
     img -= min_max[0];
     img *= (range/ (min_max[1] - min_max[0]));
 }

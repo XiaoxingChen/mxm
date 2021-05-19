@@ -38,6 +38,13 @@ gauss(size_t size)
     return vec.matmul(vec.T());
 }
 
+template<typename DType=float>
+typename std::enable_if_t<std::is_floating_point<DType>::value, Matrix<DType>>
+average(size_t size)
+{
+    return Matrix<DType>::ones({size, size}) * (DType(1) / size / size);
+}
+
 } // namespace kernel
 } // namespace mxm
 
