@@ -564,6 +564,15 @@ inline void testComplexBase()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
 
+inline void testCombinations()
+{
+    {
+        if(combinations(5,2) != 10) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        if(combinations(5,3) != 10) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        if(combinations(3,1) != 3) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 inline void testLinearAlgebra()
 {
     Mat m1({3,3},{1,1,1, 2,2,2, 3,3,3});
@@ -594,6 +603,7 @@ inline void testLinearAlgebra()
     // testUnsymmetrixEigenvaluePipeline01();
     // testUnsymmetrixEigenvaluePipeline02();
     testEigenvalues();
+    testCombinations();
 
 }
 

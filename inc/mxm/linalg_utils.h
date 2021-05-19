@@ -188,6 +188,17 @@ Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const M
     return ret;
 
 #endif
+
+}
+template<typename IntType>
+typename std::enable_if_t<std::is_integral<IntType>::value, IntType>
+combinations(IntType m, IntType n)
+{
+    n = std::min(m - n, n);
+    IntType denominator = factorial(n);
+    IntType numerator = 1;
+    for(IntType i = 0; i < n; i++) numerator *= (m - i);
+    return numerator / denominator;
 }
 
 } // namespace mxm

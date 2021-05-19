@@ -4,6 +4,7 @@
 #include "cv_basic.h"
 #include "linalg_utils.h"
 #include "linalg_solve.h"
+#include "cv_kernel.h"
 
 namespace mxm
 {
@@ -33,9 +34,8 @@ inline Matrix<float> lkOpticalFlow(
     const Matrix<float>& pts_curr,
     size_t window_width=5)
 {
-    Matrix<float> sobel_kernal = Matrix<float>({3,3}, {-1,0,1, -2,0,2, -1,0,1}) * 0.125;
-    Matrix<float> sobel_x = convolute(img_curr, sobel_kernal.T());
-    Matrix<float> sobel_y = convolute(img_curr, sobel_kernal);
+    Matrix<float> sobel_x = convolute(img_curr, kernel::sobel());
+    Matrix<float> sobel_y = convolute(img_curr, kernel::sobel().T());
 
     const size_t max_it = 40;
     float tol = 1e-3;

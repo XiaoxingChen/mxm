@@ -4,6 +4,7 @@
 #include <iostream>
 #include "mxm/cv_basic.h"
 #include "mxm/linalg.h"
+#include "mxm/cv_kernel.h"
 
 
 using namespace mxm;
@@ -92,11 +93,20 @@ inline void testPixelMemory()
     }
 }
 
+inline void testKernels()
+{
+    {//case 01
+        std::cout << kernel::gauss<float>(3).str() << std::endl;
+        std::cout << mxm::sum(kernel::gauss<float>(3)) << std::endl;
+    }
+}
+
 inline void testCvBasic()
 {
     testPixel();
     testImageResize();
     testPixelMemory();
+    testKernels();
 }
 
 #endif // _TEST_PIXEL_H_
