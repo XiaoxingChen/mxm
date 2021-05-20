@@ -21,13 +21,42 @@ namespace interp
 //      | f(1,0), f(1,1) |
 // pos: (x,y) position
 template<typename FType, typename DType>
-DType bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square)
+Matrix<DType>
+bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square)
 {
+#if 0
     if(square.shape() != Shape{2,2})
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     Matrix<FType> vx({2,1},{FType(1) - pos(0,0), pos(0,0)});
     Matrix<FType> vy({2,1},{FType(1) - pos(1,0), pos(1,0)});
     return vx.T().matmul(square).matmul(vy)(0,0);
+#else
+    Matrix<DType> ret({pos.shape(1), 1});
+    for(size_t i = 0; i < pos.shape(1); i++)
+    {
+        float x = pos(0,i);
+        float y = pos(1,i);
+        if(0 <= x && x + 1 < square.shape(0) && 0 <= y && y + 1 < square.shape(1))
+        {
+            FType l0(std::floor(x) + 1 - x);
+            FType l1(1 - l0);
+            FType r0(std::floor(y) + 1 - y);
+            FType r1(1 - r0);
+            size_t c0(x);
+            size_t c1(y);
+
+            ret(i,0) = l0 * square(c0, c1) * r0 + l1 * square(c0+1, c1) * r0
+                    + l0 * square(c0, c1+1) * r1 + l1 * square(c0+1, c1+1) * r1;
+        }else
+        {
+            x = std::min<FType>(square.shape(0) - 1, std::max<FType>(0, x));
+            y = std::min<FType>(square.shape(1) - 1, std::max<FType>(0, y));
+            ret(i,0) = square(size_t(x), size_t(y));
+        }
+
+    }
+    return ret;
+#endif
 }
 
 //

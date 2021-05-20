@@ -36,7 +36,8 @@ resize(const Matrix<PType>& img, const Shape& shape, const std::string& strategy
             unit_mat(1,0) = img(i_1, j_0);
             unit_mat(1,1) = img(i_1, j_1);
 
-            ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({i_float, j_float}), unit_mat);
+            ret(i,j) = interp::bilinearUnitSquare(Vector<DType>({i_float, j_float}), unit_mat)(0,0);
+            // todo, accelerate
         }else if(strategy == std::string("nearest"))
         {
             DType k_h = DType(img.shape(0)) / (ret.shape(0));
@@ -119,6 +120,7 @@ inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape
 template<typename PType>
 Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
 {
+#if 0
     Matrix<PType> ret({pts.shape(1), 1});
     for(size_t i = 0;i < pts.shape(1); i++)
     {
@@ -134,6 +136,11 @@ Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
         ret(i, 0) = interp::bilinearUnitSquare(t, img(Block({x0, x0+2},{y0, y0+2})));
     }
     return ret;
+#else
+    Matrix<PType> ret({pts.shape(1), 1});
+    ret = interp::bilinearUnitSquare(pts, img);
+    return ret;
+#endif
 }
 
 template<typename PType> using ImagePyramid = std::vector<Matrix<PType>>;

@@ -28,6 +28,15 @@ inline Matrix<DType> windowGrids(DType x, DType y, const Shape& shape_limit, siz
     return Matrix<DType>(fixRow(2), std::move(ret_data), Mat::COL);
 }
 
+template<typename DType=float>
+bool validWindow(DType x, DType y, const Shape& shape_limit, size_t window_width)
+{
+    size_t half_w = window_width / 2;
+    if(x - half_w < 0 || y - half_w < 0) return false;
+    if(x + half_w + 1 > shape_limit.at(0) || y + half_w + 1 > shape_limit.at(1)) return false;
+    return true;
+}
+
 // return: updated point position
 // negative position if point lost tracking.
 inline Matrix<float> lkOpticalFlow(
@@ -50,7 +59,7 @@ inline Matrix<float> lkOpticalFlow(
 
     for(size_t pt_idx = 0; pt_idx < pts_curr.shape(1); pt_idx++)
     {
-        if(pts_init(0, pt_idx) < 0)
+        if(pts_init(0, pt_idx) < 0 || !validWindow(pts_curr(0, pt_idx), pts_curr(1, pt_idx), img_curr.shape(), window_width))
         {
             pts_next(Col(pt_idx)) = coord_lost;
             continue;
@@ -59,17 +68,18 @@ inline Matrix<float> lkOpticalFlow(
         Matrix<float> grids_curr = windowGrids<float>(pts_curr(0, pt_idx), pts_curr(1, pt_idx), img_curr.shape(), window_width);
         Matrix<float> pt_next = pts_init(Col(pt_idx));
         float prev_inc = 10.;
-        if(grids_curr.shape(1) != window_width * window_width)
-        {
-            pts_next(Col(pt_idx)) = coord_lost;
-            continue;
-        }
+
         bool track_lost = false;
 
         for(size_t _i = 0; _i < max_it; _i++)
         {
+            if(!validWindow(pt_next(0,0), pt_next(1,0), img_next.shape(), window_width))
+            {
+                if(verbose) std::cout << "window out of bounds, pt: " << pt_idx << std::endl;
+                track_lost = true; break;
+            }
             Matrix<float> grids_next = windowGrids<float>(pt_next(0,0), pt_next(1,0), img_next.shape(), window_width);
-            if(grids_next.shape(1) != window_width * window_width) {track_lost = true; break;}
+            // if(grids_next.shape(1) != window_width * window_width) {track_lost = true; break;}
             Matrix<float> mat_a({grids_curr.shape(1), 2});
             Matrix<float> vec_b({grids_next.shape(1), 1});
 
@@ -81,15 +91,17 @@ inline Matrix<float> lkOpticalFlow(
             Matrix<float> solve_b(mat_a.T().matmul(vec_b));
 
             Matrix<float> increment = qr::solve(solve_a, solve_b);
-            if(increment.norm() > prev_inc) { std::cout << "inc inc" << std::endl; break; }
-            pt_next += increment;
+            float curr_inc = increment.norm();
             if(verbose) std::cout << "increment: " << increment.norm() << std::endl;
+            if(curr_inc > prev_inc) { if(verbose)std::cout << "inc inc, pt: " << pt_idx << std::endl; track_lost = true; break;/**/ }
+            pt_next += increment;
+            prev_inc = curr_inc;
             if(increment.norm() < tol) break;
         }
         if(verbose) std::cout << "done" << std::endl;
         if(!track_lost && (pt_next - pts_init(Col(pt_idx))).norm() > max_move)
         {
-            if(verbose) std::cout << "pt jump" << std::endl;
+            if(verbose) std::cout << "pt jump, pt: " << pt_idx << std::endl;
             track_lost = true;
         }
         pts_next(Col(pt_idx)) = track_lost ? coord_lost : pt_next;

@@ -42,9 +42,10 @@ inline void testOpticalFlow01()
     // Matrix<float> fp_dst(fp_src);
     size_t window_width = 5;
     auto fp_dst = lkOpticalFlow(img_src, img_dst, fp_src, window_width);
-    // std::cout << mxm::to_string(fp_dst, 3) << std::endl;
+
     if(fp_dst_expected != Matrix<size_t>(fp_dst + 0.5))
     {
+        std::cout << mxm::to_string(fp_dst, 3) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 

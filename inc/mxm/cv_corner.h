@@ -16,12 +16,27 @@ Matrix<float> harrisCornernessMap(const Matrix<float>& src, size_t window_width=
     result.traverse([&](auto i, auto j){
         if(i+window_width >= sobel_x.shape(0) || j+window_width >= sobel_x.shape(1)) return;
 
+    #if 0
         Matrix<float> M({2,2});
         auto Ix = sobel_x(Block({i, i+window_width}, {j, j+window_width}));
         auto Iy = sobel_y(Block({i, i+window_width}, {j, j+window_width}));
         M(0,0) = mxm::sum(Ix * Ix);
         M(1,1) = mxm::sum(Iy * Iy);
         M(0,1) = mxm::sum(Ix * Iy);
+    #else
+        Matrix<float> M = Matrix<float>::zeros({2,2});
+        for(size_t u = i; u < i+window_width; u++)
+        {
+            for(size_t v = j; v < j+window_width; v++)
+            {
+                float ix = sobel_x(u,v);
+                float iy = sobel_y(u,v);
+                M(0,0) += ix*ix;
+                M(1,1) += iy*iy;
+                M(0,1) += ix*iy;
+            }
+        }
+    #endif
         M(1,0) = M(0,1);
 
         float det = M.det();

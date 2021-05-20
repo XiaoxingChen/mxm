@@ -15,9 +15,35 @@ void testTriangular()
 
 }
 
+void testBilinearInterpolation()
+{
+    {
+        Mat square({2,2},{1,2,2,3});
+        Mat pos(fixRow(2), {0.5,0.5, 0.25,0.25, 0,0}, Mat::COL);
+
+        Mat expected(fixCol(1), {2, 1.5, 1});
+
+        auto ret = interp::bilinearUnitSquare(pos, square);
+        if((ret-expected).norm() > eps())
+        {
+            std::cout << mxm::to_string(ret) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    {
+
+    }
+
+
+
+
+}
+
 void testInterpolation()
 {
     testTriangular();
+    testBilinearInterpolation();
 }
 
 

@@ -4,6 +4,8 @@
 #include "linalg_mat.h"
 #include <algorithm>
 
+#define NO_MAT_REF 1
+
 namespace mxm
 {
 
@@ -166,8 +168,18 @@ Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matr
             ret(i,j) = src(i_src, j_src);
             return;
         }
-
+    #if NO_MAT_REF
+        ret(i, j) = 0;
+        for(size_t u = 0; u < core.shape(0); u++)
+        {
+            for(size_t v = 0; v < core.shape(1); v++)
+            {
+                ret(i, j) += core(u,v)* src(i_src + u, j_src + v);
+            }
+        }
+    #else
         ret(i,j) = mxm::sum(src(Block({i_src, i_src + core.shape(0)}, {j_src, j_src + core.shape(1)})) * core);
+    #endif
     });
     return ret;
 }
@@ -175,7 +187,6 @@ Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matr
 template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
-#if 1 // padding
     if(core.shape(0) % 2 != 1 || core.shape(1) % 2 != 1)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     Matrix<decltype(DType()*CoreType())> ret(src.shape());
@@ -191,22 +202,23 @@ Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const M
             ret(i,j) = src(i,j);
             return;
         }
+#if NO_MAT_REF
+        ret(i, j) = 0;
+        for(size_t u = 0; u < core.shape(0); u++)
+        {
+            for(size_t v = 0; v < core.shape(1); v++)
+            {
+                ret(i, j) += core(u,v)* src(i - half_w[0] + u, j - half_w[1] + v);
+            }
+        }
+#else
         ret(i, j)
             = mxm::sum(core * src(Block(
                 {i - half_w[0], i + half_w[0] + 1},
                 {j - half_w[1], j + half_w[1] + 1})));
-    });
-    return ret;
-
-#else
-    Matrix<decltype(DType()*CoreType())> ret({src.shape(0) - core.shape(0) + 1, src.shape(1) - core.shape(1) + 1});
-
-    ret.traverse([&](auto i, auto j){
-        ret(i,j) = mxm::sum(core * src(Block({i, i + core.shape(0)}, {j, j+ core.shape(1)})));
-    });
-    return ret;
-
 #endif
+    });
+    return ret;
 
 }
 template<typename IntType>
