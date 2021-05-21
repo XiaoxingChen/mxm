@@ -48,7 +48,7 @@ public:
     DeriveType operator - (const DeriveType& rhs) const { return DeriveType(*deriveThis()) -= rhs; }
     DeriveType operator * (const DeriveType& rhs) const { return DeriveType(*deriveThis()) *= rhs; }
 
-    DeriveType operator - () { return DeriveType(*deriveThis()) *= -1; }
+    DeriveType operator - () const { return DeriveType(*deriveThis()) *= -1; }
 
     // obj to scalar
     DeriveType& operator += (const DType& rhs) { traverse([&](size_t i) {at(i) += rhs;}); return *deriveThis(); }

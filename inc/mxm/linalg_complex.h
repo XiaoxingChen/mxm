@@ -56,17 +56,6 @@ public:
         this->traverse([&](size_t i){ (*this)(i) = rhs(i); });
     }
 
-    // ThisType& operator += (DType scalar)  { (*this)(0) += scalar; return *this;}
-    // ThisType& operator -= (DType scalar)  { (*this)(0) -= scalar; return *this;}
-    // ThisType& operator *= (DType scalar)  { traverse([&](size_t i){(*this)(i) *= scalar;}); return *this;}
-    // ThisType operator + (DType scalar) const { return ThisType(*this) += scalar; }
-    // ThisType operator - (DType scalar) const { return ThisType(*this) -= scalar; }
-    // ThisType operator * (DType scalar) const { return ThisType(*this) *= scalar; }
-
-    ThisType& operator -= (const ThisType& rhs) { this->traverse([&](size_t i) {data_.at(i) -= rhs(i);}); return *this; }
-    ThisType operator - (const ThisType& rhs) const { return ThisType(*this) -= rhs; }
-
-    ThisType operator - () const { return (*this) * -1; }
 
     ThisType& operator *= (const ThisType& rhs)  { (*this) = complexMul(*this, rhs); return *this;}
     ThisType operator * (const ThisType& rhs) const { return ThisType(*this) *= rhs;}
