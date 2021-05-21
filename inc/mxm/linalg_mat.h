@@ -58,8 +58,8 @@ public:
 
     //
     // interfaces
-    virtual size_t shape(uint8_t i) const {return shape_.at(i);}
-    virtual const Shape& shape() const {return shape_;}
+    size_t shape(uint8_t i) const {return shape_.at(i);}
+    const Shape& shape() const {return shape_;}
     bool square() const {return shape(0) == shape(1);}
     bool majorAxis() const {return major_;}
     bool& majorAxis() {return major_;}
@@ -178,16 +178,20 @@ public:
     virtual const DType& operator () (size_t i, size_t j) const
     {
         return data_.at(
-            indexConvert2D(i,j,majorAxis(), shape(0), shape(1)));
+            indexConvert2D(i,j,major_, shape_[0], shape_[1]));
     }
 
-    virtual DType& operator () (size_t i, size_t j) { return const_cast<DType&>(static_cast<const ThisType&>(*this)(i,j)); }
+    virtual DType& operator () (size_t i, size_t j)
+    {
+        return data_.at(
+            indexConvert2D(i,j,major_, shape_[0], shape_[1]));
+    }
 
     template<typename Op>
     void traverse(Op f) const
     {
-        for(size_t i = 0; i < shape(0); i++)
-            for(size_t j = 0; j < shape(1); j++)
+        for(size_t i = 0; i < shape_[0]; i++)
+            for(size_t j = 0; j < shape_[1]; j++)
                 f(i, j);
     }
 
