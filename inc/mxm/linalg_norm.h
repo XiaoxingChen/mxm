@@ -3,13 +3,10 @@
 
 namespace mxm
 {
-template<typename T>
+template<typename T, typename=void>
 struct NormTraits { using type = void; };
 
-// template<T> struct NormTraits<T> { using type = typename std::enable_if<std::is_floating_point<T>::value, T>::type; };
-template<> struct NormTraits<float> { using type = float; };
-template<> struct NormTraits<double> { using type = double; };
-template<> struct NormTraits<uint8_t> { using type = uint8_t; };
+template<typename T> struct NormTraits<T, std::enable_if_t<std::is_arithmetic<T>::value, void>> { using type = T; };
 
 template<typename DType>
 typename std::enable_if<std::is_floating_point<DType>::value, DType>::type norm(const DType& in)
