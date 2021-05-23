@@ -52,7 +52,7 @@ inline void testSolveLowerTriangle()
     Vec x = solveLowerTriangle(L, b);
     if((x - expect).norm() > eps())
     {
-        std::cout << x.T().str() << std::endl;
+        std::cout << mxm::to_string(x.T()) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
@@ -60,7 +60,7 @@ inline void testSolveLowerTriangle()
     Vec x_u = solveUpperTriangle(L.T(), b);
     if((x_u - expect_u).norm() > eps())
     {
-        std::cout << x_u.T().str() << std::endl;
+        std::cout << mxm::to_string(x_u.T()) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
@@ -79,7 +79,7 @@ inline void testQRcalcMatQ()
         Mat mat_q = qr::calcMatQ(mat_a);
         if((mat_q - expect_q).norm() > 2 * eps())
         {
-            std::cout << mat_q.str() << std::endl;
+            std::cout << mxm::to_string(mat_q) << std::endl;
             std::cout << "norm: " << (mat_q - expect_q).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
@@ -102,7 +102,7 @@ inline void testQRcalcMatQ()
 
         if((mat_q - expect_q).norm() > 5 * eps())
         {
-            std::cout << mat_q.str() << std::endl;
+            std::cout << mxm::to_string(mat_q) << std::endl;
             std::cout << "norm: " << (mat_q - expect_q).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
@@ -116,9 +116,9 @@ inline void testQRcalcMatQ()
             {3,0},{3,0},{1,2}});
 
         auto q_r = qr::decomposeByRotation(m);
-        // std::cout << q_r[1].str() << std::endl;
+        // std::cout << mxm::to_string(q_r[1]) << std::endl;
 
-        // std::cout << (q_r[0].matmul(q_r[1])).str() << std::endl;
+        // std::cout << mxm::to_string((q_r[0].matmul(q_r[1]))) << std::endl;
 
         if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() > 2 * eps())
         {
@@ -143,7 +143,7 @@ inline void testQRSolve()
     Mat mat_q = qr::calcMatQFromReflection(mat_a);
     if((mat_q - expect_q).norm() > 2 * eps())
     {
-        std::cout << mat_q.str() << std::endl;
+        std::cout << mxm::to_string(mat_q) << std::endl;
         std::cout << "norm: " << (mat_q - expect_q).norm() << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
@@ -155,7 +155,7 @@ inline void testQRSolve()
     // if((x - expect).norm() > eps())
     if((mat_a.matmul(x) - b).norm() > 10 * eps())
     {
-        std::cout << x.T().str() << std::endl;
+        std::cout << mxm::to_string(x.T()) << std::endl;
         std::cout << "err: " << (mat_a.matmul(x) - b).norm() << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
@@ -206,7 +206,7 @@ inline void testQRIteration()
 
         eig_vec = eig_vec.matmul(q_r[0]);
     }
-    // std::cout << tmp.str() << std::endl;
+    // std::cout << mxm::to_string(tmp) << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
     if((recover - rot).norm() > 40 * eps())
     {
@@ -242,7 +242,7 @@ inline void testUnsymmetrixEigenvaluePipeline01()
         eig_vec = eig_vec.matmul(q_r[0]);
         // std::cout << "i: " << i << " err: " << qr::errorQuasiUpperTriangle(tmp) << std::endl;
     }
-    std::cout << tmp.str() << std::endl;
+    std::cout << mxm::to_string(tmp) << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
 }
 
@@ -269,7 +269,7 @@ inline void testUnsymmetrixEigenvaluePipeline02()
 
     auto q_hessen = qr::decomposeByRotation(mat_a, qr::eUpperHessenbergize, true);
     Mat tmp = q_hessen[1];
-    std::cout << q_hessen[1].str() << std::endl;
+    std::cout << mxm::to_string(q_hessen[1]) << std::endl;
     // Mat eig_vec = Mat::identity(n);
     Mat eig_vec = q_hessen[0];
 
@@ -284,13 +284,13 @@ inline void testUnsymmetrixEigenvaluePipeline02()
 
         eig_vec = eig_vec.matmul(q_r[0]);
 
-        std::cout << "r: " << q_r[0].str() << std::endl;
+        std::cout << "r: " << mxm::to_string(q_r[0]) << std::endl;
 
         // std::cout << "i: " << i << " err: " << qr::errorOrthogonalBlockDiagonal(q_r[0]) << std::endl;
     }
-    std::cout << tmp.str() << std::endl;
+    std::cout << mxm::to_string(tmp) << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
-    // std::cout << recover.str() << std::endl;
+    // std::cout << mxm::to_string(recover) << std::endl;
 }
 
 inline void testEigenvalues()
@@ -307,7 +307,7 @@ inline void testEigenvalues()
         auto eigvals_std_vec = eigvals(mat_a);
         Matrix<Complex<FloatType>> eigvals({n,1});
         for(size_t i = 0; i < n; i++) eigvals(i,0) = eigvals_std_vec.at(i);
-        // std::cout << eigvals.str() << std::endl;
+        // std::cout << mxm::to_string(eigvals) << std::endl;
         Matrix<Complex<FloatType>> expected({n,1}, {
             {2.0937458093, 0},
             {-0.6786741964, 0},
@@ -370,7 +370,7 @@ inline void testEigenvalues()
         if(err > eps())
         {
             std::cout << err << std::endl;
-            std::cout << "recover: \n" << u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2]).str() << std::endl;
+            std::cout << "recover: \n" << mxm::to_string(u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2])) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
@@ -402,7 +402,7 @@ inline void testTridiagonalizeSkewSymmetric()
         if((result_q_d[1] - expected).norm() > eps() * 30)
         {
 
-            std::cout << "d: \n" << result_q_d[1].str() << "error: " << (result_q_d[1] - expected).norm() << std::endl;
+            std::cout << "d: \n" << mxm::to_string(result_q_d[1]) << "error: " << (result_q_d[1] - expected).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }
@@ -414,7 +414,7 @@ inline void testTridiagonalizeSkewSymmetric()
             -1,1, 0});
 
         auto result_q_d = blockDiagonalizeSkewSymmetric(skew);
-        std::cout << result_q_d[1].str() << std::endl;
+        std::cout << mxm::to_string(result_q_d[1]) << std::endl;
     }
 
 }
@@ -526,7 +526,7 @@ inline void testMatRef()
         mat = mat(Block({1,end()}, {1,end()})).T();
         if(mat != expected)
         {
-            std::cout << mat.str() << std::endl;
+            std::cout << mxm::to_string(mat) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 

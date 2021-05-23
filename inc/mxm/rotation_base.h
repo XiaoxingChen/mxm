@@ -107,7 +107,7 @@ inline void simpleRotationToPlaneAngle(const Matrix<DType>& R, Matrix<DType>& pl
     std::sort(col_norm.begin(), col_norm.end(), [](auto a, auto b){return a.second > b.second;});
     plane(Col(0)) = skew(Col(col_norm.at(0).first)).normalized();
     plane(Col(1)) = skew(Col(col_norm.at(1).first)).normalized();
-    // std::cout << "plane: " << plane.T().str() << std::endl;
+    // std::cout << "plane: " << mxm::to_string(plane.T()) << std::endl;
 }
 
 template<typename DType>

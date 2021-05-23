@@ -21,7 +21,7 @@ inline void testBazier()
         Vec expected_fx({0.,11.6484375,21.125,27.5859375,30.});
         if((expected_fx - bazier::f(n, x, t)).norm() > eps())
         {
-            std::cout << bazier::f(n, x, t).T().str() << std::endl;
+            std::cout << mxm::to_string(bazier::f(n, x, t).T()) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }

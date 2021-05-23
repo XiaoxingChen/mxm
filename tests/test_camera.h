@@ -11,7 +11,7 @@ inline void cameraTest1()
     auto ray = cam.pixelRay({1,1});
     if((ray.direction() - Vec({0,0,1})).norm() > eps())
     {
-        std::cout << ray.direction().T().str() << std::endl;
+        std::cout << mxm::to_string(ray.direction().T()) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
@@ -26,7 +26,7 @@ inline void cameraTest2()
 
     if((img - img_expected).norm() > eps())
     {
-        std::cout << "img: \n" << img.str() << std::endl;
+        std::cout << "img: \n" << mxm::to_string(img) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }

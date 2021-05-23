@@ -96,7 +96,7 @@ inline void testPixelMemory()
 inline void testKernels()
 {
     if(0){//case 01
-        std::cout << kernel::gauss<float>(3).str() << std::endl;
+        std::cout << mxm::to_string(kernel::gauss<float>(3)) << std::endl;
         std::cout << mxm::sum(kernel::gauss<float>(3)) << std::endl;
     }
 }

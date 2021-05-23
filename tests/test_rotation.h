@@ -31,8 +31,8 @@ inline void rotationTestCase2()
     Vec expect({-0.08369046, 1.09452736, 0.89163095});
     if((v1 - expect).norm() > 10*eps())
     {
-        // std::cout << r.asMatrix().str() << std::endl;
-        std::cout << v1.T().str() << std::endl;
+        // std::cout << mxm::to_string(r.asMatrix()) << std::endl;
+        std::cout << mxm::to_string(v1.T()) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
@@ -46,7 +46,7 @@ inline void rotationTestCase4()
     Rotation r(Rotation::fromPlaneAngle(Vec({0,1,0}), Vec({0,0,1}), M_PI));
     if((r.asMatrix() - expect).norm() > 5*eps())
     {
-        std::cout << "\n" << r.asMatrix().str();
+        std::cout << "\n" << mxm::to_string(r.asMatrix());
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
@@ -63,7 +63,7 @@ inline void rotationTestCase5()
     matrixToAxisAngle3D(rot, axis, angle);
     if((axis - Vector<double>({0,0,1})).norm() > eps() || fabs(angle - 1e-7) > eps())
     {
-        std::cout << "axis: " << axis.T().str() << "angle: " << angle << std::endl;
+        std::cout << "axis: " << mxm::to_string(axis.T()) << "angle: " << angle << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
@@ -81,7 +81,7 @@ inline void rotationTestCase6()
     matrixToAxisAngle3D(rot, axis, angle);
     if((axis - Vector<double>({0,0,1})).norm() > eps() || fabs(angle - 1) > eps())
     {
-        std::cout << "axis: " << axis.T().str() << "angle: " << angle << std::endl;
+        std::cout << "axis: " << mxm::to_string(axis.T()) << "angle: " << angle << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 

@@ -162,8 +162,8 @@ decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrian
 
         // if(std::is_same<DType, Complex<FloatType>>::value)
         // {
-        //     // std::cout << "mat: \n" << mat.str() << std::endl;
-        //     std::cout << "recover: \n" << (conj(rot.T())).matmul(mat).str() << std::endl;
+        //     // std::cout << "mat: \n" << mxm::to_string(mat) << std::endl;
+        //     std::cout << "recover: \n" << mxm::to_string((conj(rot.T())).matmul(mat)) << std::endl;
         // }
     }
     rot = conj(rot.T());
@@ -187,7 +187,7 @@ Matrix<DType> calcMatQFromReflection(const Matrix<DType>& mat)
         }
     }
 
-    // std::cout << "Bq: \n" << mat_u.str();
+    // std::cout << "Bq: \n" << mxm::to_string(mat_u);
     for(size_t i = 0; i < mat.shape(0); i++)
     {
         mat_u(Col(i)) = mat_u(Col(i)).normalized();
@@ -320,7 +320,7 @@ std::vector<Complex<DType>> eigvals(const Matrix<DType>& mat)
         if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
     }
 
-    // std::cout << quasi.str() << std::endl;
+    // std::cout << mxm::to_string(quasi) << std::endl;
 
     std::vector<Complex<DType>> ret(n);
     for(size_t i = 0; i < n;)
@@ -369,7 +369,7 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
         mat_k = q_r[1];
     }
 
-    // std::cout << mat_k.str() << std::endl;
+    // std::cout << mxm::to_string(mat_k) << std::endl;
 
     for(size_t i = 0; i < max_it; i++)
     {
@@ -382,7 +382,7 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
         // std::cout << "i: " << i << ", err: " << qr::errorOrthogonalBlockDiagonal(mat_k) << std::endl;
     }
 
-    // std::cout << mat_k.str() << std::endl;
+    // std::cout << mxm::to_string(mat_k) << std::endl;
     std::vector<size_t> idx_buffer;
     for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
     std::sort(idx_buffer.begin(), idx_buffer.end(), [&](size_t i, size_t j) { return mat_k(i,i) > mat_k(j,j); });
@@ -416,7 +416,7 @@ Matrix<DType> inverseIteration(
         bk = qr::solve(mat_a - eigenvalue * Matrix<DType>::identity(n), bk);
         bk.normalize();
         auto err = (mat_a.matmul(bk) - eigenvalue * bk).norm();
-        // std::cout << "bk: " << bk.T().str() << ", err: " << err << std::endl;
+        // std::cout << "bk: " << mxm::to_string(bk.T()) << ", err: " << err << std::endl;
         if(err < tol) break;
     }
     return bk;
@@ -469,13 +469,13 @@ svd(const Matrix<DType>& mat)
         {
             u_s_vh[1](i,0) = sqrt(val_vec[0](i,0));
         }
-        // std::cout << val_vec[0].str() << std::endl;
+        // std::cout << mxm::to_string(val_vec[0]) << std::endl;
     }
 
     {
         auto val_vec = symmetricEig(mat.T().matmul(mat));
         u_s_vh[2] = val_vec[1].T();
-        // std::cout << val_vec[0].str() << std::endl;
+        // std::cout << mxm::to_string(val_vec[0]) << std::endl;
     }
     return u_s_vh;
 }
@@ -535,8 +535,8 @@ std::array<Matrix<DType>, 2> blockDiagonalizeSkewSymmetric(const Matrix<DType>& 
                 sin(theta), cos(theta)});
 
             sub_rot.setBlock(i-1, i-1, so2);
-            // std::cout << sub_rot.str() << std::endl;
-            std::cout << "b: \n"<< mat.str()  << std::endl;
+            // std::cout << mxm::to_string(sub_rot) << std::endl;
+            std::cout << "b: \n"<< mxm::to_string(mat)  << std::endl;
 
             rot = sub_rot.matmul(rot);
             mat = sub_rot.matmul(mat).matmul(sub_rot.T());

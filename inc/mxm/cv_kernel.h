@@ -32,7 +32,7 @@ gauss(size_t size)
         vec(i,0) = comb;
         vec(size - i - 1,0) = comb;
     }
-    // std::cout << "vec: " << vec.T().str() << std::endl;
+    // std::cout << "vec: " << mxm::to_string(vec.T()) << std::endl;
     vec *= (DType(1) / (1 << layer));
 
     return vec.matmul(vec.T());

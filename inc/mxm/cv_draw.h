@@ -21,7 +21,7 @@ Matrix<size_t> pixelsOnLine(const Matrix<float>& pts, float width=5)
     Matrix<float> center({2,1}, {0.f + pts(0,0), 0.f + pts(1,0)});
     std::vector<size_t> ret_data;
     // std::cout << "main ax: " << main_ax << std::endl;
-    // std::cout << "dir_inc: " << dir_inc.T().str() << std::endl;
+    // std::cout << "dir_inc: " << mxm::to_string(dir_inc.T()) << std::endl;
 
     for(size_t t = 0; t < abs(delta(main_ax,0)); t++)
     {
