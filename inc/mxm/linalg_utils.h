@@ -150,7 +150,7 @@ std::array<DType, 2> elementwiseBounds(const Matrix<DType>& mat)
 template<typename DType>
 Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 {
-    Matrix<DType> ret = Matrix<DType>::Identity(vec.shape(0));
+    Matrix<DType> ret = Matrix<DType>::identity(vec.shape(0));
     for(size_t i = 0; i < vec.shape(0); i++) ret(i,i) = vec(i,0);
     return ret;
 }

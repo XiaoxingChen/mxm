@@ -39,7 +39,7 @@ inline void rotationTestCase2()
 
 inline void rotationTestCase4()
 {
-    Mat expect(Mat::Identity(3));
+    Mat expect(Mat::identity(3));
     expect(1,1) = -1;
     expect(2,2) = -1;
 

@@ -9,7 +9,7 @@ namespace mxm
 class Camera
 {
 public:
-    Camera(size_t dim=3):pose_(RigidTrans::Identity(dim)), f_(Vec::ones(dim - 1) * 500.), c_(Vec::ones(dim - 1) * 300.)
+    Camera(size_t dim=3):pose_(RigidTrans::identity(dim)), f_(Vec::ones(dim - 1) * 500.), c_(Vec::ones(dim - 1) * 300.)
     {
         updateCameraMatrix();
     }
@@ -66,8 +66,8 @@ private:
 
     void updateCameraMatrix()
     {
-        cam_mat_ = Mat::Identity(pose_.dim());
-        cam_mat_inv_ = Mat::Identity(pose_.dim());
+        cam_mat_ = Mat::identity(pose_.dim());
+        cam_mat_inv_ = Mat::identity(pose_.dim());
         for(size_t i = 0; i < pose_.dim() - 1; i++)
         {
             cam_mat_(i,i) = f_(i);

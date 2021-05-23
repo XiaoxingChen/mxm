@@ -32,7 +32,7 @@ inline Matrix<DType> rodrigues3D(const Vector<DType>& axis_in, DType angle)
         rz,   0, -rx,
         -ry, rx,   0});
 
-    return Matrix<DType>::Identity(3) * c + (axis.matmul(axis.T())) * c1 + r_x * s;
+    return Matrix<DType>::identity(3) * c + (axis.matmul(axis.T())) * c1 + r_x * s;
 }
 
 //
@@ -54,7 +54,7 @@ inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DTy
     theta = acos(c);
     Vector<DType> r({rx, ry, rz});
 
-    if( s < 1e-5 ) // R is very close to Identity matrix.
+    if( s < 1e-5 ) // R is very close to identity matrix.
     {
         if( c > 0 ) // trace(R) > 1
         {
@@ -122,7 +122,7 @@ inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DTy
 inline Mat reflection(const Vec& u_in)
 {
     Vec u(u_in.normalized());
-    return Mat::Identity(u.size()) - 2 * u.matmul(u.T());
+    return Mat::identity(u.size()) - 2 * u.matmul(u.T());
 }
 
 inline std::array<Vec, 2> planeAngleToBivector(const Vec& u_in, const Vec& v_in, FloatType angle)

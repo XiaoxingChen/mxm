@@ -21,7 +21,7 @@ public:
     RigidTransform(const Rotation& r): translation_(Vector<DType>::zeros(r.dim())), rotation_(r)
     {}
 
-    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation::Identity(p.size()))
+    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation::identity(p.size()))
     {}
 
     using ThisType = RigidTransform;
@@ -38,7 +38,7 @@ public:
 
     Matrix<DType> asMatrix() const
     {
-        Matrix<DType> ret = Matrix<DType>::Identity(dim() + 1);
+        Matrix<DType> ret = Matrix<DType>::identity(dim() + 1);
         ret.setBlock(0,0, rotation_.asMatrix());
         ret.setBlock(0, dim(), translation_);
         return ret;
@@ -48,7 +48,7 @@ public:
 
     size_t dim() const { return translation_.size(); }
 
-    static ThisType Identity(size_t dim) { return ThisType(Translation::zeros(dim), Rotation::Identity(dim)); }
+    static ThisType identity(size_t dim) { return ThisType(Translation::zeros(dim), Rotation::identity(dim)); }
 
     const Rotation& rotation() const {return rotation_;}
     Rotation& rotation() {return rotation_;}

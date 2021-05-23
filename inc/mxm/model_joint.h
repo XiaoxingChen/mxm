@@ -10,7 +10,7 @@ class Joint
 public:
     virtual void set(FloatType val) = 0;
     Joint(const RigidTrans& zero_tf, bool rotor_output=true):
-        zero_tf_(zero_tf), state_tf_(RigidTrans::Identity(3)), rotor_output_(rotor_output){}
+        zero_tf_(zero_tf), state_tf_(RigidTrans::identity(3)), rotor_output_(rotor_output){}
 
     RigidTrans nominalStateTf() const
     {

@@ -44,7 +44,7 @@ public:
 
     size_t dim() const { return plane_.shape(0); }
 
-    static ThisType Identity(size_t dim)
+    static ThisType identity(size_t dim)
     {
         Mat plane({dim, 2});
         plane(0,0) = 1;
@@ -54,7 +54,7 @@ public:
 
 private:
     LowDimensionalRotation(FloatType angle)
-    :plane_(Mat::Identity(2)), angle_(angle){ }
+    :plane_(Mat::identity(2)), angle_(angle){ }
 
     LowDimensionalRotation(const Vec& axis, FloatType angle)
     :plane_(orthogonalComplement(axis)), angle_(angle) { checkDimension(); }

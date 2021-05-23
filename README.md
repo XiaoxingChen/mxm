@@ -25,7 +25,7 @@ Mat mat_a = Mat({3,3}, {
 ```cpp
 Mat transform = Mat({4,4});
 transform(3,3) = 1;
-transform(Block({0,3},{0,3})) = Mat::Identity(3);
+transform(Block({0,3},{0,3})) = Mat::identity(3);
 ```
 
 - Random matrix
@@ -38,7 +38,7 @@ Mat mat_a = random::uniform({5,5});
 
 ```cpp
 Mat mat_a = random::uniform({3,3});
-Mat mat_b = Mat::Identity({3,3});
+Mat mat_b = Mat::identity({3,3});
 Mat mat_c = mat_a.matmul(mat_b);
 mat_a = mat_a.T() // O(1) time complexity
 ```
@@ -92,7 +92,7 @@ Vec v1 = r1.apply(Vec({1,2,3,4}));
 - 3D Rigid Body Transform
 
 ```cpp
-RigidTrans tf = RigidTrans::Identity(3);
+RigidTrans tf = RigidTrans::identity(3);
 Vec v1 = tf.apply(Vec({1,0,0}));
 ```
 

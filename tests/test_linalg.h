@@ -120,9 +120,9 @@ inline void testQRcalcMatQ()
 
         // std::cout << (q_r[0].matmul(q_r[1])).str() << std::endl;
 
-        if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::Identity(3)).norm() > 2 * eps())
+        if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() > 2 * eps())
         {
-            std::cout << "error: " << (conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::Identity(3)).norm() << std::endl;
+            std::cout << "error: " << (conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
@@ -194,13 +194,13 @@ inline void testQRIteration()
         -0.92923289, -0.29263768, -0.22558684});
 
     Mat tmp = rot;
-    Mat eig_vec = Mat::Identity(n);
+    Mat eig_vec = Mat::identity(n);
 
 
     for(size_t i = 0; i < 100; i++)
     {
         FloatType rho = tmp(2,2);
-        Mat shift = Mat::Identity(n) * rho;
+        Mat shift = Mat::identity(n) * rho;
         auto q_r = qr::decomposeByRotation(tmp - shift);
         tmp = q_r[1].matmul(q_r[0]) + shift;
 
@@ -228,14 +228,14 @@ inline void testUnsymmetrixEigenvaluePipeline01()
 
     Mat hessen = qr::decomposeByRotation(rot, qr::eUpperHessenbergize)[1];
     Mat tmp = hessen;
-    Mat eig_vec = Mat::Identity(n);
+    Mat eig_vec = Mat::identity(n);
 
 
     for(size_t i = 0; i < 50; i++)
     {
         // FloatType rho = 1;
         FloatType rho = qr::wilkinsonShiftStrategy(tmp);
-        Mat shift = Mat::Identity(n) * rho;
+        Mat shift = Mat::identity(n) * rho;
         auto q_r = qr::decomposeByRotation(tmp - shift, qr::eSubdiagonal);
         tmp = q_r[1].matmul(q_r[0]) + shift;
 
@@ -270,7 +270,7 @@ inline void testUnsymmetrixEigenvaluePipeline02()
     auto q_hessen = qr::decomposeByRotation(mat_a, qr::eUpperHessenbergize, true);
     Mat tmp = q_hessen[1];
     std::cout << q_hessen[1].str() << std::endl;
-    // Mat eig_vec = Mat::Identity(n);
+    // Mat eig_vec = Mat::identity(n);
     Mat eig_vec = q_hessen[0];
 
 
@@ -278,7 +278,7 @@ inline void testUnsymmetrixEigenvaluePipeline02()
     {
         // FloatType rho = 1;
         FloatType rho = qr::wilkinsonShiftStrategy(tmp);
-        Mat shift = Mat::Identity(n) * rho;
+        Mat shift = Mat::identity(n) * rho;
         auto q_r = qr::decomposeByRotation(tmp - shift, qr::eSubdiagonal);
         tmp = q_r[1].matmul(q_r[0]) + shift;
 
@@ -421,7 +421,7 @@ inline void testTridiagonalizeSkewSymmetric()
 
 inline Mat testMatRefTransposeReturn(size_t dim)
 {
-    return Mat::Identity(dim).T();
+    return Mat::identity(dim).T();
 }
 
 inline void testMatRef()
@@ -479,7 +479,7 @@ inline void testMatRef()
 #endif
 
     {//test 07
-        Mat mat(Mat::Identity(3));
+        Mat mat(Mat::identity(3));
         auto v = mat(Col(1));
         auto vt = v.T();
         if((vt - Vec({0,1,0}).T()).norm() > eps())
@@ -496,7 +496,7 @@ inline void testMatRef()
 
 #if 0
     {//test 08
-        Mat mat(Mat::Identity(3));
+        Mat mat(Mat::identity(3));
         auto b = mat(Col(1));
         auto v = b.asVector();
 
@@ -506,7 +506,7 @@ inline void testMatRef()
 #endif
 
     {//test 09
-        Mat mat = Mat::Identity(3);
+        Mat mat = Mat::identity(3);
         Mat mat_b = mat(Block({0,end()},{0, end()}));
         if(mat.shape() != Shape{3,3})
         {
@@ -541,9 +541,9 @@ inline void testMatInv()
             0.6007756 , 0.30253734, 0.78378593,
             0.93970026, 0.781002  , 0.86480691});
 
-        if((m.inv().matmul(m) - Mat::Identity(3)).norm() > eps())
+        if((m.inv().matmul(m) - Mat::identity(3)).norm() > eps())
         {
-            std::cout << "error norm: " << (m.inv().matmul(m) - Mat::Identity(3)).norm() << std::endl;
+            std::cout << "error norm: " << (m.inv().matmul(m) - Mat::identity(3)).norm() << std::endl;
             std::cout << "WARNING: todo fix.\n" << std::string(__FILE__) + ":" + std::to_string(__LINE__) << std::endl;
         }
 
@@ -590,7 +590,7 @@ inline void testLinearAlgebra()
     if((u1 - v1 * sqrt(1./3)).norm() > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-    if(fabs(Mat::Identity(3).det() - 1.) > eps())
+    if(fabs(Mat::identity(3).det() - 1.) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
 

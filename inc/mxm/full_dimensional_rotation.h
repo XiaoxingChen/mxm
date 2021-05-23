@@ -21,7 +21,7 @@ public:
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    FullDimensionalRotation(size_t dim): matrix_(Matrix<DType>::Identity(dim))
+    FullDimensionalRotation(size_t dim): matrix_(Matrix<DType>::identity(dim))
     {
     }
 
@@ -46,7 +46,7 @@ public:
         return ThisType(bivectorToRotationMatrix(bivec[0], bivec[1]));
     }
 
-    static ThisType Identity(size_t dim) { return ThisType(Matrix<DType>::Identity(dim)); }
+    static ThisType identity(size_t dim) { return ThisType(Matrix<DType>::identity(dim)); }
 
     DType norm() const { return 0. ; }
 

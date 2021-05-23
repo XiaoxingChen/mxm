@@ -165,7 +165,7 @@ public:
     //
     static ThisType zeros(const Shape& _shape) { return ThisType(_shape) *= DType(0); }
     static ThisType ones(const Shape& _shape) { return zeros(_shape) += DType(1); }
-    static ThisType Identity(size_t n)
+    static ThisType identity(size_t n)
     {
         ThisType mat = zeros({n,n});
         for(int i = 0; i < n; i++) mat(i,i) += DType(1);

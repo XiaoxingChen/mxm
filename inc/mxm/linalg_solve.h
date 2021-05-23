@@ -136,7 +136,7 @@ decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrian
     mat = mat_in;
     const size_t& n = mat.shape(0);
     Matrix<DType>& rot(ret[0]);
-    rot = Matrix<DType>::Identity(n);
+    rot = Matrix<DType>::identity(n);
 
     std::vector<std::array<size_t, 2>> seq;
     if(idx_seq == eUpperTrianglize) seq = upperTrianglizeSequence(mat_in.shape(1));
@@ -149,7 +149,7 @@ decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrian
         auto j = idx[1];
         if(norm(mat(i,j)) < eps() * eps()) { continue; }
 
-        Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
+        Matrix<DType> sub_rot = Matrix<DType>::identity(n);
 
         auto so2 = givensRotation(mat(Block({i-1, i+1}, {j, j+1})));
 
@@ -269,7 +269,7 @@ template <typename DType>
 Matrix<DType> Matrix<DType>::inv() const
 {
     if(!square()) return Matrix<DType>::zeros(shape());
-    return qr::solve(*this, Matrix<DType>::Identity(shape(0)));
+    return qr::solve(*this, Matrix<DType>::identity(shape(0)));
 }
 
 template <typename DType>
@@ -314,7 +314,7 @@ std::vector<Complex<DType>> eigvals(const Matrix<DType>& mat)
     {
         // FloatType rho = 1;
         DType rho = qr::wilkinsonShiftStrategy(quasi);
-        Matrix<DType> shift = Matrix<DType>::Identity(n) * rho;
+        Matrix<DType> shift = Matrix<DType>::identity(n) * rho;
         q_r = qr::decomposeByRotation(quasi - shift, qr::eSubdiagonal);
         quasi = q_r[1].matmul(q_r[0]) + shift;
         if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
@@ -359,7 +359,7 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
 
     std::array<Matrix<DType>, 2> val_vec{Matrix<DType>({n,1}), Matrix<DType>({n,n})};
 
-    auto eig_vecs = Matrix<DType>::Identity(n);
+    auto eig_vecs = Matrix<DType>::identity(n);
 
     Matrix<DType> mat_k = mat;
     if(n > 2)
@@ -374,7 +374,7 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
     for(size_t i = 0; i < max_it; i++)
     {
         DType rho = qr::wilkinsonShiftStrategy(mat_k);
-        Matrix<DType> shift = Matrix<DType>::Identity(n) * rho;
+        Matrix<DType> shift = Matrix<DType>::identity(n) * rho;
         auto q_r = qr::decomposeByRotation(mat_k - shift, qr::eSubdiagonal);
         mat_k = q_r[1].matmul(q_r[0]) + shift;
         eig_vecs = eig_vecs.matmul(q_r[0]);
@@ -413,7 +413,7 @@ Matrix<DType> inverseIteration(
     size_t max_it = 20;
     for(size_t i = 0; i < max_it; i++)
     {
-        bk = qr::solve(mat_a - eigenvalue * Matrix<DType>::Identity(n), bk);
+        bk = qr::solve(mat_a - eigenvalue * Matrix<DType>::identity(n), bk);
         bk.normalize();
         auto err = (mat_a.matmul(bk) - eigenvalue * bk).norm();
         // std::cout << "bk: " << bk.T().str() << ", err: " << err << std::endl;
@@ -489,13 +489,13 @@ std::array<Matrix<DType>, 2> tridiagonalizeSkewSymmetric(const Matrix<DType>& sk
     assert(("Skew symmetric matrix must be square!", skew.square()));
 #if 0 // by reflection
     const size_t& n = skew.shape(0);
-    mat_orth = Matrix<DType>::Identity(n);
+    mat_orth = Matrix<DType>::identity(n);
     for(size_t i = 0; i < n-1; i++)
     {
         Matrix<DType> v = skew(Block({i+1, end()}, {i, i+1}));
         v(0,0) += v.norm();
         v.normalize();
-        Matrix<DType> mat_p = Matrix<DType>::Identity(n);
+        Matrix<DType> mat_p = Matrix<DType>::identity(n);
         // std::cout << mat_p(Block({i+1, end()}, {i+1, end()})).shape(0) << "," << v.shape(0) <<  std::endl;
         mat_p(Block({i+1, end()}, {i+1, end()})) -= 2* v.matmul(v.T());
         mat_orth = mat_p.matmul(mat_orth);
@@ -519,7 +519,7 @@ std::array<Matrix<DType>, 2> blockDiagonalizeSkewSymmetric(const Matrix<DType>& 
     mat = skew;
     const size_t& n = mat.shape(0);
     Matrix<DType>& rot(ret[0]);
-    rot = Matrix<DType>::Identity(n);
+    rot = Matrix<DType>::identity(n);
 
     for(size_t j = 0; j < n; j++)
     {
@@ -528,7 +528,7 @@ std::array<Matrix<DType>, 2> blockDiagonalizeSkewSymmetric(const Matrix<DType>& 
             std::cout << "(i,j): " << i << "," << j << std::endl;
             DType theta = -atan2(mat(i,j), mat(i-1,j));
             // std::cout << "theta: " << theta << std::endl;
-            Matrix<DType> sub_rot = Matrix<DType>::Identity(n);
+            Matrix<DType> sub_rot = Matrix<DType>::identity(n);
 
             Matrix<DType> so2({2,2},
                 {cos(theta), -sin(theta),
