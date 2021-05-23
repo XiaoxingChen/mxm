@@ -35,7 +35,7 @@ inline bool validIntersect(const Vec& x)
         if(x(i) < 0 || x(i) > 1) return false;
     }
     // FloatType sum_k = x.norm(1) - fabs(x(0));
-    FloatType sum_k = x.sum() - x(0);
+    FloatType sum_k = mxm::sum(x) - x(0);
     return sum_k < 1 + eps();
 }
 

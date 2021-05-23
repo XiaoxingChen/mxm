@@ -9,15 +9,16 @@
 #include <string>
 #include <assert.h>
 #include <math.h>
-#include "mxm/common.h"
-#include "mxm/linalg_mat.h"
+// #include "mxm/common.h"
+// #include "mxm/linalg_mat.h"
 
 
 namespace mxm
 {
 
 // class Pixel;
-
+template<typename DType>
+class Matrix;
 template<typename DType>
 class Vector: public Matrix<DType>
 {
@@ -28,6 +29,7 @@ public:
     Vector(): BaseType(){}
     Vector(size_t size): BaseType({size, 1}){}
     Vector(const std::vector<DType>& v): BaseType({v.size(), 1}, v){}
+    Vector(std::vector<DType>&& v): BaseType({v.size(), 1}, std::move(v)){}
 
     Vector(const BaseType& mat)
         : BaseType(mat.shape(1) == 1 ? mat : mat.T())
@@ -36,13 +38,15 @@ public:
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    size_t size() const { return BaseType::shape(0); }
+    size_t size() const { return this->shape_[0]; }
+#if 0
     DType sum() const
     {
         DType sum(0);
         for(int i = 0; i < size(); i++) sum += (*this)(i);
         return sum;
     }
+#endif
 
 
     virtual DType& operator () (size_t i) { return BaseType::operator()(i, 0); }
@@ -57,18 +61,16 @@ public:
         return sum;
     }
 
-    static ThisType zeros(size_t n) { return ThisType(n); }
-    static ThisType ones(size_t n) { return ThisType(n) + 1; }
+    static ThisType zeros(size_t n) { return ThisType(n) *= 0; }
+    static ThisType ones(size_t n) { return (ThisType(n) *= 0) += 1; }
 
     operator std::vector<DType> () const
     {
-        std::vector<DType> ret;
-        for(size_t i = 0; i < size(); i++) ret.push_back((*this)(i));
-        return ret;
+        return this->data_;
     }
 };
 
-using Vec = Vector<FloatType>;
+using Vec = Vector<float>;
 #if 0
 class UnitVec: public Vec
 {

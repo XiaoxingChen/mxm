@@ -1,7 +1,7 @@
 #include <iostream>
+#include "test_linalg.h"
 #include "test_aabb.h"
 // #include "test_rigid_body.h"
-#include "test_linalg.h"
 #include "test_ray.h"
 #include "test_random.h"
 // #include "test_material.h"

@@ -458,7 +458,8 @@ inline void testMatRef()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    if(1){//test 05
+#if 0
+    {//test 05
         Mat vs(Mat::ones({2, 3}));
         auto block = vs(Row(0));
         auto v = block.asVector();
@@ -475,6 +476,7 @@ inline void testMatRef()
         if(v(1) != 5)
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+#endif
 
     {//test 07
         Mat mat(Mat::Identity(3));
@@ -492,6 +494,7 @@ inline void testMatRef()
 
     }
 
+#if 0
     {//test 08
         Mat mat(Mat::Identity(3));
         auto b = mat(Col(1));
@@ -500,6 +503,7 @@ inline void testMatRef()
         if((v - Vec({0,1,0})).norm() > eps())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+#endif
 
     {//test 09
         Mat mat = Mat::Identity(3);

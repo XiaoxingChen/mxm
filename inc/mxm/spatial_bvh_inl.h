@@ -116,7 +116,7 @@ MXM_INLINE void BaseTree::build(size_t primitive_per_leaf, bool verbose)
                 Mat prim1 = primitive(prim_idx1);
                 Mat prim2 = primitive(prim_idx2);
 
-                return prim1(Row(target_axis)).asVector().sum() < prim2(Row(target_axis)).asVector().sum();
+                return mxm::sum(prim1(Row(target_axis))) < mxm::sum(prim2(Row(target_axis)));
             }
         );
 
