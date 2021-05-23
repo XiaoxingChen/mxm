@@ -13,7 +13,7 @@ public:
     {
         updateCameraMatrix();
     }
-    Camera(const RigidTrans& pose, VecIn focus=Vec({500, 500}), VecIn resolution=Vec({640, 480}))
+    Camera(const RigidTrans& pose, const Vec& focus=Vec({500, 500}), const Vec& resolution=Vec({640, 480}))
         :pose_(pose), f_(focus), c_(resolution * 0.5)
     {
         checkDimension();

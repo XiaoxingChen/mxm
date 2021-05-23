@@ -40,9 +40,8 @@ public:
     static ThisType fromMatrix(const Matrix<DType>& R) { return ThisType(R); }
     static ThisType fromAngle(DType angle) { return ThisType(mxm::rodrigues2D(angle)); }
     static ThisType fromAxisAngle(const Vector<DType>& axis, DType angle) { return ThisType(mxm::rodrigues3D(axis, angle)); }
-    static ThisType fromPlaneAngle(UnitVecIn u, UnitVecIn v, DType angle)
+    static ThisType fromPlaneAngle(const Vec& u, const Vec& v, DType angle)
     {
-        // todo remove UnitVecIn
         auto bivec = planeAngleToBivector(u, v, angle);
         return ThisType(bivectorToRotationMatrix(bivec[0], bivec[1]));
     }

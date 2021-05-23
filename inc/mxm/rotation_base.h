@@ -119,19 +119,22 @@ inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DTy
     axis = orthogonalComplement(plane).normalized();
 }
 
-inline Mat reflection(UnitVecIn u)
+inline Mat reflection(const Vec& u_in)
 {
+    Vec u(u_in.normalized());
     return Mat::Identity(u.size()) - 2 * u.matmul(u.T());
 }
 
-inline std::array<UnitVec, 2> planeAngleToBivector(UnitVecIn u, UnitVecIn v, FloatType angle)
+inline std::array<Vec, 2> planeAngleToBivector(const Vec& u_in, const Vec& v_in, FloatType angle)
 {
-    UnitVec v_perpend(v - u.dot(v));
-    UnitVec v_new(cos(angle/2.) * u + sin(angle/2.) * v_perpend);
+    Vec u = u_in.normalized();
+    Vec v = v_in.normalized();
+    Vec v_perpend(v - u.dot(v));
+    Vec v_new(cos(angle/2.) * u + sin(angle/2.) * v_perpend);
     return {u,v_new};
 }
 
-inline Mat bivectorToRotationMatrix(UnitVecIn u, UnitVecIn v)
+inline Mat bivectorToRotationMatrix(const Vec& u, const Vec& v)
 {
     return reflection(v).matmul(reflection(u));
 }
@@ -143,7 +146,7 @@ inline FloatType normSO2(const Mat& R)
 
 inline FloatType normSO3(const Mat& R)
 {
-    UnitVec axis(3);
+    Vec axis(3);
     FloatType angle;
     matrixToAxisAngle3D(R, axis, angle);
     return angle;

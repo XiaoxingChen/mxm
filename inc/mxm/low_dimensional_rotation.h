@@ -19,12 +19,12 @@ public:
 
     static ThisType fromMatrix(const Mat& R);
     static ThisType fromAngle(FloatType angle) { return ThisType(angle); }
-    static ThisType fromAxisAngle(UnitVecIn axis, FloatType angle) { return ThisType(axis, angle); }
-    static ThisType fromPlaneAngle(UnitVecIn u, UnitVecIn v, FloatType angle)
+    static ThisType fromAxisAngle(const Vec& axis, FloatType angle) { return ThisType(axis.normalized(), angle); }
+    static ThisType fromPlaneAngle(const Vec& u, const Vec& v, FloatType angle)
     {
         Mat plane({u.size(),2});
-        plane.setBlock(0,0,u);
-        plane.setBlock(0,1,v);
+        plane.setBlock(0,0,u.normalized());
+        plane.setBlock(0,1,v.normalized());
         return ThisType(plane, angle);
     }
     Mat asMatrix() const;

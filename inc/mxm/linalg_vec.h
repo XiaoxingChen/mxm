@@ -69,6 +69,7 @@ public:
 };
 
 using Vec = Vector<FloatType>;
+#if 0
 class UnitVec: public Vec
 {
 public:
@@ -96,7 +97,7 @@ private:
 
 using VecIn = const Vec&;
 using UnitVecIn = const UnitVec&;
-
+#endif
 
 } // namespace mxm
 
