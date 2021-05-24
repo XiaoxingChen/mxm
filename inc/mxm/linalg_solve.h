@@ -246,7 +246,7 @@ DType errorOrthogonalBlockDiagonal(const Matrix<DType> mat_a)
 }
 
 } // namespace qr
-
+#if 0
 template <typename DType>
 DType Matrix<DType>::det() const
 {
@@ -264,6 +264,24 @@ DType Matrix<DType>::det() const
     for(size_t i = 0; i < shape(0); i++) det *= mat_r(i,i);
     return det;
 }
+#endif
+template <typename DType>
+DType det(const Matrix<DType>& mat)
+{
+    if(mat.square() && mat.shape(0) == 2)
+        return mat(0,0) * mat(1,1) - mat(1,0)*mat(0,1);
+
+    Matrix<DType> mat_q(qr::calcMatQ(mat));
+
+    // check full rank
+    if((mat_q.matmul(mat_q)).trace() - mat.shape(0) > eps())
+        return 0.;
+
+    Matrix<DType> mat_r(mat_q.T().matmul(mat));
+    DType det(1);
+    for(size_t i = 0; i < mat.shape(0); i++) det *= mat_r(i,i);
+    return det;
+}
 
 template <typename DType>
 Matrix<DType> Matrix<DType>::inv() const
@@ -277,7 +295,7 @@ std::vector<Complex<DType>> eigvals2x2(const Matrix<DType>& mat)
 {
     std::vector<Complex<DType>> ret(2);
     DType tr = mat.trace();
-    DType det = mat.det();
+    DType det = mxm::det(mat);
     DType delta = tr*tr - 4 * det;
     if(delta >= 0)
     {

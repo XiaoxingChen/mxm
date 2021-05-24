@@ -39,7 +39,7 @@ Matrix<float> harrisCornernessMap(const Matrix<float>& src, size_t window_width=
     #endif
         M(1,0) = M(0,1);
 
-        float det = M.det();
+        float det = mxm::det(M);
         float tr = M.trace();
 
         result(i+window_width/2, j+window_width/2) = det - k * tr*tr;

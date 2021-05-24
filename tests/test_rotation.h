@@ -92,9 +92,9 @@ inline void rotationTestDeterminant()
     for(size_t i = 0; i < 10; i++)
     {
         Rotation r(Rotation::fromAxisAngle(Vec({1.,1,1}), 0.1 * i));
-        if(fabs(r.asMatrix().det() - 1) > 4 * eps())
+        if(fabs(mxm::det(r.asMatrix()) - 1) > 4 * eps())
         {
-            std::cout << r.asMatrix().det() - 1 << std::endl;
+            std::cout << mxm::det(r.asMatrix()) - 1 << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 

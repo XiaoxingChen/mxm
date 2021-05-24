@@ -590,7 +590,7 @@ inline void testLinearAlgebra()
     if((u1 - v1 * sqrt(1./3)).norm() > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-    if(fabs(Mat::identity(3).det() - 1.) > eps())
+    if(fabs(mxm::det(Mat::identity(3)) - 1.) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
 

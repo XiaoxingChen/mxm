@@ -28,7 +28,7 @@ inline Matrix<DType> orthogonalComplement(const Matrix<DType>& vs)
         if(i < vs.shape(0) - 1)
             adjoint_mat(Block({i, },{})) = vs(Block({i+1,},{}));
 
-        ret(i, 0) = adjoint_mat.det();
+        ret(i, 0) = mxm::det(adjoint_mat);
         if((i % 2) == 1) ret(i, 0) *= -1;
     }
     return ret;
