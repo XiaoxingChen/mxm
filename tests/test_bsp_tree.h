@@ -1,6 +1,9 @@
 #if !defined(__TEST_BSP_TREE_H__)
 #define __TEST_BSP_TREE_H__
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
 #include "mxm/spatial_bsp.h"
 
 using namespace mxm;
@@ -74,5 +77,7 @@ inline void testBspTree()
 {
     testAxisPartition();
 }
-
+#else
+inline void testBspTree(){}
+#endif
 #endif // __TEST_BSP_TREE_H__

@@ -1,6 +1,8 @@
 #if !defined(_TEST_RANDOM_H_)
 #define _TEST_RANDOM_H_
+#include "test_config.h"
 
+#if TEST_AVAILABLE_ALL
 #include "mxm/random.h"
 using namespace mxm;
 
@@ -13,5 +15,7 @@ void testRandom()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
-
+#else
+void testRandom(){}
+#endif
 #endif // _TEST_RANDOM_H_

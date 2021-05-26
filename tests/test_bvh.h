@@ -1,6 +1,10 @@
 #if !defined(_TEST_BVH_H)
 #define _TEST_BVH_H
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
+
 #include "mxm/spatial_bvh.h"
 #include "mxm/random.h"
 #include <memory>
@@ -229,5 +233,7 @@ void testBvh()
     testRadiusSearch();
     testNearestNeighborSearch();
 }
-
+#else
+void testBvh(){}
+#endif
 #endif // _TEST_BVH_H

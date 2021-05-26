@@ -1,6 +1,10 @@
 #if !defined(_TEST_ROTATION_H_)
 #define _TEST_ROTATION_H_
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
+
 #include "mxm/rotation.h"
 #include <iostream>
 
@@ -110,5 +114,7 @@ inline void testRotation()
     rotationTestCase6();
     rotationTestDeterminant();
 }
-
+#else
+inline void testRotation(){}
+#endif
 #endif // _TEST_ROTATION_H_

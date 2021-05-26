@@ -1,10 +1,15 @@
 #if !defined(__TEST_GRID_MAP_H__)
 #define __TEST_GRID_MAP_H__
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
 #include "mxm/spatial_grid_map.h"
+#endif
 
 using namespace mxm;
 
+#if TEST_AVAILABLE_ALL
 void testQuantize01()
 {
     Mat pts({2,3}, {3,3, 9,9, 20,4}, Mat::COL);
@@ -20,6 +25,9 @@ void testGridMap()
 {
     testQuantize01();
 }
+#else
+void testGridMap(){}
+#endif
 
 
 #endif // __TEST_GRID_MAP_H__

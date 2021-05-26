@@ -1,6 +1,8 @@
 #if !defined(_TEST_PIXEL_H_)
 #define _TEST_PIXEL_H_
+#include "test_config.h"
 
+#if TEST_AVAILABLE_ALL
 #include <iostream>
 #include "mxm/cv_basic.h"
 #include "mxm/linalg.h"
@@ -108,5 +110,7 @@ inline void testCvBasic()
     testPixelMemory();
     testKernels();
 }
-
+#else
+inline void testCvBasic(){}
+#endif
 #endif // _TEST_PIXEL_H_

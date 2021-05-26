@@ -1,6 +1,10 @@
 #if !defined(_TEST_RAY_H_)
 #define _TEST_RAY_H_
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_GEOMETRY_RAY
+
 #include "mxm/geometry_ray.h"
 using namespace mxm;
 
@@ -15,5 +19,7 @@ inline void testRay()
     if(!ray1.valid(500))
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
-
+#else
+inline void testRay(){}
+#endif
 #endif // _TEST_RAY_H_

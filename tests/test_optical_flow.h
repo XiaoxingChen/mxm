@@ -1,13 +1,18 @@
 #if !defined(_TEST_OPTICAL_FLOW_H_)
 #define _TEST_OPTICAL_FLOW_H_
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
+
 #include "mxm/cv_optical_flow.h"
+#endif
 
 using namespace mxm;
 
 inline void testOpticalFlow01()
 {
-
+#if TEST_AVAILABLE_ALL
     Matrix<float> img_src({10,10},{
     0.728477, 0.738667, 0.742198, 0.740368, 0.202688, 0.202093, 0.396650, 0.146337, 0.122355, 0.146413,
     0.729365, 0.741939, 0.741963, 0.732592, 0.203782, 0.198433, 0.224574, 0.151642, 0.129539, 0.138128,
@@ -48,7 +53,7 @@ inline void testOpticalFlow01()
         std::cout << mxm::to_string(fp_dst, 3) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
-
+#endif
 }
 
 

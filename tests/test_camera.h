@@ -1,6 +1,8 @@
 #if !defined(_TEST_CAMERA_H_)
 #define _TEST_CAMERA_H_
+#include "test_config.h"
 
+#if TEST_AVAILABLE_ALL
 #include "mxm/model_camera.h"
 
 using namespace mxm;
@@ -36,6 +38,8 @@ inline void testCamera()
     cameraTest1();
     cameraTest2();
 }
-
+#else
+inline void testCamera(){}
+#endif
 
 #endif // _TEST_CAMERA_H_

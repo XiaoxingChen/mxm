@@ -2,6 +2,7 @@
 #define _LINALG_MAT_REF_H
 
 #include "linalg_mat.h"
+#include "linalg_mat_block.h"
 
 
 namespace mxm

@@ -1,11 +1,15 @@
 #if !defined(_TEST_GRAPH_H_)
 #define _TEST_GRAPH_H_
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
 #include <iostream>
 #include "mxm/graph_dijkstra.h"
+#endif
 
 using namespace mxm;
-
+#if TEST_AVAILABLE_ALL
 // test graph:
 // link: https://en.wikipedia.org/wiki/File:Dijkstra_Animation.gif
 inline void testDijkstra1()
@@ -40,6 +44,9 @@ inline void testGraph()
 {
     testDijkstra1();
 }
+#else
+inline void testGraph(){}
+#endif
 
 
 

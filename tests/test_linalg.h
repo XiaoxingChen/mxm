@@ -1,14 +1,39 @@
 #if !defined(_TEST_LINALG_H)
 #define _TEST_LINALG_H
 
+#include "test_config.h"
+
 #include <iostream>
-#include "mxm/linalg.h"
-// #include "pixel.h"
-// #include "accessor.h"
+
+#if TEST_AVAILABLE_LINALG_MAT
+#include "mxm/linalg_mat.h"
+#include "mxm/linalg_mat_ref.h"
+#include "mxm/linalg_mat_block.h"
+#endif
+
+#if TEST_AVAILABLE_LINALG_VEC
+#include "mxm/linalg_vec.h"
+#endif
+
+#if TEST_AVAILABLE_LINALG_SOLVE
+#include "mxm/linalg_solve.h"
+#endif
+
+#if TEST_AVAILABLE_LINALG_UTILS
+#include "mxm/linalg_utils.h"
+#include "mxm/string.h"
+#endif
+
+#if TEST_AVAILABLE_LINALG_COMPLEX
+#include "mxm/linalg_complex.h"
+#endif
+
+
 
 
 using namespace mxm;
 
+#if TEST_AVAILABLE_LINALG_UTILS
 inline void testOrthogonalComplement()
 {
     {
@@ -43,7 +68,11 @@ inline void testOrthogonalComplement()
     }
 
 }
+#else
+inline void testOrthogonalComplement(){}
+#endif
 
+#if TEST_AVAILABLE_LINALG_SOLVE
 inline void testSolveLowerTriangle()
 {
     Mat L({3,3}, {1,0,0, 2,3,0, 4,5,6});
@@ -418,6 +447,7 @@ inline void testTridiagonalizeSkewSymmetric()
     }
 
 }
+#endif
 
 inline Mat testMatRefTransposeReturn(size_t dim)
 {
@@ -478,6 +508,8 @@ inline void testMatRef()
     }
 #endif
 
+#if TEST_AVAILABLE_LINALG_VEC
+
     {//test 07
         Mat mat(Mat::identity(3));
         auto v = mat(Col(1));
@@ -493,7 +525,7 @@ inline void testMatRef()
         }
 
     }
-
+#endif
 #if 0
     {//test 08
         Mat mat(Mat::identity(3));
@@ -533,6 +565,7 @@ inline void testMatRef()
     }
 }
 
+#if TEST_AVAILABLE_LINALG_SOLVE
 inline void testMatInv()
 {
     if(1){
@@ -549,6 +582,7 @@ inline void testMatInv()
 
     }
 }
+#endif
 
 inline void testRvalueReference()
 {
@@ -558,6 +592,7 @@ inline void testRvalueReference()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
 
+#if TEST_AVAILABLE_LINALG_COMPLEX
 inline void testComplexBase()
 {
     Complex<FloatType> a({1,2});
@@ -567,7 +602,11 @@ inline void testComplexBase()
     if((a * b - expected).norm() > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
+#else
+inline void testComplexBase(){}
+#endif
 
+#if TEST_AVAILABLE_LINALG_UTILS
 inline void testCombinations()
 {
     {
@@ -576,6 +615,9 @@ inline void testCombinations()
         if(combinations(3,1) != 3) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
+#else
+inline void testCombinations(){}
+#endif
 
 inline void testLinearAlgebra()
 {
@@ -590,23 +632,28 @@ inline void testLinearAlgebra()
     if((u1 - v1 * sqrt(1./3)).norm() > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
+#if TEST_AVAILABLE_LINALG_SOLVE
     if(fabs(mxm::det(Mat::identity(3)) - 1.) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+#endif
 
 
     testMatRef();
     testOrthogonalComplement();
+#if TEST_AVAILABLE_LINALG_SOLVE
     testSolveLowerTriangle();
     testQRcalcMatQ();
     testQRSolve();
     testMatInv();
+    testEigenvalues();
+#endif
     testRvalueReference();
     testComplexBase();
     // testTridiagonalizeSkewSymmetric();
     // testQRIteration();
     // testUnsymmetrixEigenvaluePipeline01();
     // testUnsymmetrixEigenvaluePipeline02();
-    testEigenvalues();
+
     testCombinations();
 
 }

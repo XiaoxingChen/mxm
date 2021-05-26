@@ -1,3 +1,11 @@
+#if !defined(_TEST_AABB_H_)
+#define _TEST_AABB_H_
+
+#include "test_config.h"
+
+#if TEST_AVAILABLE_SPATIAL_AABB
+
+
 #include "mxm/spatial_aabb.h"
 #include <string>
 
@@ -67,3 +75,7 @@ void testAABB()
 
     testDistanceToPoint();
 }
+#else
+void testAABB(){}
+#endif //TEST_AVAILABLE_ALL
+#endif // _TEST_AABB_H_

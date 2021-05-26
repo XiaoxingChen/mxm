@@ -1,6 +1,10 @@
 #if !defined(_TEST_INTERP_H_)
 #define _TEST_INTERP_H_
 
+#include "test_config.h"
+
+#if TEST_AVAILABLE_ALL
+
 #include <iostream>
 #include "mxm/interpolation.h"
 
@@ -45,7 +49,9 @@ void testInterpolation()
     testTriangular();
     testBilinearInterpolation();
 }
-
+#else
+void testInterpolation(){}
+#endif
 
 
 #endif // _TEST_INTERP_H_
