@@ -48,7 +48,7 @@ inline std::string to_string(const std::array<T, N>& container, size_t prec=6)
     }
     return ret;
 }
-
+#if 0
 template<typename DType>
 std::string to_string(const Matrix<DType>& mat, size_t prec)
 {
@@ -57,7 +57,17 @@ std::string to_string(const Matrix<DType>& mat, size_t prec)
         ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
     return ret;
 }
-
+#elif 0
+template<typename DeriveType>
+std::string to_string(const MatrixBase<DeriveType>& mat_in, size_t prec=6)
+{
+    auto & mat = reinterpret_cast<const DeriveType&>(mat_in);
+    std::string ret;
+    mat.traverse([&](size_t i, size_t j){
+        ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
+    return ret;
+}
+#endif
 } // namespace mxm
 
 

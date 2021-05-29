@@ -1,10 +1,13 @@
 #if !defined(_TEST_BAZIER_H)
 #define _TEST_BAZIER_H
 
+#include "test_config.h"
+#if TEST_AVAILABLE_ALL
+
 #include "mxm/bazier.h"
 
-namespace mxm
-{
+using namespace mxm;
+
 
 inline void testBazier()
 {
@@ -27,7 +30,8 @@ inline void testBazier()
     }
 }
 
-} // namespace mxm
-
+#else
+inline void testBazier(){}
+#endif
 
 #endif // _TEST_BAZIER_H

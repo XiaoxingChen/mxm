@@ -3,4 +3,4 @@
 #endif
 
 #include "mxm/linalg_mat_inl.h"
-#include "mxm/spatial_bvh_inl.h"
+// #include "mxm/spatial_bvh_inl.h"

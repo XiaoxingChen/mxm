@@ -2,6 +2,7 @@
 #define _TEST_LINALG_H
 
 #include "test_config.h"
+#include "mxm/common.h"
 
 #include <iostream>
 
@@ -198,7 +199,7 @@ inline void testQRSolve()
         Matrix<Complex<FloatType>> b({3,1}, {
             {1,2},
             {3,4},
-            {6,2}}, Mat::COL);
+            {6,2}}, COL);
 
         auto x = qr::solve(m, b);
 
@@ -358,6 +359,7 @@ inline void testEigenvalues()
         for(size_t i = 0; i < n; i++)
         {
             auto eig_vec = eig_val_vec[1](Col(i));
+            // std::cout << "eigv: " << mxm::to_string(eig_vec) << std::endl;
             auto err = (cmat_a.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
             if(err > 20 * eps())
             {
@@ -388,7 +390,8 @@ inline void testEigenvalues()
         }
     }
 
-    if(0){
+    #if(0)
+    {
         auto u_s_vh = svd(mat_a);
         // u_s_vh[2](Row(0)) *= -1;
         std::cout << mxm::to_string(u_s_vh) << std::endl;
@@ -404,6 +407,7 @@ inline void testEigenvalues()
         }
 
     }
+    #endif
 
 
 
@@ -516,6 +520,7 @@ inline void testMatRef()
         auto vt = v.T();
         if((vt - Vec({0,1,0}).T()).norm() > eps())
         {
+            std::cout << mxm::to_string(mat) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
@@ -595,12 +600,25 @@ inline void testRvalueReference()
 #if TEST_AVAILABLE_LINALG_COMPLEX
 inline void testComplexBase()
 {
-    Complex<FloatType> a({1,2});
-    Complex<FloatType> b({3,1});
-    Complex<FloatType> expected({1,7});
+    {
+        Complex<FloatType> a({1,2});
+        Complex<FloatType> b({3,1});
+        Complex<FloatType> expected({1,7});
 
-    if((a * b - expected).norm() > eps())
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        if((a * b - expected).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+        if(mxm::to_string(a).size() == 0)
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    {
+        auto mat = Matrix<Complex<float>>::identity(3);
+        if(mxm::to_string(mat).size() == 0)
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+
 }
 #else
 inline void testComplexBase(){}

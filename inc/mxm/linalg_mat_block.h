@@ -96,10 +96,25 @@ public:
         ret[3] = col_.end.eval(mat.shape(1));
         return ret;
     }
+
+    std::array<std::array<size_t, 2>, 2> deduct(const Shape& shape) const
+    {
+        std::array<std::array<size_t, 2>, 2> offset_shape;
+        offset_shape[0] = {row_.begin.eval(shape[0]), col_.begin.eval(shape[1])};
+        offset_shape[1] = {
+            row_.end.eval(shape[0]) - row_.begin.eval(shape[0]),
+            col_.end.eval(shape[1]) - col_.begin.eval(shape[1])};
+        return offset_shape;
+    }
 protected:
     Range row_;
     Range col_;
 };
+
+inline std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat)
+{
+    return b.deduct(mat);
+}
 
 // inline Mat& Mat::set(const Block& s, const Mat& rhs)
 // {

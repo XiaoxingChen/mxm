@@ -3,6 +3,7 @@
 
 namespace mxm
 {
+#if 0
 template<typename T, typename=void>
 struct NormTraits { using type = void; };
 
@@ -14,17 +15,18 @@ typename std::enable_if<std::is_floating_point<DType>::value, DType>::type norm(
     return abs(in);
 }
 
-#if 0
+
 template<typename InType>
 typename NormTraits<InType>::type norm(const InType& in)
 {
     throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
-#endif
+
 
 template<typename DType>
 typename std::enable_if<std::is_floating_point<DType>::value, DType>::type
 inv(const DType& val) { return DType(1) / val; }
+#endif
 
 } // namespace mxm
 

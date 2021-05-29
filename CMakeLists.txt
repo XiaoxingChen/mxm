@@ -11,6 +11,7 @@ endif()
 
 include_directories(inc)
 
+# add_library(mxm STATIC src/mxm.cpp)
 add_library(mxm STATIC src/mxm.cpp)
 target_compile_definitions(mxm PUBLIC MXM_COMPILED_LIB)
 

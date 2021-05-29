@@ -9,33 +9,30 @@
 namespace mxm
 {
 
-AutoShape fixRow(size_t n) { return AutoShape(n, -1); }
-AutoShape fixCol(size_t n) { return AutoShape(-1, n); }
+AutoShape fixRow(size_t n) { return AutoShape(n, 1, true, false); }
+AutoShape fixCol(size_t n) { return AutoShape(0, n, false, true); }
 
 std::array<size_t, 2> AutoShape::deduct(size_t total_num) const
 {
-    std::array<size_t, 2> ret;
-    if(raw_shape_[0] < 0)
+    if(defined_[0] && defined_[1]) return shape_;
+    std::array<size_t, 2> ret(shape_);
+    if(!defined_[0]) ret[0] = total_num / shape_[1];
+    if(!defined_[1]) ret[1] = total_num / shape_[0];
+    return ret;
+}
+
+void updateOffset(
+    Shape& abs_offset, const Shape& inc_offset, bool same_major)
+{
+    if(same_major)
     {
-        ret[0] = total_num / raw_shape_[1];
-        ret[1] = raw_shape_[1];
-    }else if(raw_shape_[1] < 0)
-    {
-        ret[0] = raw_shape_[0];
-        ret[1] = total_num / raw_shape_[0];
+        abs_offset[0] += inc_offset[0];
+        abs_offset[1] += inc_offset[1];
     }else
     {
-        ret[0] = raw_shape_[0];
-        ret[1] = raw_shape_[1];
+        abs_offset[0] += inc_offset[1];
+        abs_offset[1] += inc_offset[0];
     }
-
-    if(ret[0] * ret[1] != total_num && total_num != 0)
-    {
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    }
-
-    return ret;
-
 }
 
 } // namespace mxm

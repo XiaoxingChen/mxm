@@ -2,6 +2,7 @@
 #define _LINALG_SOLVE_H
 
 #include "mxm/linalg_mat_ref.h"
+#include "mxm/linalg_complex.h"
 #include <iostream>
 #include <algorithm>
 
@@ -9,9 +10,14 @@
 namespace mxm
 {
 
-template<typename DType>
-Matrix<DType> solveLUTriangle(const Matrix<DType>& mat, const Matrix<DType>& b, bool l_tri)
+template<typename DeriveType1, typename DeriveType2>
+Matrix<typename Traits<DeriveType1>::EntryType>
+solveLUTriangle(const MatrixBase<DeriveType1>& mat_in, const MatrixBase<DeriveType2>& b_in, bool l_tri)
 {
+    using DType = typename Traits<DeriveType1>::EntryType;
+    auto & mat = reinterpret_cast<const DeriveType1&>(mat_in);
+    auto & b = reinterpret_cast<const DeriveType2&>(b_in);
+
     if(!mat.square())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     if(mat.shape(0) != b.shape(0))
@@ -44,8 +50,9 @@ Matrix<DType> solveLowerTriangle(const Matrix<DType>& lower, const Matrix<DType>
     return solveLUTriangle(lower, b, 1);
 }
 
-template<typename DType>
-Matrix<DType> solveUpperTriangle(const Matrix<DType>& upper, const Matrix<DType>& b)
+template<typename DeriveType1, typename DeriveType2>
+Matrix<typename Traits<DeriveType1>::EntryType>
+solveUpperTriangle(const MatrixBase<DeriveType1>& upper, const MatrixBase<DeriveType2>& b)
 {
     return solveLUTriangle(upper, b, 0);
 }
@@ -54,11 +61,12 @@ namespace qr
 {
 // u: column vector, direction
 // a: column vectors
-template<typename DType>
-Matrix<DType> project(const Matrix<DType>& u, const Matrix<DType>& a)
+template<typename DeriveType1, typename DeriveType2>
+typename Traits<DeriveType1>::DerefType
+project(const MatrixBase<DeriveType1>& u, const MatrixBase<DeriveType2>& a)
 {
-    Matrix<DType> u_dir = u.normalized();
-    return u_dir.dot(u_dir.T()).dot(a);
+    auto u_dir = u.normalized();
+    return u_dir.matmul(u_dir.T()).matmul(a);
 }
 
 inline std::vector<std::array<size_t, 2>> upperTrianglizeSequence(size_t cols)
@@ -97,7 +105,7 @@ enum TraverseSeq{
     eUpperHessenbergize,
     eSubdiagonal
 };
-
+#if 0
 template<typename DType>
 typename std::enable_if<std::is_floating_point<DType>::value, Matrix<DType>>::type
 givensRotation(const Matrix<DType>& v2)
@@ -110,6 +118,7 @@ givensRotation(const Matrix<DType>& v2)
     return so2;
 }
 
+
 template<typename DType, unsigned int N>
 Matrix<Hypercomplex<DType, N>>
 givensRotation(const Matrix<Hypercomplex<DType, N>>& v2)
@@ -121,13 +130,40 @@ givensRotation(const Matrix<Hypercomplex<DType, N>>& v2)
     su2 *= (decltype(norm_v)(1) / norm_v);
     return su2;
 }
+#else
 
-template<typename DType>
-// Matrix<DType> calcMatQFromRotation(const Matrix<DType>& mat_in, bool hessenberg=false)
-std::array<Matrix<DType>, 2>
-decomposeByRotation(const Matrix<DType>& mat_in, TraverseSeq idx_seq=eUpperTrianglize, bool symmetric=false)
+template<template <class> class MatrixType, class EntryType>
+std::enable_if_t<std::is_floating_point<EntryType>::value , Matrix<EntryType>>
+givensRotation(const MatrixBase<MatrixType<EntryType>>& v2)
+{
+    auto norm_v = v2.norm();
+    Matrix<EntryType> so2({2,2},{
+        v2(0,0), v2(1,0),
+        -v2(1,0), v2(0,0) });
+    so2 *= (decltype(norm_v)(1) / norm_v);
+    return so2;
+}
+
+template<template <class> class MatrixType, class EntryType>
+std::enable_if_t<IsHypercomplexMatrix<MatrixType<EntryType>>::value , Matrix<EntryType>>
+givensRotation(const MatrixBase<MatrixType<EntryType>>& v2)
+{
+    auto norm_v = v2.norm();
+    Matrix<EntryType> su2({2,2},{
+        v2(0,0).conj(), v2(1,0).conj(),
+        -v2(1,0), v2(0,0) });
+    su2 *= (decltype(norm_v)(1) / norm_v);
+    return su2;
+}
+
+#endif
+
+template<typename DeriveType>
+std::array<Matrix<typename Traits<DeriveType>::EntryType>, 2>
+decomposeByRotation(const MatrixBase<DeriveType>& mat_in, TraverseSeq idx_seq=eUpperTrianglize, bool symmetric=false)
 {
     // reference: https://www.math.usm.edu/lambers/mat610/sum10/lecture9.pdf
+    using DType = typename Traits<DeriveType>::EntryType;
     if(!mat_in.square())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
@@ -196,8 +232,8 @@ Matrix<DType> calcMatQFromReflection(const Matrix<DType>& mat)
     return mat_u;
 }
 
-template<typename DType>
-Matrix<DType> calcMatQ(const Matrix<DType>& mat)
+template<typename DeriveType>
+auto calcMatQ(const MatrixBase<DeriveType>& mat)
 {
     return decomposeByRotation(mat)[0];
 }
@@ -212,7 +248,7 @@ Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
     {
         // singular
         auto tmp = q_r[0].matmul(conj(q_r[0].T()));
-        std::cout << "q.matmul(q.T()): \n" << tmp.str() << std::endl;
+        std::cout << "q.matmul(q.T()): \n" << mxm::to_string(tmp) << std::endl;
         std::cout << "norm: " << (tmp - Matrix<DType>::identity(q_r[0].shape(0)) ).norm() << std::endl;
         std::cout << "Singular Matrix!" << std::endl;
         return Matrix<DType>::zeros(b.shape());
@@ -268,9 +304,12 @@ DType Matrix<DType>::det() const
     return det;
 }
 #endif
-template <typename DType>
-DType det(const Matrix<DType>& mat)
+template <typename DeriveType>
+typename Traits<DeriveType>::EntryType
+det(const MatrixBase<DeriveType>& mat_in)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
+    auto & mat = reinterpret_cast<const DeriveType&>(mat_in);
     if(mat.square() && mat.shape(0) == 2)
         return mat(0,0) * mat(1,1) - mat(1,0)*mat(0,1);
 
@@ -285,16 +324,29 @@ DType det(const Matrix<DType>& mat)
     for(size_t i = 0; i < mat.shape(0); i++) det *= mat_r(i,i);
     return det;
 }
-
+#if 0
 template <typename DType>
 Matrix<DType> Matrix<DType>::inv() const
 {
     if(!square()) return Matrix<DType>::zeros(shape());
     return qr::solve(*this, Matrix<DType>::identity(shape(0)));
 }
+#endif
 
-template <typename DType>
-std::vector<Complex<DType>> eigvals2x2(const Matrix<DType>& mat)
+// Inversion
+template<typename DeriveType, typename=void>
+Matrix<typename Traits<DeriveType>::EntryType>
+inv(const MatrixBase<DeriveType>& mat)
+{
+    using EntryType = typename Traits<DeriveType>::EntryType;
+    using ArithType = typename Traits<DeriveType>::ArithType;
+    auto& self = reinterpret_cast<const DeriveType&>(mat);
+    if(!mat.square()) return Matrix<EntryType>::zeros(self.shape());
+    return qr::solve(self, Matrix<EntryType>::identity(self.shape(0)));
+}
+
+template <template <class> class MatrixType, typename DType>
+std::vector<Complex<DType>> eigvals2x2(const MatrixBase<MatrixType<DType>>& mat)
 {
     std::vector<Complex<DType>> ret(2);
     DType tr = mat.trace();
@@ -430,7 +482,7 @@ Matrix<DType> inverseIteration(
 {
     Matrix<DType> bk = guess;
     size_t n = guess.shape(0);
-    typename NormTraits<DType>::type tol = eps() * 20;
+    typename Traits<DType>::ArithType tol = eps() * 20;
     size_t max_it = 20;
     for(size_t i = 0; i < max_it; i++)
     {

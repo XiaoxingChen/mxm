@@ -6,7 +6,7 @@
 #include <cmath>
 #include "common.h"
 #include "accessor.h"
-#include "linalg_norm.h"
+// #include "linalg_norm.h"
 #include <initializer_list>
 
 namespace mxm
@@ -113,8 +113,9 @@ template<typename DType>
 inline typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
 to_string(const DType& v, size_t prec);
 
-template<typename DType, unsigned int N>
-std::string to_string(const Hypercomplex<DType, N>& v, size_t prec=6)
+template<typename DType, unsigned int N, typename>
+// template<typename DType, unsigned int N, typename=void>
+std::string to_string(const Hypercomplex<DType, N>& v, size_t prec)
 {
     std::string ret;
     v.traverse([&](size_t i){
@@ -128,21 +129,76 @@ std::string Hypercomplex<DType, N>::str() const
 {
     return to_string(*this);
 }
-
+#if 0
 template<typename DType, unsigned int N>
 struct NormTraits<Hypercomplex<DType, N>>{using type=DType;};
+#endif
 
-template<typename DType, unsigned int N>
-typename NormTraits<Hypercomplex<DType, N>>::type norm(const Hypercomplex<DType, N>& in)
-{
-    return in.norm();
-}
 
 template<typename DType, unsigned int N>
 Hypercomplex<DType, N> inv(const Hypercomplex<DType, N>& val)
 {
     auto norm_v = val.norm();
     return val.conj() * (decltype(norm_v)(1) / (norm_v * norm_v));
+}
+
+template<typename DType, unsigned int N>
+struct Traits<Hypercomplex<DType, N>>{
+    using ArithType = DType;
+    using EntryType = DType;
+    static Hypercomplex<DType, N> identity() { return Hypercomplex<DType, N>(1); }
+    static Hypercomplex<DType, N> zero() { return Hypercomplex<DType, N>(0); }
+    // static Hypercomplex<DType, N> inv(const Hypercomplex<DType, N>& val) { return Px<DType>(); }
+    // static ArithType norm(const Px<DType>& val) { return ArithType(5); }
+    // static std::string to_string(const Px<DType>& val) { return std::string("px"); }
+};
+
+template<typename DType, unsigned int N>
+typename Traits<Hypercomplex<DType, N>>::ArithType norm(const Hypercomplex<DType, N>& in)
+{
+    return in.norm();
+}
+
+template<typename DeriveType>
+class MatrixBase;
+
+
+template<typename MatrixType, typename U=void>
+struct IsHypercomplexMatrix { static const bool value = false; };
+template<typename MatrixType>
+struct IsHypercomplexMatrix<MatrixType, std::enable_if_t<Traits<MatrixType>::EntryType::size() >= 0, void>>
+{
+    static const bool value = std::is_same<
+            Hypercomplex<
+                typename Traits<MatrixType>::ArithType,
+                Traits<MatrixType>::EntryType::size()
+            >, typename Traits<MatrixType>::EntryType
+        >::value;
+};
+
+template<typename MatrixType>
+struct IsRealMatrix {
+    static const bool value = std::is_arithmetic<typename Traits<MatrixType>::ArithType>::value ;
+};
+
+// template<template <class> class MatrixType, class EntryType>
+// std::enable_if_t<IsHypercomplexMatrix<MatrixType<EntryType>>::value , Matrix<EntryType>>
+// conj(const MatrixBase<MatrixType<EntryType>>& in)
+// {
+//     const size_t N = Traits<EntryType>::size();
+//     Matrix<EntryType> ret(in);
+//     ret.traverse([&](auto i, auto j){ret(i,j) = ret(i,j).conj();});
+//     return ret;
+// }
+
+template<template <class> class MatrixType, class EntryType>
+std::enable_if_t<IsHypercomplexMatrix<MatrixType<EntryType>>::value , Matrix<EntryType>>
+conj(const MatrixBase<MatrixType<EntryType>>& in)
+{
+    const size_t N = EntryType::size();
+    Matrix<EntryType> ret(in);
+    ret.traverse([&](auto i, auto j){ret(i,j) = ret(i,j).conj();});
+    return ret;
 }
 
 } // namespace mxm
