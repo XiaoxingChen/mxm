@@ -116,14 +116,14 @@ public:
 
 
     // Binary Operator
-    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>
-    operator * (RhsType scalar) const { return DeriveType(reinterpret_cast<const DeriveType&>(*this)) *= scalar; }
+    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
+    operator * (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) *= scalar; }
 
-    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>
-    operator + (RhsType scalar) const { return DeriveType(reinterpret_cast<const DeriveType&>(*this)) += scalar; }
+    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
+    operator + (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) += scalar; }
 
-    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>
-    operator - (RhsType scalar) const { return DeriveType(reinterpret_cast<const DeriveType&>(*this)) -= scalar; }
+    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
+    operator - (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) -= scalar; }
 
 
     template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) *= reinterpret_cast<const T &>(rhs)(i,j);}); return self;}
@@ -134,8 +134,9 @@ public:
     auto binaryOp(const MatrixBase<T>& rhs, OpType f) const
     {
         auto& self = reinterpret_cast<const DeriveType&>(*this);
+        auto& rhs_d = reinterpret_cast<const T&>(rhs);
         Matrix<typename OpType::ReturnType> ret(self.shape());
-        ret.traverse([&](size_t i, size_t j){ret(i,j) = f(self(i,j), reinterpret_cast<const T&>(rhs)(i,j));});
+        ret.traverse([&](size_t i, size_t j){ret(i,j) = f(self(i,j), rhs_d(i,j));});
         return ret;
     }
 #if 1
@@ -253,15 +254,15 @@ private:
 };
 
 template<typename ScalarType, typename DeriveType>
-std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , DeriveType>
+std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , typename Traits<DeriveType>::DerefType>
 operator * (ScalarType scalar, const MatrixBase<DeriveType>& rhs) { return rhs * scalar; }
 
 template<typename ScalarType, typename DeriveType>
-std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , DeriveType>
+std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , typename Traits<DeriveType>::DerefType>
 operator + (ScalarType scalar, const MatrixBase<DeriveType>& rhs) { return rhs + scalar; }
 
 template<typename ScalarType, typename DeriveType>
-std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , DeriveType>
+std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , typename Traits<DeriveType>::DerefType>
 operator - (ScalarType scalar, const MatrixBase<DeriveType>& rhs) { return rhs - scalar; }
 
 #if 0
@@ -323,7 +324,7 @@ MatrixBase<DeriveType>::operator () (const Block& b)
     return MatrixRef<EntryType>(self, offset_shape[0], offset_shape[1], false);
 }
 
-#if 1
+#if 0
 
 template<typename DType, typename=void>
 std::string to_string(const DType& m, size_t prec=6);

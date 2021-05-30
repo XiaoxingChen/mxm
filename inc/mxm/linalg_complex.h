@@ -56,9 +56,24 @@ public:
         this->traverse([&](size_t i){ (*this)(i) = rhs(i); });
     }
 
-
+    // obj to obj
     ThisType& operator *= (const ThisType& rhs)  { (*this) = complexMul(*this, rhs); return *this;}
+    ThisType& operator += (const ThisType& rhs) { this->traverse([&](size_t i) {data_.at(i) += rhs(i);}); return *this; }
+    ThisType& operator -= (const ThisType& rhs) { this->traverse([&](size_t i) {data_.at(i) -= rhs(i);}); return *this; }
+
     ThisType operator * (const ThisType& rhs) const { return ThisType(*this) *= rhs;}
+    ThisType operator + (const ThisType& rhs) const { return ThisType(*this) += rhs; }
+    ThisType operator - (const ThisType& rhs) const { return ThisType(*this) -= rhs; }
+
+
+    // obj to scalar, "+/-" only takes effect on real part, "*" take effects on both
+    ThisType& operator += (const DType& rhs) { data_.at(0) += rhs; return *this; }
+    ThisType& operator -= (const DType& rhs) { data_.at(0) -= rhs; return *this; }
+
+    ThisType operator + (const DType& rhs) const { return ThisType(*this) += rhs; }
+    ThisType operator - (const DType& rhs) const { return ThisType(*this) -= rhs; }
+
+    ThisType operator - () const { return ThisType(*this) *= -1; }
 
     ThisType conj() const { ThisType ret(-(*this)); ret(0) *= -1; return ret;}
 
@@ -114,7 +129,6 @@ inline typename std::enable_if<std::is_floating_point<DType>::value , std::strin
 to_string(const DType& v, size_t prec);
 
 template<typename DType, unsigned int N, typename>
-// template<typename DType, unsigned int N, typename=void>
 std::string to_string(const Hypercomplex<DType, N>& v, size_t prec)
 {
     std::string ret;

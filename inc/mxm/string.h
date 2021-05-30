@@ -3,8 +3,9 @@
 
 #include <string>
 #include <array>
+#include "string_forward_declaration.h"
 
-#include "cv_pixel.h"
+// #include "cv_pixel.h"
 
 namespace mxm
 {
@@ -57,7 +58,7 @@ std::string to_string(const Matrix<DType>& mat, size_t prec)
         ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
     return ret;
 }
-#elif 0
+#elif 1
 template<typename DeriveType>
 std::string to_string(const MatrixBase<DeriveType>& mat_in, size_t prec=6)
 {

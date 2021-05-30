@@ -10,6 +10,7 @@
 #include "mxm/linalg_mat.h"
 #include "mxm/linalg_mat_ref.h"
 #include "mxm/linalg_mat_block.h"
+#include "mxm/string.h"
 #endif
 
 #if TEST_AVAILABLE_LINALG_VEC
@@ -354,17 +355,30 @@ inline void testEigenvalues()
         Matrix<Complex<FloatType>> cmat_a = Matrix<Complex<FloatType>>::zeros({n,n});
         cmat_a.traverse([&](auto i, auto j){cmat_a(i,j)(0) = mat_a(i,j);});
 
+        // std::cout << mxm::to_string(cmat_a) << std::endl;
+
         auto eig_val_vec = eig(mat_a);
 
-        for(size_t i = 0; i < n; i++)
+        // std::cout << mxm::to_string(eig_val_vec) << std::endl;
+
+        // for(size_t i = 0; i < n; i++)
+        for(size_t i = 0; i < 1; i++)
         {
+            auto eig_val = eig_val_vec[0](i,0);
             auto eig_vec = eig_val_vec[1](Col(i));
-            // std::cout << "eigv: " << mxm::to_string(eig_vec) << std::endl;
-            auto err = (cmat_a.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
+            // std::cout << "eigv: " << mxm::to_string(eig_vec.T()) << std::endl;
+            auto err = (cmat_a.matmul(eig_vec) - eig_val * eig_vec).norm();
             if(err > 20 * eps())
             {
                 std::cout << "Error! " << __FILE__ << ":" << __LINE__ << std::endl;
                 std::cout << "i: " << i << ", error: " << err << std::endl;
+                std::cout << "mat.matmul(vec): " << mxm::to_string(cmat_a.matmul(eig_vec).T()) << "\n, eig_val * eig_vec: "
+                << mxm::to_string((eig_val * eig_vec).T()) << std::endl;
+                std::cout << "residual: " << mxm::to_string((cmat_a.matmul(eig_vec) - eig_val * eig_vec).T()) << std::endl;
+                auto lhs = cmat_a.matmul(eig_vec);
+                auto rhs = eig_val * eig_vec;
+                std::cout << "residual2: " << mxm::to_string((lhs - rhs).T()) << std::endl;
+
             }
         }
         // std::cout << mxm::to_string(eig_val_vec) << std::endl;
@@ -568,6 +582,26 @@ inline void testMatRef()
         }
 
     }
+
+    {//test 11
+        size_t n = 5;
+        Mat mat_a({n,n}, {
+        0.0028910405, 0.2797538283, 0.9771945489, 0.2228983867, 0.6710390525,
+        0.6567445086, 0.0454680832, 0.9139623576, 0.7276380447, 0.0890351175,
+        0.7236019741, 0.6144312151, 0.5533828464, 0.4187292391, 0.0462407111,
+        0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
+        0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
+
+        Mat eig_vecs(fixRow(n), {0.466463, 0.516039, 0.524968, 0.327560, 0.365007});
+        auto eig_vec = eig_vecs(Col(0));
+        float eig_val = 2.09374581;
+
+        if((mat_a.matmul(eig_vec) - eig_val * eig_vec).norm() > 10 * eps())
+        {
+            std::cout << mxm::to_string((mat_a.matmul(eig_vec) - eig_val * eig_vec).T()) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 
 #if TEST_AVAILABLE_LINALG_SOLVE
@@ -616,6 +650,45 @@ inline void testComplexBase()
         auto mat = Matrix<Complex<float>>::identity(3);
         if(mxm::to_string(mat).size() == 0)
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    {
+        float error = (Complex<float>{0.5, 0} - 0.5).norm();
+        if(error > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(1){
+        size_t n = 5;
+        Mat v_real(fixCol(n), {0.97665438, 1.08045411, 1.09914879, 0.68582671, 0.76423185});
+        Matrix<Complex<float>> v_complex(v_real);
+        if((v_complex - v_real).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(1){//test 03
+        size_t n = 5;
+        Mat mat_a_real({n,n}, {
+        0.0028910405, 0.2797538283, 0.9771945489, 0.2228983867, 0.6710390525,
+        0.6567445086, 0.0454680832, 0.9139623576, 0.7276380447, 0.0890351175,
+        0.7236019741, 0.6144312151, 0.5533828464, 0.4187292391, 0.0462407111,
+        0.6310457773, 0.0022013412, 0.2199422767, 0.7315915776, 0.0965157312,
+        0.2525883171, 0.7773467106, 0.2399114012, 0.2521241482, 0.1006454857});
+
+        Matrix<Complex<float>> mat_a(mat_a_real);
+        // std::cout << mxm::to_string(mat_a) << std::endl;
+
+        Mat eig_vec_real(fixRow(n), {0.46646273, 0.51603882, 0.52496764, 0.32755968, 0.36500698});
+        Matrix<Complex<float>> eig_vec(eig_vec_real);
+        Complex<float> eig_val{2.09374581, 0};
+
+        // Mat v_expected(fixRow(n), {0.97665438, 1.08045411, 1.09914879, 0.68582671, 0.76423185});
+
+        if((mat_a.matmul(eig_vec) - eig_val * eig_vec).norm() > 10 * eps())
+        {
+            // std::cout << mxm::to_string((mat_a.matmul(eig_vec) - v_expected).T()) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 
 

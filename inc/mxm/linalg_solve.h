@@ -519,6 +519,7 @@ eig(const Matrix<DType>& mat)
         eig_vals(i,0) = prio_que.at(i);
         eig_vecs.setBlock(0,i, inverseIteration(cmat, prio_que.at(i), guess));
     }
+    // std::cout << mxm::to_string(ret) << std::endl;
     return ret;
 }
 
