@@ -34,7 +34,7 @@ public:
     const DType& at(size_t i) const {return (*deriveThis())(i);}
     DType& at(size_t i) {return (*deriveThis())(i);}
 
-    DType norm() const { DType sum; traverse([&, this](size_t i) { DType v = at(i); sum += v * v;}); return sqrt(sum);}
+    DType norm() const { DType sum(0); traverse([&, this](size_t i) { DType v = at(i); sum += v * v;}); return sqrt(sum);}
     DeriveType& normalize() { return (*deriveThis()) *= (1./DeriveType::norm()); }
     DeriveType normalized() const { return DeriveType(*deriveThis()).normalize(); }
     std::string str() const { std::string ret; traverse([&](size_t i) {ret += to_string(at(i)) + " ";}); return ret; }
