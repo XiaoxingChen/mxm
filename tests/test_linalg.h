@@ -149,13 +149,13 @@ inline void testQRcalcMatQ()
 
         // std::cout << mxm::to_string((q_r[0].matmul(q_r[1]))) << std::endl;
 
-        if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() > 2 * eps())
+        if((conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() > 5 * eps())
         {
             std::cout << "error: " << (conj(q_r[0].T()).matmul(q_r[0]) - Matrix<Complex<FloatType>>::identity(3)).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
-        if((q_r[0].matmul(q_r[1]) - m).norm() > 15 * eps())
+        if((q_r[0].matmul(q_r[1]) - m).norm() > 30 * eps())
         {
             std::cout << "error: " << (q_r[0].matmul(q_r[1]) - m).norm() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));

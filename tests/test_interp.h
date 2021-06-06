@@ -10,7 +10,7 @@
 
 void testTriangular()
 {
-    Mat tex_coord({2,3}, {0,0, 1,0, 0.5, 0.5*sqrt(3.)}, Mat::COL);
+    Mat tex_coord({2,3}, {0,0, 1,0, 0.5, 0.5f*sqrt(3.f)}, Mat::COL);
     auto ret = interp::triangular(Vec({.5, .5}), tex_coord, tex_coord);
     if((ret - Vec::ones(2) * .5).norm() > eps())
     {

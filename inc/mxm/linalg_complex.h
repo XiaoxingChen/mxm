@@ -109,6 +109,10 @@ using Quaternion = Hypercomplex<DType, 4>;
 template<typename DType>
 using Complex = Hypercomplex<DType, 2>;
 
+template<typename DType>
+inline typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
+to_string(const DType& v, size_t prec);
+
 template<typename DType, unsigned int N>
 std::string to_string(const Hypercomplex<DType, N>& v, size_t prec=6)
 {

@@ -208,9 +208,12 @@ Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
     // Matrix<DType> mat_q(calcMatQ(mat_a));
     auto q_r = decomposeByRotation(mat_a);
 
-    if((q_r[0].matmul(q_r[0])).norm() - q_r[0].shape(0) > eps())
+    if((q_r[0].matmul(conj(q_r[0].T())) - Matrix<DType>::identity(q_r[0].shape(0)) ).norm()  > 10 * eps())
     {
         // singular
+        auto tmp = q_r[0].matmul(conj(q_r[0].T()));
+        std::cout << "q.matmul(q.T()): \n" << tmp.str() << std::endl;
+        std::cout << "norm: " << (tmp - Matrix<DType>::identity(q_r[0].shape(0)) ).norm() << std::endl;
         std::cout << "Singular Matrix!" << std::endl;
         return Matrix<DType>::zeros(b.shape());
     }
