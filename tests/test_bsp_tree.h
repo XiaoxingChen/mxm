@@ -11,7 +11,7 @@ using namespace mxm;
 inline void testAxisPartition()
 {
     {
-        Mat points({2, 4}, {0,0, 0,1, 1,0, 1,1}, Mat::COL);
+        Mat points({2, 4}, {0,0, 0,1, 1,0, 1,1}, COL);
         std::vector<size_t> index_buffer{3,2,1,0};
         Vec thresholds({0.5, 0,5});
 
@@ -29,7 +29,7 @@ inline void testAxisPartition()
     }
 
     {
-        Mat points({2, 4}, {0,0, 0,1, 1,0, 1,1}, Mat::COL);
+        Mat points({2, 4}, {0,0, 0,1, 1,0, 1,1}, COL);
         std::vector<size_t> index_buffer{3,2,1,0};
         Vec thresholds({0.5, 0,5});
 
@@ -49,7 +49,7 @@ inline void testAxisPartition()
     }
 
     if(0){
-        std::shared_ptr<Mat> p_points(new Mat ({2, 4}, {0,0, 0,1, 1,0, 1,1}, Mat::COL));
+        std::shared_ptr<Mat> p_points(new Mat ({2, 4}, {0,0, 0,1, 1,0, 1,1}, COL));
         bsp::PointCloudTree tree(p_points);
         tree.build(1, true);
         for(const auto & node: tree.nodeBuffer())

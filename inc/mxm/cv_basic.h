@@ -80,7 +80,7 @@ inline Matrix<size_t> nonMaximumSuppression(const Matrix<float>& heat_map, const
 
         }
     }
-    return Matrix<size_t>(fixRow(2), std::move(local_maximums), Mat::COL);
+    return Matrix<size_t>(fixRow(2), std::move(local_maximums), COL);
 }
 
 inline Matrix<size_t> adaptiveNonMaximalSuppression(const Matrix<float>& heat_map)
@@ -100,7 +100,7 @@ inline Matrix<size_t> adaptiveNonMaximalSuppression(const Matrix<float>& heat_ma
         }
     });
     // todo
-    return Matrix<size_t>(fixRow(2), std::move(coords), Mat::COL);
+    return Matrix<size_t>(fixRow(2), std::move(coords), COL);
 }
 
 inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape)
@@ -114,7 +114,7 @@ inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape
             corners.push_back(j);
         }
     }
-    return Matrix<size_t>(fixRow(2), std::move(corners), Mat::COL);
+    return Matrix<size_t>(fixRow(2), std::move(corners), COL);
 }
 
 template<typename PType>

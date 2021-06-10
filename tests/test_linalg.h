@@ -11,6 +11,7 @@
 #include "mxm/linalg_mat_ref.h"
 #include "mxm/linalg_mat_block.h"
 #include "mxm/string.h"
+#include "mxm/linalg_norm.h"
 #endif
 
 #if TEST_AVAILABLE_LINALG_VEC
@@ -49,14 +50,26 @@ inline void testOrthogonalComplement()
     }
 
     {
-        Mat in({3,2},{-0.16224509,0.16913061, 0.08134538,  0., -0.06551123,  0.});
-        Mat expected({3,1},{0., -0.01107995, -0.01375799});
+        Mat in({3,2},{
+            -0.16224509,0.16913061, 
+            0.08134538,  0., 
+            -0.06551123,  0.});
+        Mat expected({3,1},{
+            0., 
+            -0.01107995, 
+            -0.01375799});
 
         if((orthogonalComplement(in) - expected).norm() > eps())
+        {
+            std::cout << "error: " << (orthogonalComplement(in) - expected).norm() << std::endl;
+            std::cout << "actual: " << mxm::to_string (orthogonalComplement(in).T()) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+            
     }
 
-    if(0){
+    #if(0)
+    {
         Mat in({1,3},{1,0,0});
         Mat complement = orthogonalComplement(in);
         Vec out1 = complement(Row(0));
@@ -68,6 +81,7 @@ inline void testOrthogonalComplement()
         if(static_cast<Vec>(in).dot(out2) > eps())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+    #endif
 
 }
 #else
@@ -599,6 +613,21 @@ inline void testMatRef()
         if((mat_a.matmul(eig_vec) - eig_val * eig_vec).norm() > 10 * eps())
         {
             std::cout << mxm::to_string((mat_a.matmul(eig_vec) - eig_val * eig_vec).T()) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    { // test 12
+        Mat left = Mat::zeros({4,3});
+        Mat right = Mat::ones({4,3});
+
+        auto blk_l = Block({0,3},{0,3});
+        auto blk_r = Block({1,4},{0,3});
+        left(blk_l) = right(blk_r);
+        
+        if(left.norm() < eps())
+        {
+            std::cout << mxm::to_string(left) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }

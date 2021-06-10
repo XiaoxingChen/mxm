@@ -141,7 +141,7 @@ PixelType<DType, N> inv(const PixelType<DType, N>& val)
 template<typename PType>
 Matrix<PixelType<uint8_t, channelNum<PType>()>> quantize(const Matrix<PType>& img)
 {
-    Matrix<PixelType<uint8_t, channelNum<PType>()>> tmp(img.shape(), {}, Mat::ROW);
+    Matrix<PixelType<uint8_t, channelNum<PType>()>> tmp(img.shape(), {}, ROW);
     tmp = img;
     return tmp;
 }

@@ -9,15 +9,17 @@
 namespace mxm
 {
 
-template<typename DType>
-inline Matrix<DType> orthogonalComplement(const Matrix<DType>& vs)
+template<typename DeriveType>
+typename Traits<DeriveType>::DerefType orthogonalComplement(const MatrixBase<DeriveType>& vs_in)
 {
+    auto & vs = reinterpret_cast<const DeriveType&>(vs_in);
     int diff = static_cast<int>(vs.shape(0)) - vs.shape(1);
     if(diff == -1)
         return orthogonalComplement(vs.T()).T();
     if(diff != 1)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
+    using DType = typename Traits<DeriveType>::EntryType;
     Matrix<DType> ret({vs.shape(0), 1});
     for(size_t i = 0; i < vs.shape(0); i++)
     {

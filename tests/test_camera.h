@@ -21,10 +21,10 @@ inline void cameraTest1()
 inline void cameraTest2()
 {
     Camera cam(RigidTrans::identity(3), Vec({320,240}), Vec({640, 480}));
-    Mat points({3,3}, {1, 1, 1, 0, 0, 1, -1,-1,1}, Mat::COL);
+    Mat points({3,3}, {1, 1, 1, 0, 0, 1, -1,-1,1}, COL);
 
     Mat img = cam.project(points);
-    Mat img_expected({2,3}, {640, 480, 320, 240, 0,0}, Mat::COL);
+    Mat img_expected({2,3}, {640, 480, 320, 240, 0,0}, COL);
 
     if((img - img_expected).norm() > eps())
     {

@@ -96,7 +96,7 @@ inline void testBuildTree2()
         4.000000, 0.000000, 0.000000, 8.000000, 1.000000, 0.000000,
         6.000000, 0.000000, 0.000000, 10.000000, 1.000000, 0.000000,
         0.000000, 0.000000, 0.000000, 2.000000, 1.000000, 0.000000,
-        2.000000, 0.000000, 0.000000, 6.000000, 1.000000, 0.000000}, Mat::COL);
+        2.000000, 0.000000, 0.000000, 6.000000, 1.000000, 0.000000}, COL);
 
     for(size_t i = 0; i < node_buffer.size(); i++)
     {
@@ -138,7 +138,7 @@ inline void testMultiHit()
     -0.5, -0.5, -0.5,
     -0.5, 0.5, -0.5,
     0.5, -0.5, -0.5,
-    0.5, 0.5, -0.5}, Mat::COL));
+    0.5, 0.5, -0.5}, COL));
 
     std::shared_ptr<Matrix<size_t>> index_buffer( new Matrix<size_t>({3,12},{
         0 , 1 , 2 ,
@@ -152,7 +152,7 @@ inline void testMultiHit()
         16, 17, 18,
         19, 18, 17,
         20, 21, 22,
-        23, 22, 21}, Mat::COL));
+        23, 22, 21}, COL));
 
     bvh::PrimitiveMeshTree tree(vertex_buffer, index_buffer);
     tree.build(1, false);

@@ -25,7 +25,7 @@ inline Matrix<DType> windowGrids(DType x, DType y, const Shape& shape_limit, siz
             ret_data.push_back(j);
         }
     }
-    return Matrix<DType>(fixRow(2), std::move(ret_data), Mat::COL);
+    return Matrix<DType>(fixRow(2), std::move(ret_data), COL);
 }
 
 template<typename DType=float>

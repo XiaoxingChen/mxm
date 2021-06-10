@@ -61,8 +61,11 @@ public:
     MatrixRef(const ThisType& rhs);
 
     // assignment operators
-    // copy assignment
+    // 04 copy assignment
     template<typename DeriveType>  void operator = (const MatrixBase<DeriveType>& rhs);
+
+    // 05 copy self type
+    void operator = (const ThisType& rhs);
 
     //
     // static polymorphism
@@ -115,6 +118,14 @@ void MatrixRef<DType>::operator = (const MatrixBase<DeriveType>& rhs_in)
 
     this->traverse([&](auto i, auto j){ (*this)(i,j) = rhs(i,j); });
 
+}
+
+// 05: copy assignment
+template<typename DType>
+void MatrixRef<DType>::operator = (const MatrixRef<DType>& rhs)
+{
+    assert(rhs.shape() == shape());
+    this->traverse([&](auto i, auto j){ (*this)(i,j) = rhs(i,j); });
 }
 
 template<typename DType>

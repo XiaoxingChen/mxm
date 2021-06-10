@@ -33,7 +33,7 @@ class AxisAlignedBoundingBox
         max_ = Vec::ones(max_.size()) * (-INFINITY);
     }
     size_t dim() const { return min_.size(); }
-    std::string str() const { return min_.T().str() + max_.T().str(); }
+    std::string str() const { return mxm::to_string(min_.T()) + mxm::to_string(max_.T()); }
 
     std::vector<size_t> axesByLength() const { return argSort(max_ - min_); }
 

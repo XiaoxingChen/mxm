@@ -12,7 +12,7 @@ using namespace mxm;
 #if TEST_AVAILABLE_ALL
 void testQuantize01()
 {
-    Mat pts({2,3}, {3,3, 9,9, 20,4}, Mat::COL);
+    Mat pts({2,3}, {3,3, 9,9, 20,4}, COL);
     Matrix<uint32_t> quantized_pts = quantize(pts, 128);
     Matrix<uint32_t> expected({2,3}, {0,45,127, 0,45,7});
     if(quantized_pts != expected)

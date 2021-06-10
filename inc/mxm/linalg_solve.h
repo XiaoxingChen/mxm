@@ -334,7 +334,7 @@ Matrix<DType> Matrix<DType>::inv() const
 #endif
 
 // Inversion
-template<typename DeriveType, typename=void>
+template<typename DeriveType, typename>
 Matrix<typename Traits<DeriveType>::EntryType>
 inv(const MatrixBase<DeriveType>& mat)
 {
@@ -560,7 +560,7 @@ svd(const Matrix<DType>& mat)
 template <typename DType>
 std::array<Matrix<DType>, 2> tridiagonalizeSkewSymmetric(const Matrix<DType>& skew)
 {
-    assert(("Skew symmetric matrix must be square!", skew.square()));
+    assert(skew.square() && "Skew symmetric matrix must be square!");
 #if 0 // by reflection
     const size_t& n = skew.shape(0);
     mat_orth = Matrix<DType>::identity(n);

@@ -33,7 +33,7 @@ public:
 
     std::string str() const
     {
-        return std::string("plane: \n") + plane_.str() + "angle: " + std::to_string(angle_);
+        return std::string("plane: \n") + mxm::to_string(plane_) + "angle: " + std::to_string(angle_);
     }
 
     void checkDimension() const

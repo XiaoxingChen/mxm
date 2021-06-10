@@ -38,7 +38,7 @@ public:
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    size_t size() const { return this->shape_[0]; }
+    size_t size() const { return this->shape(0); }
 #if 0
     DType sum() const
     {

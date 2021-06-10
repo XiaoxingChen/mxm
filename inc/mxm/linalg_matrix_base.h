@@ -23,7 +23,7 @@ template<typename DType> class MatrixRef;
 class Block;
 std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 
-template<typename DType, typename=void>
+template<typename DType, typename>
 typename Traits<DType>::ArithType norm(const DType& m);
 
 template<typename DType>
@@ -167,7 +167,11 @@ public:
     }
 #endif
 
-    DeriveType operator -() const        { return reinterpret_cast<DeriveType&>(*this) *= -1;}
+    DeriveType operator -() const        
+    { 
+        using ReturnType = typename Traits<DeriveType>::DerefType;
+        return ReturnType(*this) *= -1;
+    }
 
     bool operator == (const DeriveType& rhs)
     {
@@ -371,6 +375,7 @@ Matrix< typename Traits<DeriveType>::EntryType> MatrixBase<DeriveType>::inv() co
 }
 
 // Norm and normalization interfaces
+#if 0
 template<typename DeriveType, typename=void>
 typename Traits<DeriveType>::ArithType
 norm(const MatrixBase<DeriveType>& mat)
@@ -384,6 +389,11 @@ norm(const MatrixBase<DeriveType>& mat)
     });
     return sqrt(sum2);
 }
+#else
+template<typename DeriveType, typename=void>
+typename Traits<DeriveType>::ArithType
+norm(const MatrixBase<DeriveType>& mat);
+#endif
 
 template<typename DeriveType>
 typename Traits<DeriveType>::ArithType MatrixBase<DeriveType>::norm() const
@@ -409,9 +419,6 @@ Matrix<typename Traits<DeriveType>::EntryType> MatrixBase<DeriveType>::normalize
 
 // for float point type
 
-template<typename DType,
-    typename=std::enable_if_t<std::is_floating_point<DType>::value, void>>
-typename Traits<DType>::ArithType norm(const DType& val){ return std::abs(val); }
 template<typename DType,
     typename=std::enable_if_t<std::is_floating_point<DType>::value, void>>
 typename Traits<DType>::ArithType inv(const DType& val){ return DType(1)/val; }
