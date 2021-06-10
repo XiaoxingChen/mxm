@@ -2,11 +2,12 @@
 #define _TEST_PIXEL_H_
 #include "test_config.h"
 
-#if TEST_AVAILABLE_ALL
+#if TEST_AVAILABLE_CV_BASIC
 #include <iostream>
 #include "mxm/cv_basic.h"
 #include "mxm/linalg.h"
 #include "mxm/cv_kernel.h"
+#include "mxm/random.h"
 
 
 using namespace mxm;

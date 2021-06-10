@@ -3,6 +3,8 @@
 
 #include "mxm/linalg_mat_ref.h"
 #include "mxm/linalg_complex.h"
+#include "mxm/linalg_norm.h"
+#include "mxm/string.h"
 #include <iostream>
 #include <algorithm>
 

@@ -119,7 +119,7 @@ template<typename PType>
 constexpr std::enable_if_t<std::is_same<PType, PixelType< typename PType::EntryType, PType::size()>>::value, size_t> channelNum() { return PType::size(); }
 
 template<typename DType, size_t N>
-std::string to_string(const PixelType<DType, N>& px, size_t prec=6)
+std::string to_string(const PixelType<DType, N>& px, size_t prec)
 {
     std::string ret("(");
     px.traverse([&](size_t i){
@@ -199,8 +199,15 @@ typename std::enable_if_t<
     >::value , Matrix<DType>
 > operator * (LType lhs, const Matrix<DType>& rhs) { return rhs * lhs;}
 
+// template<typename DType, size_t N>
+// struct NormTraits<PixelType<DType, N>>{using type = typename PixelType<DType, N>::EntryType;};
 template<typename DType, size_t N>
-struct NormTraits<PixelType<DType, N>>{using type = typename PixelType<DType, N>::EntryType;};
+struct Traits<PixelType<DType, N>>{
+    using ArithType = DType;
+    using EntryType = DType;
+    static PixelType<DType, N> identity() { return PixelType<DType, N>(1); }
+    static PixelType<DType, N> zero() { return PixelType<DType, N>(0); }
+};
 
 namespace random
 {
@@ -212,7 +219,7 @@ uniform();
 template<typename DType>
 typename std::enable_if<
     std::is_same<
-        DType, PixelType< typename DType::EntryType , DType::size()>
+        DType, ::mxm::PixelType< typename DType::EntryType , DType::size()>
     >::value, DType
 >::type
 uniform()

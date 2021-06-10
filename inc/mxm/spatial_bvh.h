@@ -88,7 +88,7 @@ public:
     PointCloudTree(
         std::shared_ptr<Mat>& point_buffer)
         :point_buffer_(point_buffer) {}
-    size_t dim() const {return point_buffer_->shape(0);}
+    virtual size_t dim() const override {return point_buffer_->shape(0);}
     size_t pointNum() const {return point_buffer_->shape(1);}
 
     // void build(size_t point_per_leaf=4, bool verbose=true);

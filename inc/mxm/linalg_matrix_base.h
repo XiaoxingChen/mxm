@@ -253,6 +253,7 @@ public:
     DeriveType& normalize();
     Matrix<EntryType> normalized() const;
     Matrix<EntryType> inv() const;
+    Matrix<EntryType> pow(size_t i) const;
 
 private:
 };
@@ -453,6 +454,17 @@ conj(const MatrixBase<DeriveType>& in)
     return ret;
 }
 #endif
+
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType> MatrixBase<DeriveType>::pow(size_t n) const
+{
+    auto ret = Matrix<typename Traits<DeriveType>::EntryType>::identity(shape(0));
+    for(size_t i = 0; i < n; i++)
+    {
+        ret = this->matmul(ret);
+    }
+    return ret;
+}
 } // namespace mxm
 
 

@@ -2,7 +2,7 @@
 #define _TEST_BAZIER_H
 
 #include "test_config.h"
-#if TEST_AVAILABLE_ALL
+#if TEST_AVAILABLE_BAZIER
 
 #include "mxm/bazier.h"
 

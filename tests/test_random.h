@@ -2,7 +2,7 @@
 #define _TEST_RANDOM_H_
 #include "test_config.h"
 
-#if TEST_AVAILABLE_ALL
+#if TEST_AVAILABLE_RANDOM
 #include "mxm/random.h"
 using namespace mxm;
 

@@ -125,10 +125,10 @@ template<typename DType>
 using Complex = Hypercomplex<DType, 2>;
 
 template<typename DType>
-inline typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
+typename std::enable_if<std::is_floating_point<DType>::value , std::string>::type
 to_string(const DType& v, size_t prec);
 
-template<typename DType, unsigned int N, typename>
+template<typename DType, unsigned int N>
 std::string to_string(const Hypercomplex<DType, N>& v, size_t prec)
 {
     std::string ret;
@@ -136,6 +136,12 @@ std::string to_string(const Hypercomplex<DType, N>& v, size_t prec)
         ret += (v(i) >= 0 && i > 0 ? "+" : "");
         ret += (mxm::to_string(v(i), prec) + complexSymbol(i)); });
     return ret;
+}
+
+template<typename DType, unsigned int N>
+std::string to_string(const Hypercomplex<DType, N>& v)
+{
+    return mxm::to_string(v, 6);
 }
 
 template<typename DType, unsigned int N>

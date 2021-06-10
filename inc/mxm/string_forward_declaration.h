@@ -19,10 +19,19 @@ to_string(const DType& v, size_t prec);
 
 // Hypercomplex to string
 template<typename DType, unsigned int N> class Hypercomplex;
-template<typename DType, unsigned int N, typename=void>
-std::string to_string(const Hypercomplex<DType, N>& v, size_t prec=6);
+
+template<typename DType, unsigned int N>
+std::string to_string(const Hypercomplex<DType, N>& v, size_t prec);
+
+template<typename DType, unsigned int N>
+std::string to_string(const Hypercomplex<DType, N>& v);
 
 // Pixel to string
+template<typename DType, size_t N>
+class PixelType;
+
+template<typename DType, size_t N>
+std::string to_string(const PixelType<DType, N>& px, size_t prec=6);
 
 } // namespace mxm
 

@@ -49,10 +49,16 @@ inline size_t argMax(const Vec& v)
     return idx_max;
 }
 #else
-template<typename DType>
-typename std::enable_if_t<std::is_arithmetic<DType>::value, std::array<size_t, 2>>
-argMax(const Matrix<DType>& mat)
+template<typename DeriveType>
+typename std::enable_if_t<
+    std::is_arithmetic< 
+        typename Traits<DeriveType>::EntryType 
+    >::value, 
+    std::array<size_t, 2>
+>
+argMax(const MatrixBase<DeriveType>& mat)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     std::array<size_t, 2> ret{0,0};
     DType curr_max = std::numeric_limits<DType>::min();
     mat.traverse([&](auto i, auto j){
@@ -223,6 +229,13 @@ Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const M
     return ret;
 
 }
+
+template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const MatrixRef<CoreType>& core)
+{
+    Matrix<CoreType> deref_core(core);
+    return convolute(src, deref_core);
+}
 template<typename IntType>
 typename std::enable_if_t<std::is_integral<IntType>::value, IntType>
 combinations(IntType m, IntType n)
@@ -232,6 +245,17 @@ combinations(IntType m, IntType n)
     IntType numerator = 1;
     for(IntType i = 0; i < n; i++) numerator *= (m - i);
     return numerator / denominator;
+}
+
+template<typename DeriveType>
+typename Traits<DeriveType>::EntryType sum(const MatrixBase<DeriveType>& src)
+{
+    using EntryType = typename Traits<DeriveType>::EntryType;
+    EntryType ret = Traits<EntryType>::zero();
+    src.traverse([&](auto i, auto j){
+        ret += src(i,j);
+    });
+    return ret;
 }
 
 } // namespace mxm

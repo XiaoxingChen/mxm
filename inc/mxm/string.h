@@ -27,7 +27,7 @@ to_string(const DType& v, size_t prec)
 }
 
 template<template <class, class> class Container, class T, class Alloc>
-inline std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
+std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
 {
     std::string ret;
     for(size_t i = 0; i < container.size(); i++)

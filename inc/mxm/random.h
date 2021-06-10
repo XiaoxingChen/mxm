@@ -4,7 +4,7 @@
 #include <functional>
 #include <random>
 #include "linalg_mat.h"
-#include "cv_pixel.h"
+#include "random_forward_declaration.h"
 
 namespace mxm
 {

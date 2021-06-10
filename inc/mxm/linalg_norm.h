@@ -34,9 +34,17 @@ struct Traits;
 template<typename T>
 struct MatrixBase;
 
-template<typename DType,
-    typename=std::enable_if_t<std::is_floating_point<DType>::value, void>>
-typename Traits<DType>::ArithType norm(const DType& val){ return std::abs(val); }
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type norm(const DType& in)
+{
+    return abs(in);
+}
+
+template<typename DType, unsigned int N>
+class Hypercomplex;
+
+template<typename DType, unsigned int N>
+typename Traits<Hypercomplex<DType, N>>::ArithType norm(const Hypercomplex<DType, N>& in);
 
 template<typename DeriveType, typename>
 typename Traits<DeriveType>::ArithType

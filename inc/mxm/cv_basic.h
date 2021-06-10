@@ -4,6 +4,7 @@
 #include "cv_pixel.h"
 #include "cv_kernel.h"
 #include "interpolation.h"
+#include "linalg_utils.h"
 
 namespace mxm
 {
@@ -13,7 +14,7 @@ resize(const Matrix<PType>& img, const Shape& shape, const std::string& strategy
 {
     Matrix<PType> ret(shape);
 
-    using DType = typename NormTraits<PType>::type;
+    using DType = typename Traits<PType>::ArithType;
     // std::cout << "k_w: " << k_w << ", k_h: " << k_h << std::endl;
 
     ret.traverse([&](auto i, auto j){
@@ -147,7 +148,7 @@ template<typename PType> using ImagePyramid = std::vector<Matrix<PType>>;
 template<typename PType>
 std::vector<Matrix<PType>> gaussPyramid(const Matrix<PType>& img, size_t level, bool return_blured=true)
 {
-    using DType = typename NormTraits<PType>::type;
+    using DType = typename Traits<PType>::ArithType;
     std::vector<Matrix<PType>> pyramid;
     Matrix<PType> prev_img(img);
     for(size_t i = 0; i < level; i++)
