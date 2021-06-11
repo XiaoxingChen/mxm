@@ -92,6 +92,8 @@ public:
     MatrixRef<DType> operator () (const Block& b) { return MatrixBase<ThisType>::operator()(b); };
     const MatrixRef<DType> operator () (const Block& b) const { return MatrixBase<ThisType>::operator()(b); };
 
+    const DType * data() const { return data_.data(); }
+
 };
 
 class AutoShape
