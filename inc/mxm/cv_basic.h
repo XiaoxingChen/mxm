@@ -6,6 +6,7 @@
 #include "interpolation.h"
 #include "linalg_utils.h"
 
+#include <map>
 namespace mxm
 {
 template<typename PType>
@@ -102,6 +103,79 @@ inline Matrix<size_t> adaptiveNonMaximalSuppression(const Matrix<float>& heat_ma
     });
     // todo
     return Matrix<size_t>(fixRow(2), std::move(coords), COL);
+}
+
+inline std::vector<std::array<size_t, 2>> greaterThan(
+    const Matrix<float>& img, float thresh)
+{
+    std::vector<std::array<size_t, 2>> coord_buffer;
+    img.traverse([&](auto i, auto j){ if(img(i,j) > thresh) coord_buffer.push_back({i,j}); });
+    std::sort(coord_buffer.begin(), coord_buffer.end(),
+        [&](auto & lhs, auto & rhs) {return img(lhs[0], lhs[1]) < img(rhs[0], rhs[1]);});
+    return coord_buffer;
+}
+
+inline Matrix<size_t> gridPartitionNonMaximalSuppression(
+    const Matrix<float>& img,
+    const std::vector<std::array<size_t, 2>>& coord_buffer,
+    size_t max_pt_num,
+    float min_dist)
+{
+    using Coord2D = std::array<size_t, 2>;
+
+    size_t grid_width = size_t(min_dist + 0.5);
+    float dist_square = min_dist * min_dist;
+    // grid_coord to idx_of_idx
+    std::map<Coord2D, std::vector<Coord2D>> coord_grid_to_img_map;
+    auto isOverlap = [&](
+        const Coord2D& img_coord,
+        const Coord2D& grid_coord,
+        float dist_square)->bool
+        {
+            if(0 == coord_grid_to_img_map.count(grid_coord)) return false;
+
+            for(auto & stored_img_coord : coord_grid_to_img_map[grid_coord])
+            {
+                float dx = float(img_coord[0]) - float(stored_img_coord[0]);
+                float dy = float(img_coord[1]) - float(stored_img_coord[1]);
+                if((dx *dx + dy*dy) < dist_square) return true;
+            }
+            return false;
+        };
+
+    std::vector<size_t> result_mem;
+
+    for(auto & img_coord : coord_buffer)
+    {
+        size_t grid_x = img_coord[0] / grid_width;
+        size_t grid_y = img_coord[1] / grid_width;
+        Coord2D grid_coord;
+
+        bool has_overlap = false;
+        for(grid_coord[0] = grid_x > 0 ? grid_x-1 : 0; grid_coord[0] < grid_x+2; grid_coord[0]++)
+        {
+            for(grid_coord[1] = grid_y > 0 ? grid_y-1 : 0; grid_coord[1] < grid_y+2; grid_coord[1]++)
+            {
+                has_overlap = has_overlap || isOverlap(img_coord, grid_coord, dist_square);
+                if(has_overlap) break;
+            }
+            if(has_overlap) break;
+        }
+        // std::cout << grid_x << "," << grid_y << std::endl;
+        if(!has_overlap)
+        {
+            coord_grid_to_img_map[{grid_x, grid_y}].push_back(img_coord);
+            result_mem.push_back(img_coord[0]);
+            result_mem.push_back(img_coord[1]);
+        }
+        else
+        {
+            // std::cout << "overlap" << std::endl;
+        }
+        if((result_mem.size() / 2) >= max_pt_num) break;
+    }
+
+    return Matrix<size_t>(fixRow(2), std::move(result_mem), COL);
 }
 
 inline Matrix<size_t> nmsGrid(const Matrix<float>& mat, const Shape& block_shape)
