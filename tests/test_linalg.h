@@ -51,12 +51,12 @@ inline void testOrthogonalComplement()
 
     {
         Mat in({3,2},{
-            -0.16224509,0.16913061, 
-            0.08134538,  0., 
+            -0.16224509,0.16913061,
+            0.08134538,  0.,
             -0.06551123,  0.});
         Mat expected({3,1},{
-            0., 
-            -0.01107995, 
+            0.,
+            -0.01107995,
             -0.01375799});
 
         if((orthogonalComplement(in) - expected).norm() > eps())
@@ -65,7 +65,7 @@ inline void testOrthogonalComplement()
             std::cout << "actual: " << mxm::to_string (orthogonalComplement(in).T()) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
-            
+
     }
 
     #if(0)
@@ -177,6 +177,13 @@ inline void testQRcalcMatQ()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
+    }
+
+    if(0){
+        Matrix<float> m = Matrix<float>::zeros({3,3});
+        auto q_r = qr::decomposeByRotation(m);
+
+        std::cout << mxm::to_string(q_r) << std::endl;
     }
 }
 
@@ -624,7 +631,7 @@ inline void testMatRef()
         auto blk_l = Block({0,3},{0,3});
         auto blk_r = Block({1,4},{0,3});
         left(blk_l) = right(blk_r);
-        
+
         if(left.norm() < eps())
         {
             std::cout << mxm::to_string(left) << std::endl;

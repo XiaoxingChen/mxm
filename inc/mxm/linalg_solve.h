@@ -244,6 +244,11 @@ template<typename DType>
 Matrix<DType> solve(const Matrix<DType>& mat_a, const Matrix<DType>& b)
 {
     // Matrix<DType> mat_q(calcMatQ(mat_a));
+    if( norm(mat_a) < eps())
+    {
+        std::cout << "Zero Matrix!" << std::endl;
+        return Matrix<DType>::zeros(b.shape());
+    }
     auto q_r = decomposeByRotation(mat_a);
 
     if((q_r[0].matmul(conj(q_r[0].T())) - Matrix<DType>::identity(q_r[0].shape(0)) ).norm()  > 10 * eps())
