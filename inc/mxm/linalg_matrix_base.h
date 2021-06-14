@@ -17,7 +17,7 @@ static const bool ROW = 0;
 static const bool COL = 1;
 
 template <typename DeriveType, typename=void>
-struct Traits{};
+struct Traits{ using ArithType = void; };
 template <typename DType> class Matrix;
 template<typename DType> class MatrixRef;
 class Block;

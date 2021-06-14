@@ -141,6 +141,164 @@ fastCorners(const Matrix<float>& src, float thresh=0.06)
 
     return ret;
 }
+
+template<uint8_t K>
+const Matrix<int>& briefPatternII();
+
+template<>
+const Matrix<int>& briefPatternII<8>()
+{
+    static const Matrix<int> pattern({4,64},
+    {-11,   0, -10,  10,
+    -1,   4,  -7,  -2,
+    0, -11,  -3,  -7,
+    4,   3,  -3,   3,
+    5,  -5,  -6,   1,
+    1,  -3,  -4,   5,
+    2,   1,   3,  -7,
+    -3,   8,  -7,  11,
+    -2,  -3,   2,   2,
+    0,   1,   6,  -4,
+    -5,   5, -10,   3,
+    4,  -2,   4,  -1,
+    10,  -2,   0,   3,
+    1,  -3,  -8,  -6,
+    6,   8,  -3,  -1,
+    -3, -10,  -1,  -1,
+    0,  10,  -2,   0,
+    -1,  -8,  -6,   5,
+    6,   3,   7,   8,
+    -6,   4,   5,  -4,
+    9,   5,  -4,  10,
+    6,   3,  -1,   3,
+    -8,  -5,   2,   1,
+    -2,  -7,   4,   7,
+    5,  -7,   2,  -1,
+    -5,  -9,  -7,   9,
+    5,   8,  -2,  12,
+    1,   3,   7,  -1,
+    14,  -1,   0,  -1,
+    -2,  15,  -1,  -3,
+    -4,  -1,   0,   5,
+    15,   5,  -3,   5,
+    3,  -2,   0,   1,
+    8,  10,   0,   8,
+    2,   0,   0,  -3,
+    -2,   7,  -9,   0,
+    -9,   2,   9,  -7,
+    0,   1,   3,  -1,
+    -2,  -1,  -4, -12,
+    6,   3,  -1,   7,
+    -1,  -8,   8,   2,
+    10,   0,   3,  -1,
+    2,  -4,   3,   0,
+    12,   6,  -5,  -6,
+    -5,   1,  -4,  -1,
+    -1,  16,  -3,  10,
+    4,   4,   1,   9,
+    0,   6,  -2,   2,
+    2,  -9,  -6,   3,
+    -9,   1,   1,  -2,
+    6,   0,  12,   3,
+    4,   1,   4,   2,
+    -2,   6,   0,   2,
+    -7,  -1,  -9,   2,
+    6,   0,  -3,  -4,
+    0,   0,  -5,  -8,
+    -4,  -5,   3,  12,
+    3,  -4,  -3,  -1,
+    -1,  10,  -4,   0,
+    -9,   0,   5,   0,
+    -2,  -9,   1,  11,
+    10,  -5,   9,   1,
+    1,   5,   2,   0,
+    0,  -5,  -4, -13}, COL);
+   return pattern;
+}
+
+// Reference:
+// https://papers.nips.cc/paper/2012/file/59b90e1005a220e2ebc542eb9d950b1e-Paper.pdf
+template<uint8_t K>
+class BriefDescriptor
+{
+public:
+    using ThisType = BriefDescriptor<K>;
+    const uint8_t BYTES = K;
+    // BriefDescriptor() { for(size_t i = 0; i < K; i++) data_.at(i) = 0; }
+    void operator = (const ThisType& rhs) { data_ = rhs.data_; }
+
+    void setBit(size_t b, bool val)
+    {
+        uint8_t idx = b / 8;
+        uint8_t pos = b % 8;
+        data_.at(idx) &= ~(uint8_t(1) << pos);
+        data_.at(idx) |= (val << pos);
+    }
+    uint8_t at(size_t i) const {return data_.at(i);}
+
+    size_t distance(const ThisType& rhs)
+    {
+        size_t cnt = 0;
+        for(size_t i = 0; i < K; i++)
+        {
+            uint8_t v = at(i) ^ rhs.at(i);
+            while(v)
+            {
+                cnt += (v & 1);
+                v >>= 1;
+            }
+        }
+        return cnt;
+    }
+private:
+    std::array<uint8_t, K> data_;
+};
+
+template<uint8_t K>
+std::string to_string(const BriefDescriptor<K>& v)
+{
+    std::stringstream stream;
+    stream << std::setfill ('0') << std::uppercase;
+    stream << std::hex;
+    for(size_t i = 0; i < K; i++)
+    {
+        stream << std::setw(2) << int(v.at(K - 1 - i));
+    }
+    return stream.str();
+}
+
+
+template<uint8_t K=8>
+Matrix<BriefDescriptor<K>> calculateBriefDescriptor(
+    const Matrix<float>& img, const Matrix<size_t>& pts)
+{
+    const size_t patch_size = 32;
+    const size_t half_w = patch_size / 2;
+
+    Matrix<BriefDescriptor<K>> ret({pts.shape(1), 1});
+    const auto & pattern = briefPatternII<K>();
+    for(size_t pt_idx = 0; pt_idx < pts.shape(1); pt_idx++)
+    {
+        if(pts(0, pt_idx) < half_w
+        || pts(0, pt_idx) + half_w >= img.shape(0)
+        || pts(1, pt_idx) < half_w
+        || pts(1, pt_idx) + half_w >= img.shape(1))
+        {
+            continue;
+        }
+
+        for(size_t b = 0; b < 8 * K; b++)
+        {
+            bool sign =
+                img(pts(0, pt_idx) + pattern(b, 0), pts(1, pt_idx) + pattern(b, 1))
+                > img(pts(0, pt_idx) + pattern(b, 2), pts(1, pt_idx) + pattern(b, 3));
+            ret(pt_idx, 0).setBit(b, sign);
+        }
+    }
+    return ret;
+}
+
+
 } // namespace mxm
 
 #endif // _CV_CORNER_H_
