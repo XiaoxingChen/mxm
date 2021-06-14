@@ -116,7 +116,6 @@ inline std::vector<std::array<size_t, 2>> greaterThan(
 }
 
 inline Matrix<size_t> gridPartitionNonMaximalSuppression(
-    const Matrix<float>& img,
     const std::vector<std::array<size_t, 2>>& coord_buffer,
     size_t max_pt_num,
     float min_dist)

@@ -51,9 +51,9 @@ inline size_t argMax(const Vec& v)
 #else
 template<typename DeriveType>
 typename std::enable_if_t<
-    std::is_arithmetic< 
-        typename Traits<DeriveType>::EntryType 
-    >::value, 
+    std::is_arithmetic<
+        typename Traits<DeriveType>::EntryType
+    >::value,
     std::array<size_t, 2>
 >
 argMax(const MatrixBase<DeriveType>& mat)

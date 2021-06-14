@@ -167,8 +167,8 @@ public:
     }
 #endif
 
-    DeriveType operator -() const        
-    { 
+    DeriveType operator -() const
+    {
         using ReturnType = typename Traits<DeriveType>::DerefType;
         return ReturnType(*this) *= -1;
     }
