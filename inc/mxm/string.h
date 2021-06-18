@@ -39,7 +39,7 @@ std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
 }
 
 template<class T, size_t N>
-inline std::string to_string(const std::array<T, N>& container, size_t prec=6)
+std::string to_string(const std::array<T, N>& container, size_t prec)
 {
     std::string ret;
     for(size_t i = 0; i < container.size(); i++)

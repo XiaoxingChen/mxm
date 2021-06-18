@@ -104,12 +104,25 @@ inline void testKernels()
     }
 }
 
+inline void testBresenhamCircle()
+{
+    {
+        // auto ret = halfQuarterBresenhamCircle(8.3);
+        // expendFullBresenhamCircle(ret);
+        // auto ret = bresenhamCircle(8.3);
+        auto ret = bresenhamCircle(6);
+        // std::cout << "ret size: " << ret.shape(1) << std::endl;
+        // std::cout << mxm::to_string(ret) << std::endl;
+    }
+}
+
 inline void testCvBasic()
 {
     testPixel();
     testImageResize();
     testPixelMemory();
     testKernels();
+    testBresenhamCircle();
 }
 #else
 inline void testCvBasic(){}

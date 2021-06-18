@@ -33,6 +33,9 @@ class PixelType;
 template<typename DType, size_t N>
 std::string to_string(const PixelType<DType, N>& px, size_t prec=6);
 
+template<class T, size_t N>
+std::string to_string(const std::array<T, N>& container, size_t prec=6);
+
 } // namespace mxm
 
 #endif // _STRING_FORWARD_DECLARATION_H_

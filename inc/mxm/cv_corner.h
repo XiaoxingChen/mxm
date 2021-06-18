@@ -52,23 +52,12 @@ using FastCornerBresehamCircle = std::array<float, 16>;
 
 inline FastCornerBresehamCircle fastCornerCircle(const Matrix<float>& src, size_t idx_x, size_t idx_y)
 {
-    FastCornerBresehamCircle ret{
-        src(idx_x - 3, idx_y + 0),
-        src(idx_x - 3, idx_y + 1),
-        src(idx_x - 2, idx_y + 2),
-        src(idx_x - 1, idx_y + 3),
-        src(idx_x - 0, idx_y + 3),
-        src(idx_x + 1, idx_y + 3),
-        src(idx_x + 2, idx_y + 2),
-        src(idx_x + 3, idx_y + 1),
-        src(idx_x + 3, idx_y + 0),
-        src(idx_x + 3, idx_y - 1),
-        src(idx_x + 2, idx_y - 2),
-        src(idx_x + 1, idx_y - 3),
-        src(idx_x + 0, idx_y - 3),
-        src(idx_x - 1, idx_y - 3),
-        src(idx_x - 2, idx_y - 2),
-        src(idx_x - 3, idx_y - 1)};
+    auto offset = bresenhamCircle(3);
+    FastCornerBresehamCircle ret;
+    for(size_t i = 0; i < offset.shape(1); i++)
+    {
+        ret.at(i) = src(idx_x + offset(i, 0), idx_y + offset(i,1));
+    }
     return ret;
 }
 

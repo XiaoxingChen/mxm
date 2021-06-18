@@ -233,6 +233,69 @@ std::vector<Matrix<PType>> gaussPyramid(const Matrix<PType>& img, size_t level, 
     return pyramid;
 }
 
+inline std::vector<std::ptrdiff_t> halfQuarterBresenhamCircle_(float radius)
+{
+    std::vector<std::ptrdiff_t> ret;
+    std::ptrdiff_t max_y = std::ptrdiff_t(sqrt(0.5f) * radius + 0.5);
+    ret.reserve(2 * (max_y * 8));
+    float r2 = radius * radius;
+    for(std::ptrdiff_t y = 0; y <= max_y; y++)
+    {
+        std::ptrdiff_t x = sqrt(r2 - y*y) + 0.5;
+        if(y == max_y && x == ret.at(ret.size() - 2)) continue;
+        ret.push_back(x);
+        ret.push_back(y);
+    }
+    return ret;
+}
+
+inline void expendFullBresenhamCircle_(std::vector<ptrdiff_t>& buff)
+{
+    // to quarter
+    int idx = buff.size() - 2;
+
+    while(idx >= 0)
+    {
+        if(buff.at(idx) != buff.at(idx + 1))
+        {
+            buff.push_back(buff.at(idx + 1));
+            buff.push_back(buff.at(idx + 0));
+        }
+        idx -= 2;
+    }
+    // to half
+    idx = buff.size() - 2;
+    while(idx >= 0)
+    {
+        if(buff.at(idx) != 0)
+        {
+            buff.push_back(-buff.at(idx + 0));
+            buff.push_back( buff.at(idx + 1));
+        }
+        idx -= 2;
+    }
+    // to full
+    idx = buff.size() - 2;
+    while(idx >= 0)
+    {
+        if(buff.at(idx + 1) != 0)
+        {
+            buff.push_back( buff.at(idx + 0));
+            buff.push_back(-buff.at(idx + 1));
+        }
+        idx -= 2;
+    }
+}
+
+// Reference:
+// https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
+inline Matrix<ptrdiff_t> bresenhamCircle(float radius)
+{
+    auto circle = halfQuarterBresenhamCircle_(radius);
+    expendFullBresenhamCircle_(circle);
+    return Matrix<ptrdiff_t>(fixRow(2), std::move(circle), COL);
+}
+
 } // namespace mxm
 
 #endif // _CV_BASIC_H_
