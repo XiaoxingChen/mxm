@@ -114,6 +114,14 @@ inline void testBresenhamCircle()
         // std::cout << "ret size: " << ret.shape(1) << std::endl;
         // std::cout << mxm::to_string(ret) << std::endl;
     }
+
+    {
+        // auto cnt = 0;
+        // traverseBresenhamCircleArea(3, {5,5}, [&](auto i, auto j){
+        //     std::cout << cnt++ << " " ;//<< std::endl;
+        //     std::cout << "(" << i << "," <<  j << ")" << std::endl;
+        //     });
+    }
 }
 
 inline void testCvBasic()

@@ -6,6 +6,7 @@
 #include "interpolation.h"
 #include "linalg_utils.h"
 
+#include <functional>
 #include <map>
 namespace mxm
 {
@@ -294,6 +295,48 @@ inline Matrix<ptrdiff_t> bresenhamCircle(float radius)
     auto circle = halfQuarterBresenhamCircle_(radius);
     expendFullBresenhamCircle_(circle);
     return Matrix<ptrdiff_t>(fixRow(2), std::move(circle), COL);
+}
+
+// return vector, index as x, value as y.
+inline std::vector<size_t> bresenhamHeight_(float radius)
+{
+    std::vector<size_t> ret;
+    size_t max_x = size_t(radius + 0.5);
+    float r2 = radius * radius;
+    ret.push_back(max_x);
+
+
+    auto calcErr = [&](float r2_, float x_, float y_) {
+        return abs(r2_ - (x_*x_ + y_*y_));
+    };
+    while(ret.size() < max_x + 1)
+    {
+        float e0 = calcErr(r2, ret.size(), ret.back());
+        float e1 = calcErr(r2, ret.size(), ret.back() - 1);
+        ret.push_back(e0 < e1 ? ret.back() : ret.back() - 1);
+    }
+
+    return ret;
+}
+
+inline void traverseBresenhamCircleArea(
+    float radius,
+    const std::array<size_t, 2>& center,
+    std::function<void(size_t, size_t)> f)
+{
+    assert(center[0] > radius);
+    assert(center[1] > radius);
+
+    auto hs = bresenhamHeight_(radius);
+    // std::cout << mxm::to_string(hs) << std::endl;
+    for(auto i = 0; i < hs.size(); i++)
+    {
+        for(int h = -1 * hs.at(i); h < int(hs.at(i) + 1); h++)
+        {
+            f(center[0] + h, center[1] + i);
+            if(0 != i) f(center[0] + h, center[1] - i);
+        }
+    }
 }
 
 } // namespace mxm
