@@ -107,19 +107,57 @@ float fastScore(const FastCornerBresehamCircle& pixels, float center)
     return score;
 }
 
+float sparseHarrisCornerness(
+    const Matrix<float>& src,
+    std::map<std::array<size_t, 2>, std::array<float, 2>>& sobel_map,
+    const std::array<size_t, 2>& coord,
+    size_t r,
+    float k=0.06)
+{
+    Matrix<float> M = Matrix<float>::zeros({2,2});
+    for(size_t i = coord[0] - r; i <= coord[0] + r; i++)
+    {
+        for(size_t j = coord[1] - r; j <= coord[1] + r; j++)
+        {
+            std::array<float, 2> sobel;
+            if(0 == sobel_map.count({i,j}))
+            {
+                Matrix<float> blk = src(Block({i-1, i+2},{j-1, j+2}));
+                sobel[0] = mxm::sum(blk * kernel::sobel());
+                sobel[1] = mxm::sum(blk * kernel::sobel().T());
+                sobel_map[{i,j}] = sobel;
+            }else
+            {
+                sobel = sobel_map[{i,j}];
+            }
+            M(0,0) += sobel[0]*sobel[0];
+            M(1,1) += sobel[1]*sobel[1];
+            M(0,1) += sobel[0]*sobel[1];
+        }
+    }
+    M(1,0) = M(0,1);
+    float det = mxm::det(M);;
+    float tr = M.trace();
+
+    return (det - k * tr*tr);
+}
+
 std::vector<std::array<size_t, 2>>
 fastCorners(const Matrix<float>& src, float thresh=0.06)
 {
     using Coord2D = std::array<size_t, 2>;
     std::map<Coord2D, float> scores;
+    std::map<Coord2D, std::array<float, 2>> sobel;
     std::vector<Coord2D> ret;
-    for(size_t i = 3; i < src.shape(0) - 3; i++)
+    const size_t RADIUS = 3;
+    for(size_t i = RADIUS; i < src.shape(0) - RADIUS; i++)
     {
-        for(size_t j = 3; j < src.shape(1) - 3; j++)
+        for(size_t j = RADIUS; j < src.shape(1) - RADIUS; j++)
         {
             auto circle_pixels = fastCornerCircle(src, i, j);
             if(!isFastCorner(circle_pixels, src(i,j), thresh)) continue;
-            scores[{i,j}] = fastScore(circle_pixels, src(i,j));
+            // scores[{i,j}] = fastScore(circle_pixels, src(i,j));
+            scores[{i,j}] = sparseHarrisCornerness(src, sobel, {i,j}, RADIUS - 1);
             ret.push_back({i,j});
         }
     }
@@ -137,7 +175,7 @@ const Matrix<int>& briefPatternII();
 template<>
 const Matrix<int>& briefPatternII<8>()
 {
-    static const Matrix<int> pattern({4,64},
+    static const Matrix<int> pattern(fixRow(2),
     {-11,   0, -10,  10,
     -1,   4,  -7,  -2,
     0, -11,  -3,  -7,
@@ -205,6 +243,37 @@ const Matrix<int>& briefPatternII<8>()
    return pattern;
 }
 
+template<uint8_t K>
+const Matrix<float>& briefPatternTableII(float angle);
+
+template<>
+const Matrix<float>& briefPatternTableII<8>(float angle)
+{
+    static std::vector<Matrix<float>> table;
+    size_t resolution = 30;
+    if(0 == table.size())
+    {
+        table.reserve(resolution);
+        Matrix<float> pattern_raw(briefPatternII<8>());
+        for(size_t i = 0; i < resolution; i++)
+        {
+            float theta = 2 * M_PI * i / resolution;
+            Matrix<float> rot({2,2}, {
+                cos(theta), -sin(theta),
+                sin(theta), cos(theta)}, ROW);
+
+            table.push_back(rot.matmul(pattern_raw));
+        }
+    }
+
+    if(angle < 0) angle += 2 * M_PI;
+    size_t idx = angle * resolution / 2 / M_PI + 0.5;
+    idx %= resolution;
+
+    // std::cout << idx << std::endl;
+    return table.at(idx);
+}
+
 // Reference:
 // https://papers.nips.cc/paper/2012/file/59b90e1005a220e2ebc542eb9d950b1e-Paper.pdf
 template<uint8_t K>
@@ -225,7 +294,10 @@ public:
     }
     uint8_t at(size_t i) const {return data_.at(i);}
 
-    size_t distance(const ThisType& rhs)
+    const float& orientation() const { return orientation_; }
+    float& orientation() { return orientation_; }
+
+    float distance(const ThisType& rhs)
     {
         size_t cnt = 0;
         for(size_t i = 0; i < K; i++)
@@ -237,14 +309,15 @@ public:
                 v >>= 1;
             }
         }
-        return cnt;
+        return float(cnt) / BYTES / 8;
     }
 private:
     std::array<uint8_t, K> data_;
+    float orientation_;
 };
 
 template<uint8_t K>
-std::string to_string(const BriefDescriptor<K>& v)
+std::string to_string(const BriefDescriptor<K>& v, size_t prec)
 {
     std::stringstream stream;
     stream << std::setfill ('0') << std::uppercase;
@@ -253,19 +326,40 @@ std::string to_string(const BriefDescriptor<K>& v)
     {
         stream << std::setw(2) << int(v.at(K - 1 - i));
     }
+    stream << "|" << v.orientation();
     return stream.str();
 }
 
+inline std::array<float,3> patchMoment(const Matrix<float>& img, const std::array<size_t, 2>& center, float radius)
+{
+    float m00 = 0;
+    float m01 = 0;
+    float m10 = 0;
+    traverseBresenhamCircleArea(radius, center, [&](auto i, auto j) {
+        float intensity = img(i,j);
+        m00 += intensity;
+        m10 += (float(i) - center[0]) * intensity;
+        m01 += (float(j) - center[1]) * intensity;
+    });
+    return std::array<float,3>({m00, m01, m10});
+}
+
+inline float patchOrientation(const Matrix<float>& img, const std::array<size_t, 2>& center, float radius)
+{
+    auto m00_m01_m10 = patchMoment(img, center, radius);
+    return atan2(m00_m01_m10[1], m00_m01_m10[2]);
+}
 
 template<uint8_t K=8>
 Matrix<BriefDescriptor<K>> calculateBriefDescriptor(
     const Matrix<float>& img, const Matrix<size_t>& pts)
 {
+    const size_t radius = 3;
     const size_t patch_size = 32;
     const size_t half_w = patch_size / 2;
 
     Matrix<BriefDescriptor<K>> ret({pts.shape(1), 1});
-    const auto & pattern = briefPatternII<K>();
+    // const auto & pattern = briefPatternII<K>();
     for(size_t pt_idx = 0; pt_idx < pts.shape(1); pt_idx++)
     {
         if(pts(0, pt_idx) < half_w
@@ -276,13 +370,26 @@ Matrix<BriefDescriptor<K>> calculateBriefDescriptor(
             continue;
         }
 
-        for(size_t b = 0; b < 8 * K; b++)
+        float ori = patchOrientation(img, {pts(0, pt_idx), pts(1, pt_idx)}, radius);
+
+        Matrix<float> pattern = briefPatternTableII<K>(ori);
+        pattern(Row(0)) += pts(0, pt_idx);
+        pattern(Row(1)) += pts(1, pt_idx);
+
+        auto intensities = bilinear(pattern, img);
+        for(size_t i = 0; i < intensities.shape(0)/2 ; i++)
         {
-            bool sign =
-                img(pts(0, pt_idx) + pattern(b, 0), pts(1, pt_idx) + pattern(b, 1))
-                > img(pts(0, pt_idx) + pattern(b, 2), pts(1, pt_idx) + pattern(b, 3));
-            ret(pt_idx, 0).setBit(b, sign);
+            ret(pt_idx, 0).setBit(i, intensities(i, 0) > intensities(i+1, 0));
         }
+        ret(pt_idx, 0).orientation() = ori;
+
+        // for(size_t b = 0; b < 8 * K; b++)
+        // {
+        //     bool sign =
+        //         img(pts(0, pt_idx) + pattern(2 * b, 0), pts(1, pt_idx) + pattern(2 * b, 1))
+        //         > img(pts(0, pt_idx) + pattern(2 * b + 1, 0), pts(1, pt_idx) + pattern(2*b + 1, 1));
+        //     ret(pt_idx, 0).setBit(b, sign);
+        // }
     }
     return ret;
 }

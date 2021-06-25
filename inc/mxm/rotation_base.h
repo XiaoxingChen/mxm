@@ -12,7 +12,13 @@ inline Matrix<DType> rodrigues2D(DType angle)
 {
     DType c = cos(angle);
     DType s = sin(angle);
-    return Matrix<DType>({2,2}, {c, s, -s, c});
+    return Matrix<DType>({2,2}, {c, -s, s, c}, ROW);
+}
+
+template<typename DType>
+inline DType SO2ToAngle(const Matrix<DType>& mat)
+{
+    return atan2(mat(1, 0), mat(0,0));
 }
 
 template<typename DType>

@@ -63,6 +63,16 @@ resize(const Matrix<PType>& img, float rate, const std::string& strategy="biline
     return resize(img, {size_t(img.shape(0) * rate), size_t(img.shape(1) * rate)}, strategy);
 }
 
+template<typename PType>
+Matrix<PType> flip(const Matrix<PType>& img)
+{
+    Matrix<PType> ret(img.shape());
+    ret.traverse([&](auto i, auto j){
+        ret(i,j) = img(i, img.shape(1) - 1 - j);
+    });
+    return ret;
+}
+
 inline Matrix<size_t> nonMaximumSuppression(const Matrix<float>& heat_map, const Shape& block_shape=Shape({50,50}))
 {
     // float thresh = 10;
@@ -212,9 +222,7 @@ Matrix<PType> bilinear(const Matrix<float>& pts, const Matrix<PType>& img)
     }
     return ret;
 #else
-    Matrix<PType> ret({pts.shape(1), 1});
-    ret = interp::bilinearUnitSquare(pts, img);
-    return ret;
+    return interp::bilinearUnitSquare(pts, img);
 #endif
 }
 
