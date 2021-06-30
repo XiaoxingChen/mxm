@@ -4,6 +4,7 @@
 #include "cv_pixel.h"
 #include "linalg_utils.h"
 #include <tuple>
+#include <bitset>
 
 namespace mxm
 {
@@ -287,32 +288,19 @@ public:
 
     void setBit(size_t b, bool val)
     {
-        uint8_t idx = b / 8;
-        uint8_t pos = b % 8;
-        data_.at(idx) &= ~(uint8_t(1) << pos);
-        data_.at(idx) |= (val << pos);
+        data_.set(b, val);
     }
-    uint8_t at(size_t i) const {return data_.at(i);}
+    const std::bitset<8*K>& bitset() const { return data_; }
 
     const float& orientation() const { return orientation_; }
     float& orientation() { return orientation_; }
 
     float distance(const ThisType& rhs)
     {
-        size_t cnt = 0;
-        for(size_t i = 0; i < K; i++)
-        {
-            uint8_t v = at(i) ^ rhs.at(i);
-            while(v)
-            {
-                cnt += (v & 1);
-                v >>= 1;
-            }
-        }
-        return float(cnt) / BYTES / 8;
+        return float((data_ ^ rhs.data_).count()) / data_.size();
     }
 private:
-    std::array<uint8_t, K> data_;
+    std::bitset<8*K> data_;
     float orientation_;
 };
 
@@ -324,7 +312,8 @@ std::string to_string(const BriefDescriptor<K>& v, size_t prec)
     stream << std::hex;
     for(size_t i = 0; i < K; i++)
     {
-        stream << std::setw(2) << int(v.at(K - 1 - i));
+        size_t pos = K - 1 - i;
+        stream << std::setw(2) << ((v.bitset().to_ulong() >> (pos * 8)) & 0xff);
     }
     stream << "|" << v.orientation();
     return stream.str();
