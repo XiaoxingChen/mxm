@@ -5,6 +5,7 @@
 #include "mxm/common.h"
 
 #include <iostream>
+#include <map>
 
 #if TEST_AVAILABLE_LINALG_MAT
 #include "mxm/linalg_mat.h"
@@ -668,6 +669,7 @@ inline void testRvalueReference()
 }
 
 #if TEST_AVAILABLE_LINALG_COMPLEX
+void testComplexLogExtremeCondition();
 inline void testComplexBase()
 {
     {
@@ -727,6 +729,72 @@ inline void testComplexBase()
         }
     }
 
+    // test log of complext
+    {
+        float angle = M_PI_4;
+        Complex<float> z1({cos(angle), sin(angle)});
+        if(log(z1)(1) - angle > eps())
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        Quaternion<float> q1({cos(angle), 0, sin(angle), 0});
+
+        if(log(q1)(2) - angle > eps())
+        {
+            std::cout << mxm::to_string(log(q1)) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(norm(log(Complex<float>({-1,0})) - Complex<float>({0, M_PI})) > eps())
+        {
+            std::cout << mxm::to_string(log(Complex<float>({-1,0}))) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(norm(log(Complex<float>({0,-1})) - Complex<float>({0, -M_PI_2})) > eps())
+        {
+            std::cout << mxm::to_string(log(Complex<float>({0,-1}))) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(norm(mxm::inv(Quaternion<float>({0,1,2,3})) - mxm::pow(Quaternion<float>({0,1,2,3}), -1.f)) > std::numeric_limits<float>::epsilon())
+        {
+            std::cout << mxm::to_string(mxm::inv(Quaternion<float>({0,1,2,3}))) << std::endl;
+            std::cout << mxm::to_string(mxm::pow(Quaternion<float>({0,1,2,3}), -1.f)) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        {
+            Quaternion<float> q0({0,0,0,1});
+            Quaternion<float> q1({1,0,0,0});
+            Quaternion<float> mid = interp::slerp(q0, q1, 0.5f);
+            if(mxm::norm(mid - Quaternion<float>({sqrt(.5f), 0.f, 0.f, sqrt(.5f)})) > std::numeric_limits<float>::epsilon())
+            {
+                std::cout << mxm::to_string (mid) << std::endl;
+                throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+            }
+
+        }
+
+    }
+
+
+    testComplexLogExtremeCondition();
+
+
+}
+
+// extreme condition test
+// reference: https://en.cppreference.com/w/cpp/numeric/complex/log
+inline void testComplexLogExtremeCondition()
+{
+    const auto& infty = std::numeric_limits<float>::infinity();
+    std::map<std::array<float, 2>, std::array<float, 2>> in_out_map;
+    in_out_map[{-0, 0}] = {-infty, M_PI};
+    in_out_map[{0, 0}] = {-infty, 0};
+    in_out_map[{3, infty}] = {infty, M_PI_2};
+    in_out_map[{3, NAN}] = {NAN, NAN};
 
 }
 #else

@@ -3,7 +3,9 @@
 
 #include <array>
 #include <string>
+#include <iostream>
 #include <cmath>
+#include <limits>
 #include "common.h"
 #include "accessor.h"
 // #include "linalg_norm.h"
@@ -24,9 +26,12 @@ inline std::string complexSymbol(size_t i)
     return table[i];
 }
 
+template<typename DType, unsigned int N>
+typename Traits<Hypercomplex<DType, N>>::ArithType norm(const Hypercomplex<DType, N>& in);
+
 
 template<typename DType, unsigned int N>
-class Hypercomplex: public LinearData<Hypercomplex<DType, N>, DType>
+class Hypercomplex
 {
 public:
     using ThisType = Hypercomplex<DType,N>;
@@ -50,6 +55,9 @@ public:
     DType& operator () (size_t i) { return const_cast<DType&>(static_cast<const ThisType&>(*this)(i)); }
 
     static constexpr size_t size() { return N; }
+
+    void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < size(); i++) f(i); }
+    typename Traits<Hypercomplex<DType, N>>::ArithType norm() const { return mxm::norm(*this); }
 
     void operator = (const ThisType& rhs)
     {
@@ -104,7 +112,7 @@ Hypercomplex<DType, 4> complexMul(const Hypercomplex<DType, 4>& lhs, const Hyper
     std::array<DType, N> ret_data;
     std::array<DType, N * N> mat = {
         lhs(0), -lhs(1), -lhs(2), -lhs(3),
-        lhs(1),  lhs(0), -lhs(3), -lhs(2),
+        lhs(1),  lhs(0), -lhs(3), lhs(2),
         lhs(2),  lhs(3),  lhs(0), -lhs(1),
         lhs(3), -lhs(2),  lhs(1),  lhs(0)};
 
@@ -133,7 +141,7 @@ std::string to_string(const Hypercomplex<DType, N>& v, size_t prec)
 {
     std::string ret;
     v.traverse([&](size_t i){
-        ret += (v(i) >= 0 && i > 0 ? "+" : "");
+        ret += ((v(i) >= 0 || std::isnan(v(i))) && i > 0 ? "+" : "");
         ret += (mxm::to_string(v(i), prec) + complexSymbol(i)); });
     return ret;
 }
@@ -176,7 +184,9 @@ struct Traits<Hypercomplex<DType, N>>{
 template<typename DType, unsigned int N>
 typename Traits<Hypercomplex<DType, N>>::ArithType norm(const Hypercomplex<DType, N>& in)
 {
-    return in.norm();
+    typename Traits<Hypercomplex<DType, N>>::ArithType sum = 0;
+    in.traverse([&](auto i) { sum += in(i)*in(i); });
+    return sqrt(sum);
 }
 
 template<typename DeriveType>
@@ -220,6 +230,135 @@ conj(const MatrixBase<MatrixType<EntryType>>& in)
     ret.traverse([&](auto i, auto j){ret(i,j) = ret(i,j).conj();});
     return ret;
 }
+
+template<typename DType, unsigned int N>
+std::enable_if_t<2 == N, DType> imNorm_(const Hypercomplex<DType, N>& in)
+{
+    return abs(in(1));
+}
+
+template<typename DType, unsigned int N>
+std::enable_if_t<4 == N, DType> imNorm_(const Hypercomplex<DType, N>& in)
+{
+    DType im_norm2 = DType(0);
+    for(size_t i = 1; i < in.size(); i++)
+    {
+        im_norm2 += in(i)*in(i);
+    }
+    return std::sqrt(im_norm2);
+}
+
+template<typename DType, unsigned int N>
+std::enable_if_t<2 == N, std::array<DType, N-1>> imDir_(const Hypercomplex<DType, N>& in, DType im_norm)
+{
+    return {1};
+}
+
+template<typename DType, unsigned int N>
+std::enable_if_t<4 == N, std::array<DType, N-1>> imDir_(const Hypercomplex<DType, N>& in, DType im_norm)
+{
+    std::array<DType, N-1> ret{};
+    if(im_norm < std::numeric_limits<DType>::epsilon())
+    {
+        ret[0] = 1;
+        return ret;
+    }
+    if(isinf(im_norm))
+    {
+        for(size_t i = 0; i < ret.size(); i++)
+        {
+            if(isinf(in(i+1)))
+            {
+                ret[i] = in(i+1) > 0 ? 1 : -1;
+                break;
+            }
+        }
+    }
+    for(size_t i = 0; i < ret.size(); i++)
+    {
+        ret[i] = in(i+1) / im_norm;
+    }
+    return ret;
+}
+
+// template<typename DType, unsigned int N>
+// std::enable_if_t<2 == N, std::array<DType, N-1>>
+// imDir(const Hypercomplex<DType, N>& in)
+// { return {DType(1)}; }
+
+// template<typename DType, unsigned int N>
+// std::enable_if_t<4 == N, std::array<DType, N-1>>
+// imDir(const Hypercomplex<DType, N>& in)
+// {
+
+// }
+
+template<typename DType, unsigned int N>
+Hypercomplex<DType, N> log(const Hypercomplex<DType, N>& in)
+{
+    Hypercomplex<DType, N> ret = Traits<Hypercomplex<DType, N>>::zero();
+    DType norm2 = norm(in);
+    if(norm2 < std::numeric_limits<DType>::epsilon())
+    {
+        ret(0) = - std::numeric_limits<DType>::infinity();
+        return ret;
+    }
+    ret(0) = std::log(norm2);
+    DType im_norm = imNorm_(in);
+    auto im_dir = imDir_(in, im_norm);
+    if(im_norm < std::numeric_limits<DType>::epsilon())
+    {
+        ret(1) = atan2(0, in(0));
+        return ret;
+    }
+
+    DType angle = std::atan2(im_norm, in(0));
+
+    for(size_t i = 1; i < in.size(); i++)
+    {
+        ret(i) = in(i) * im_dir[i-1] * angle;
+    }
+    return ret;
+}
+
+#if 1
+template<typename DType, unsigned int N>
+Hypercomplex<DType, N> pow(const Hypercomplex<DType, N>& in, DType y)
+{
+    Hypercomplex<DType, N> ret = Traits<Hypercomplex<DType, N>>::zero();
+    DType norm2 = norm(in);
+    if(norm2 < std::numeric_limits<DType>::epsilon()) return ret;
+
+    DType im_norm = imNorm_(in);
+    if(im_norm < std::numeric_limits<DType>::epsilon())
+    {
+        ret(0) = std::pow(in(0), y);
+        return ret;
+    }
+    DType norm_out = std::pow(norm(in), y);
+    DType angle = std::atan2(imNorm_(in), in(0)) * y;
+    auto im_dir = imDir_(in, im_norm);
+    ret(0) = std::cos(angle);
+    DType k = std::sin(angle) * norm_out;
+    for(size_t i = 1; i < in.size(); i++)
+        ret(i) = k * im_dir[i-1];
+    return ret;
+}
+#endif
+
+namespace interp
+{
+
+// Spherical linear interpolation
+// https://en.wikipedia.org/wiki/Slerp
+template<typename DType, unsigned int N>
+Hypercomplex<DType, N> slerp(const Hypercomplex<DType, N>& q0, const Hypercomplex<DType, N>& q1, DType t)
+{
+    return pow(q1 * inv(q0), t) * q0;
+}
+
+} // namespace interp
+
 
 } // namespace mxm
 

@@ -25,7 +25,7 @@ namespace bvh
 
 MXM_INLINE size_t treeNodeRequirement(size_t leaf_num, size_t child_num=2)
 {
-    size_t height = static_cast<size_t>(1. + log(leaf_num) / log(child_num)) + 1;
+    size_t height = static_cast<size_t>(1. + std::log(leaf_num) / std::log(child_num)) + 1;
     if(child_num != 2)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     return (1 << height);

@@ -15,7 +15,11 @@ inline Matrix<DType> base(size_t n, size_t i_end, const Vector<DType>& t)
     for(size_t i = 0; i < i_end; i++)
     {
         size_t coeff = factorial(n) / factorial(i) / factorial(n-i);
-        result(Row(i)) = ((-t + 1).pow(i) * t.pow(n-i) * coeff).T();
+        // result(Row(i)) = ((-t + 1).pow(i) * t.pow(n-i) * coeff).T();
+        for(size_t j = 0; j < t.size(); j++)
+        {
+            result(i,j) = std::pow(1-t(j), i) * std::pow(t(j), n-i) * coeff;
+        }
     }
     return result;
 }

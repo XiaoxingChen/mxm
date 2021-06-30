@@ -6,6 +6,7 @@
 #if TEST_AVAILABLE_ALL
 
 #include "mxm/rotation.h"
+#include "mxm/string.h"
 #include <iostream>
 
 using namespace mxm;
@@ -113,6 +114,19 @@ inline void testRotation()
     rotationTestCase5();
     rotationTestCase6();
     rotationTestDeterminant();
+
+    { // test so3 slerp
+        auto mid_expected = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2));
+        auto r1 = rodrigues3D(Vector<float>({1,1,1}), float(M_PI));
+        auto r0 = Matrix<float>::identity(3);
+        auto mid = so_n::slerp(r0, r1, 0.5f);
+        if(norm(mid - mid_expected) > 10 * std::numeric_limits<float>::epsilon())
+        {
+            std::cout << mxm::to_string(mid) << std::endl;
+            std::cout << mxm::to_string(mid_expected) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 #else
 inline void testRotation(){}

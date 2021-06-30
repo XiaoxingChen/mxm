@@ -157,6 +157,38 @@ inline FloatType normSO3(const Mat& R)
     matrixToAxisAngle3D(R, axis, angle);
     return angle;
 }
+namespace so_n
+{
+template<typename DType>
+Matrix<DType> pow(const Matrix<DType>& r, DType y)
+{
+    assert(r.square() && r.shape(0) <= 3 && "Only SO(2) and SO(3) pow function supported.");
+    if(2 == r.shape(0))
+    {
+        return rodrigues2D(SO2ToAngle(r) * y);
+    }
+
+    if(3 == r.shape(0))
+    {
+        Vector<DType> axis;
+        DType angle;
+        matrixToAxisAngle3D(r, axis, angle);
+        return rodrigues3D(axis, angle * y);
+    }
+
+    return Matrix<DType>::identity(r.shape(0));
+}
+
+template<typename DType>
+Matrix<DType> slerp(const Matrix<DType>& r0, const Matrix<DType>& r1, DType t)
+{
+    return so_n::pow(r1.matmul(r0.T()), t).matmul(r0);
+}
+} // namespace so_n
+
+
+
+
 } // namespace mxm
 
 
