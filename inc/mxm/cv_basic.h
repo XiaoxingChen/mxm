@@ -353,11 +353,11 @@ Matrix<DType> homographicalConstrains(
     const Matrix<DType>& pts_dst)
 {
     assert(pts_src.shape() == pts_dst.shape());
-
-    Matrix<DType> ret({2 * pts_src.shape(1), 9});
+    const size_t HOMO_SIZE = 9;
+    Matrix<DType> ret({2 * pts_src.shape(1), HOMO_SIZE});
     for(size_t i = 0; i < pts_src.shape(1); i++)
     {
-        ret(Block({i*2, i*2+2}, {0, end()})) = Matrix<float>({2,9},{
+        ret(Block({i*2, i*2+2}, {0, end()})) = Matrix<float>({2,HOMO_SIZE},{
             -pts_src(0, i), -pts_src(1, i), -1, 0, 0, 0, pts_src(0, i) * pts_dst(0, i), pts_src(1, i) * pts_dst(0, i), pts_dst(0, i),
             0, 0, 0, -pts_src(0, i), -pts_src(1, i), -1, pts_src(0, i) * pts_dst(1, i), pts_src(1, i) * pts_dst(1, i), pts_dst(1, i)
         }, ROW);
@@ -366,21 +366,26 @@ Matrix<DType> homographicalConstrains(
     return ret;
 }
 
+// TODO: Smallest eigenvector by power method, see [3].
 // Reference:
-// https://medium.com/all-things-about-robotics-and-computer-vision/homography-and-how-to-calculate-it-8abf3a13ddc5
-// http://www.cs.cmu.edu/~16385/s17/Slides/10.2_2D_Alignment__DLT.pdf
+// [1] https://medium.com/all-things-about-robotics-and-computer-vision/homography-and-how-to-calculate-it-8abf3a13ddc5
+// [2] http://www.cs.cmu.edu/~16385/s17/Slides/10.2_2D_Alignment__DLT.pdf
+// [3] https://math.stackexchange.com/questions/271864/how-to-compute-the-smallest-eigenvalue-using-the-power-iteration-algorithm
+
 template<typename DType>
 Matrix<DType> findHomographyMatrix(
     const Matrix<DType>& pts_src,
     const Matrix<DType>& pts_dst)
 {
     auto H = homographicalConstrains(pts_src, pts_dst);
-    auto v = orthogonalComplement(H);
-    // std::cout << mxm::to_string(H.matmul(v.T())) << std::endl;
+    auto eig_val_vec = symmetricEig(H.T().matmul(H));
+    auto v = eig_val_vec[1](Col(end() - 1));
+    // auto v = orthogonalComplement(H).T();
+    // std::cout << mxm::to_string(v.T() * (1.f / v(8,0))) << std::endl;
     return Matrix<DType>({3,3},{
-        v(0,0),v(0,1),v(0,2),
-        v(0,3),v(0,4),v(0,5),
-        v(0,6),v(0,7),v(0,8)}) * (DType(1) / v(0,8));
+        v(0,0),v(1,0),v(2,0),
+        v(3,0),v(4,0),v(5,0),
+        v(6,0),v(7,0),v(8,0)}) * (DType(1) / v(8,0));
 }
 
 } // namespace mxm
