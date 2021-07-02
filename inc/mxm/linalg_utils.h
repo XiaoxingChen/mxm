@@ -94,9 +94,12 @@ inline size_t max(const Vec& v)
     return m;
 }
 
-template <typename DType>
-inline Matrix<DType> hstack(const Matrix<DType>& lhs, const Matrix<DType>& rhs)
+// template <typename DType>
+template<typename DeriveTypeLhs, typename DeriveTypeRhs>
+Matrix<typename Traits<DeriveTypeLhs>::ArithType>
+hstack(const MatrixBase<DeriveTypeLhs>& lhs, const MatrixBase<DeriveTypeRhs>& rhs)
 {
+    using DType = typename Traits<DeriveTypeLhs>::ArithType;
     if(lhs.shape(0) != rhs.shape(0))
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 

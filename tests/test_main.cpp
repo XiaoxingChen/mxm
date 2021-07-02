@@ -18,6 +18,7 @@
 #include "test_grid_map.h"
 #include "test_harris_corner.h"
 #include "test_optical_flow.h"
+#include "test_hamming_space.h"
 
 
 int main(int argc, char const *argv[])
@@ -43,6 +44,7 @@ int main(int argc, char const *argv[])
   testGridMap();
   testHarrisCorner();
   testOpticalFlow01();
+  testHammingSpace();
   std::cout << "done" << std::endl;
   return 0;
 }

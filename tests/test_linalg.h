@@ -186,6 +186,29 @@ inline void testQRcalcMatQ()
 
         std::cout << mxm::to_string(q_r) << std::endl;
     }
+
+    {
+        // this test can be used to find the nullspace of a under determined matrix
+        Matrix<float> m({4,4},{
+            -0.75,  0.25,  0.25,  0.25,
+            1.  , -1.  ,  0.  ,  0.  ,
+            1.  ,  0.  , -1.  ,  0.  ,
+            1.  ,  0.  ,  0.  , -1.  });
+
+        auto q_r = qr::decomposeByRotation(m);
+        if(q_r[1](Row(end() - 1)).norm() > std::numeric_limits<float>::epsilon())
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        auto null_base = orthogonalComplement(q_r[1](Block({0, end()-1}, {0, end()})));
+        if(m.matmul(null_base.T()).norm() > std::numeric_limits<float>::epsilon() * 10)
+        {
+            std::cout << mxm::to_string(null_base) << std::endl;
+            std::cout << mxm::to_string(m.matmul(null_base.T())) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 
 inline void testQRSolve()

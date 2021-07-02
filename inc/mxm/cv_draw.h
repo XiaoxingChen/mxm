@@ -27,7 +27,7 @@ Matrix<size_t> pixelsOnLine(const Matrix<float>& pts, float width=5)
     {
         for(float u = center(sub_ax, 0) - sub_width; u < center(sub_ax, 0) + sub_width; u += 1)
         {
-            if(main_ax == 1)
+            if(main_ax == 0)
             {
                 ret_data.push_back(size_t(center(main_ax, 0) + 0.5));
                 ret_data.push_back(size_t(u + 0.5));
@@ -64,7 +64,7 @@ void scatter(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PTyp
 
 template<typename PType>
 void
-plot(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PType::black(), float width=5)
+plot(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PType::black(), float width=2)
 {
     // auto color = PType({0,0,0.8});
     #if 0

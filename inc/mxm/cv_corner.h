@@ -383,6 +383,22 @@ Matrix<BriefDescriptor<K>> calculateBriefDescriptor(
     return ret;
 }
 
+template<uint8_t K>
+std::multimap<size_t, size_t>
+radiusSearch(const Matrix<BriefDescriptor<K>>& desc_buffer, const BriefDescriptor<K>& target, size_t r)
+{
+    std::multimap<size_t, size_t> ret;
+    for(size_t i = 0; i < desc_buffer.shape(0); i++)
+    {
+        size_t dist = (desc_buffer(i,0).bitset() ^ target.bitset()).count();
+        if(dist <= r)
+        {
+            ret.insert({dist, i});
+        }
+    }
+    return ret;
+}
+
 
 } // namespace mxm
 
