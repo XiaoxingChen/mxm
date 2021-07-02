@@ -211,6 +211,27 @@ inline void testBriefDescriptor()
     // std::cout << mxm::to_string(flip (Matrix<float>::identity(3))) << std::endl;
 }
 
+inline void testHomography()
+{
+    {
+        Matrix<float> pts_src({2,4},{2,3, 4,1, 5,5, 3,6}, COL);
+        Matrix<float> pts_dst({2,4},{1,1, 3,1, 3,3, 1,3}, COL);
+        Matrix<float> homo({1,4},{1,1,1,1});
+        Matrix<float> expected = vstack(pts_dst, homo);
+        auto mat_h = findHomographyMatrix(pts_src, pts_dst);
+
+        auto result = mat_h.matmul( vstack(pts_src, homo) );
+        for(size_t i = 0; i < 4; i++) result(Col(i)) *= (1./result(2, i));
+        if(norm(result - expected) > std::numeric_limits<float>::epsilon() * 200)
+        {
+            std::cout << mxm::to_string(mat_h) << std::endl;
+            std::cout << mxm::to_string(result) << std::endl;
+            std::cout << norm(result - expected) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+}
+
 inline void testCvBasic()
 {
     testPixel();
@@ -219,6 +240,7 @@ inline void testCvBasic()
     testKernels();
     testBresenhamCircle();
     testBriefDescriptor();
+    testHomography();
 }
 #else
 inline void testCvBasic(){}

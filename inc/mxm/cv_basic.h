@@ -347,6 +347,42 @@ inline void traverseBresenhamCircleArea(
     }
 }
 
+template<typename DType>
+Matrix<DType> homographicalConstrains(
+    const Matrix<DType>& pts_src,
+    const Matrix<DType>& pts_dst)
+{
+    assert(pts_src.shape() == pts_dst.shape());
+
+    Matrix<DType> ret({2 * pts_src.shape(1), 9});
+    for(size_t i = 0; i < pts_src.shape(1); i++)
+    {
+        ret(Block({i*2, i*2+2}, {0, end()})) = Matrix<float>({2,9},{
+            -pts_src(0, i), -pts_src(1, i), -1, 0, 0, 0, pts_src(0, i) * pts_dst(0, i), pts_src(1, i) * pts_dst(0, i), pts_dst(0, i),
+            0, 0, 0, -pts_src(0, i), -pts_src(1, i), -1, pts_src(0, i) * pts_dst(1, i), pts_src(1, i) * pts_dst(1, i), pts_dst(1, i)
+        }, ROW);
+    }
+
+    return ret;
+}
+
+// Reference:
+// https://medium.com/all-things-about-robotics-and-computer-vision/homography-and-how-to-calculate-it-8abf3a13ddc5
+// http://www.cs.cmu.edu/~16385/s17/Slides/10.2_2D_Alignment__DLT.pdf
+template<typename DType>
+Matrix<DType> findHomographyMatrix(
+    const Matrix<DType>& pts_src,
+    const Matrix<DType>& pts_dst)
+{
+    auto H = homographicalConstrains(pts_src, pts_dst);
+    auto v = orthogonalComplement(H);
+    // std::cout << mxm::to_string(H.matmul(v.T())) << std::endl;
+    return Matrix<DType>({3,3},{
+        v(0,0),v(0,1),v(0,2),
+        v(0,3),v(0,4),v(0,5),
+        v(0,6),v(0,7),v(0,8)}) * (DType(1) / v(0,8));
+}
+
 } // namespace mxm
 
 #endif // _CV_BASIC_H_
