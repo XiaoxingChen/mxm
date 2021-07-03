@@ -378,9 +378,16 @@ Matrix<DType> findHomographyMatrix(
     const Matrix<DType>& pts_dst)
 {
     auto H = homographicalConstrains(pts_src, pts_dst);
-    auto eig_val_vec = symmetricEig(H.T().matmul(H));
-    auto v = eig_val_vec[1](Col(end() - 1));
-    // auto v = orthogonalComplement(H).T();
+    Matrix<float> v;
+    if(pts_src.shape(1) > 4)
+    {
+        auto eig_val_vec = symmetricEig(H.T().matmul(H));
+        v = eig_val_vec[1](Col(end() - 1));
+    }else
+    {
+        v = orthogonalComplement(H).T();
+    }
+
     // std::cout << mxm::to_string(v.T() * (1.f / v(8,0))) << std::endl;
     return Matrix<DType>({3,3},{
         v(0,0),v(1,0),v(2,0),

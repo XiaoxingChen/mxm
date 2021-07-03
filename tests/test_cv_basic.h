@@ -226,10 +226,9 @@ inline void testHomography()
 
         if(norm(result - expected) > std::numeric_limits<float>::epsilon() * 50)
         {
-            std::cout << "TODO: use power method to find minimum eigenvector." << std::endl;
-            std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-
-            if(norm(result - expected) > std::numeric_limits<float>::epsilon() * 300)
+            std::cout << "error norm:" << norm(result - expected) << std::endl;
+            std::cout << "WARNING: todo fix.\n" << std::string(__FILE__) + ":" + std::to_string(__LINE__) << std::endl;
+            if(norm(result - expected) > std::numeric_limits<float>::epsilon() * 150)
             {
                 std::cout << mxm::to_string(mat_h) << std::endl;
                 std::cout << mxm::to_string(result) << std::endl;
@@ -237,6 +236,26 @@ inline void testHomography()
                 throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
             }
         }
+    }
+
+    {
+        Matrix<float> pts_src(fixRow(2),{2,3, 3,2, 4,1, 5,5, 4,5.5, 3,6}, COL);
+        Matrix<float> pts_dst(fixRow(2),{1,1, 2,1, 3,1, 3,3, 2,3.0, 1,3}, COL);
+        float error = 0.02;
+        pts_dst += (random::uniform<float>(pts_dst.shape()) * error);
+        Matrix<float> homo = Matrix<float>::ones({1, pts_dst.shape(1)});
+        Matrix<float> expected = vstack(pts_dst, homo);
+
+        auto mat_h = findHomographyMatrix(pts_src, pts_dst);
+        auto result = mat_h.matmul( vstack(pts_src, homo) );
+        for(size_t i = 0; i < pts_dst.shape(1); i++) result(Col(i)) *= (1./result(2, i));
+
+        if(norm(result - expected) > error * 10 )
+        {
+            std::cout << (norm(result - expected)) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
     }
 }
 
