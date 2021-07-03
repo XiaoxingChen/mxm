@@ -117,7 +117,7 @@ inline void simpleRotationToPlaneAngle(const Matrix<DType>& R, Matrix<DType>& pl
 }
 
 template<typename DType>
-inline void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DType& angle)
+void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DType& angle)
 {
     Matrix<DType> plane;
 
@@ -157,6 +157,23 @@ inline FloatType normSO3(const Mat& R)
     matrixToAxisAngle3D(R, axis, angle);
     return angle;
 }
+
+// r * r1 = r2
+// r = r2 * r1.T()
+template<typename DType>
+DType angularDistance(DType theta1, DType theta2)
+{
+#if 0
+    return atan2(sin(theta1 - theta2), cos(theta1 - theta2));
+#else
+    DType delta = theta2 - theta1;
+
+    while (delta > DType(M_PI)) { delta -= DType(M_PI) * 2; }
+    while (delta < DType(-M_PI)) { delta += DType(M_PI) * 2; }
+    return delta;
+
+#endif
+}
 namespace so_n
 {
 template<typename DType>
@@ -185,6 +202,40 @@ Matrix<DType> slerp(const Matrix<DType>& r0, const Matrix<DType>& r1, DType t)
     return so_n::pow(r1.matmul(r0.T()), t).matmul(r0);
 }
 } // namespace so_n
+
+template<typename DType>
+void toAxisAngle3D(const Quaternion<DType> & q, Vector<DType>& axis, DType& angle)
+{
+    { //set output identity
+        axis = Vector<DType>::zeros(3);
+        axis(0) = 1;
+        angle = 0;
+    }
+
+    DType norm2 = norm(q);
+    if(norm2 < std::numeric_limits<DType>::epsilon()) return;
+
+    for(size_t i = 0; i < axis.size(); i++) axis(i) = q(i+1);
+
+    DType im_norm = axis.norm();
+    if(im_norm < std::numeric_limits<DType>::epsilon())
+    {
+        axis = Vector<DType>::zeros(3);
+        axis(0) = 1;
+        return;
+    }
+
+    angle = std::atan2(im_norm, q(0)) * 2;
+}
+
+template<typename DType>
+Matrix<DType> toSO3(const Quaternion<DType> & q_in)
+{
+    Vector<DType> axis;
+    DType angle;
+    toAxisAngle3D(q_in, axis, angle);
+    return rodrigues3D(axis, angle);
+}
 
 
 

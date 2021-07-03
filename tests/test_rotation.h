@@ -127,6 +127,42 @@ inline void testRotation()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }
+
+    {
+        Quaternion<float> q1({0.407854,0.549993,-0.616159,0.389244});
+        Matrix<float> expected_so3({3,3},
+            {-0.06232562, -0.99527573, -0.07444288,
+            -0.36025683,  0.09199361, -0.92830609,
+            0.93076879, -0.0310387 , -0.36428844});
+
+        auto mat_so3 = toSO3(q1);
+        if(norm(mat_so3 - expected_so3) > 3 * std::numeric_limits<float>::epsilon())
+        {
+            std::cout << (norm(mat_so3 - expected_so3)) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+
+    {
+        double theta1 = -M_PI + 0.1;
+        double theta2 = M_PI - 0.1;
+
+        if(norm(angularDistance(theta1, theta2) + 0.2) > std::numeric_limits<double>::epsilon() * 5)
+        {
+            std::cout << angularDistance(theta1, theta2) << std::endl;
+            std::cout << norm(angularDistance(theta1, theta2) - 0.2) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(norm(angularDistance(theta2, theta1) - 0.2) > std::numeric_limits<double>::epsilon() * 5)
+        {
+            std::cout << angularDistance(theta2, theta1) << std::endl;
+            std::cout << norm(angularDistance(theta2, theta1) - 0.2) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
 }
 #else
 inline void testRotation(){}

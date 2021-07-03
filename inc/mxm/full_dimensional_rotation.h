@@ -40,6 +40,7 @@ public:
     static ThisType fromMatrix(const Matrix<DType>& R) { return ThisType(R); }
     static ThisType fromAngle(DType angle) { return ThisType(mxm::rodrigues2D(angle)); }
     static ThisType fromAxisAngle(const Vector<DType>& axis, DType angle) { return ThisType(mxm::rodrigues3D(axis, angle)); }
+    static ThisType fromQuaternion(const Quaternion<DType>& q) { return ThisType(mxm::toSO3(q)); }
     static ThisType fromPlaneAngle(const Vec& u, const Vec& v, DType angle)
     {
         auto bivec = planeAngleToBivector(u, v, angle);
