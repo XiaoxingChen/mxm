@@ -19,7 +19,7 @@
 #include "test_harris_corner.h"
 #include "test_optical_flow.h"
 #include "test_hamming_space.h"
-
+#include "test_coordinate_system.h"
 
 int main(int argc, char const *argv[])
 {
@@ -45,6 +45,7 @@ int main(int argc, char const *argv[])
   testHarrisCorner();
   testOpticalFlow01();
   testHammingSpace();
+  testCoordinateSystem();
   std::cout << "done" << std::endl;
   return 0;
 }

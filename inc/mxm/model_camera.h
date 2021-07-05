@@ -70,11 +70,22 @@ public:
     Mat project(const Mat& points) const
     {
         Mat body_frame_points = pose_.inv().apply(points);
+        for(size_t i = 0; i < body_frame_points.shape(1); i++)
+        {
+            body_frame_points(0,i) /= body_frame_points(2,i);
+            body_frame_points(1,i) /= body_frame_points(2,i);
+            body_frame_points(2,i) = 1;
+        }
         return cam_mat_.matmul(body_frame_points)(Block({0, end() -1}, {}));
     }
 
     size_t resolution(size_t i) const { return resolution_(i); }
-    DType fov(size_t axis) const { return 2 * atan2( DType(resolution_(axis)) , f_(axis)); }
+
+    // Field of View
+    // reference:
+    // http://kmp.pentaxians.eu/technology/fov/#:~:text=Rectilinear%20Lenses%20on%20Film%20Bodies,the%20diagonal%20of%20the%20film.
+    DType fov(size_t axis) const { return 2 * atan2( DType(resolution_(axis)) , 2 * f_(axis)); }
+    DType diagFov() const { return 2 * atan2(Vector<DType>(resolution_).norm(), 2 * f_(0)); }
 
 private:
 

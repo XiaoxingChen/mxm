@@ -22,7 +22,7 @@ namespace interp
 // pos: (x,y) position
 template<typename FType, typename DType>
 Matrix<DType>
-bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square)
+bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square, const std::string& padding="nearest", const DType& padding_val=Traits<DType>::zero() )
 {
 #if 0
     if(square.shape() != Shape{2,2})
@@ -49,11 +49,20 @@ bilinearUnitSquare(const Matrix<FType>& pos, const Matrix<DType>& square)
                     + l0 * square(c0, c1+1) * r1 + l1 * square(c0+1, c1+1) * r1;
         }else
         {
-            x = std::min<FType>(square.shape(0) - 1, std::max<FType>(0, x));
-            y = std::min<FType>(square.shape(1) - 1, std::max<FType>(0, y));
-            ret(i,0) = square(size_t(x), size_t(y));
-        }
+            if(std::string("zero") == padding)
+            {
+                ret(i,0) = Traits<FType>::zero();
+            }else if(std::string("nearest") == padding)
+            {
+                x = std::min<FType>(square.shape(0) - 1, std::max<FType>(0, x));
+                y = std::min<FType>(square.shape(1) - 1, std::max<FType>(0, y));
+                ret(i,0) = square(size_t(x), size_t(y));
+            }else
+            {
+                ret(i,0) = padding_val;
+            }
 
+        }
     }
     return ret;
 #endif
