@@ -302,10 +302,9 @@ inline void testUnsymmetrixEigenvaluePipeline01()
          4.81917029e-04,  6.33156375e-01, -4.73611309e-01, 2.52124640e-01,  5.57887325e-01,
          4.50001318e-01,  6.10591729e-01,  3.88872076e-01, -5.05228157e-01, -1.34905788e-01});
 
-    Mat hessen = qr::decomposeByRotation(rot, qr::eUpperHessenbergize)[1];
-    Mat tmp = hessen;
-    Mat eig_vec = Mat::identity(n);
-
+    auto q_hesson = qr::decomposeByRotation(rot, qr::eUpperHessenbergize, true);
+    Mat tmp = q_hesson[1];
+    Mat eig_vec = q_hesson[0];
 
     for(size_t i = 0; i < 50; i++)
     {
@@ -320,6 +319,7 @@ inline void testUnsymmetrixEigenvaluePipeline01()
     }
     std::cout << mxm::to_string(tmp) << std::endl;
     Mat recover = eig_vec.matmul(tmp).matmul(eig_vec.T());
+    std::cout << mxm::to_string(recover) << std::endl;
 }
 
 inline void testUnsymmetrixEigenvaluePipeline02()
@@ -394,6 +394,7 @@ inline void testEigenvalues()
         if((eigvals - expected).norm() > 20*eps())
         {
             std::cout << "error: " << (eigvals - expected).norm() << std::endl;
+            std::cout << mxm::to_string(eigvals) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
@@ -468,7 +469,48 @@ inline void testEigenvalues()
     }
     #endif
 
+    {
+        Matrix<float> skew({5,5},
+        {0, 1, 2, 3, 4,
+        -1, 0, 3, 6, 7,
+        -2,-3, 0, 8, 2,
+        -3,-6,-8, 0, 1,
+        -4,-7,-2,-1, 0});
 
+        Matrix<Complex<float>> expected({5,1}, {
+            {0,+13.25652325},
+            {0,-13.25652325},
+            {0, +4.15506814},
+            {0, -4.15506814},
+            {0, +0.}});
+
+        auto eig_vals = Matrix<Complex<float>>(expected.shape(), std::move(eigvals(skew)));
+        if(norm(eig_vals - expected) > 40 * std::numeric_limits<float>::epsilon())
+        {
+            std::cout << "error: " << norm(eig_vals - expected) << std::endl;
+            std::cout << mxm::to_string(eig_vals) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+
+
+}
+
+inline void testEigenvalues2()
+{
+
+{
+    size_t n = 5;
+    Matrix<double> rot({n,n}, {
+         8.52072892e-01, -1.86443589e-01, -1.52868423e-01, 4.48402930e-01, -1.21559174e-01,
+         1.66260826e-01, -3.10093307e-01,  4.89428897e-01, -6.23694169e-02,  7.95467717e-01,
+        -2.09350679e-01,  3.08823048e-01,  6.01299790e-01, 6.90088793e-01, -1.51712355e-01,
+         4.81917029e-04,  6.33156375e-01, -4.73611309e-01, 2.52124640e-01,  5.57887325e-01,
+         4.50001318e-01,  6.10591729e-01,  3.88872076e-01, -5.05228157e-01, -1.34905788e-01});
+
+    std::cout << mxm::to_string(eigvals(rot)) << std::endl;
+}
 
 }
 
@@ -864,6 +906,7 @@ inline void testLinearAlgebra()
     testQRSolve();
     testMatInv();
     testEigenvalues();
+    // testEigenvalues2();
 #endif
     testRvalueReference();
     testComplexBase();

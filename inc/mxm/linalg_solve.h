@@ -160,11 +160,16 @@ givensRotation(const MatrixBase<MatrixType<EntryType>>& v2)
 
 #endif
 
+//
+// idx_seq: TraverseSeq
+// symmetric: output will be QHQ' = mat if enabled.
+// output: {Q, R}
+// Reference:
+// [1] https://www.math.usm.edu/lambers/mat610/sum10/lecture9.pdf
 template<typename DeriveType>
 std::array<Matrix<typename Traits<DeriveType>::EntryType>, 2>
 decomposeByRotation(const MatrixBase<DeriveType>& mat_in, TraverseSeq idx_seq=eUpperTrianglize, bool symmetric=false)
 {
-    // reference: https://www.math.usm.edu/lambers/mat610/sum10/lecture9.pdf
     using DType = typename Traits<DeriveType>::EntryType;
     if(!mat_in.square())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
@@ -273,6 +278,8 @@ DType wilkinsonShiftStrategy(const Matrix<DType> mat_a)
 {
     size_t n = mat_a.shape(1);
     DType sigma = 0.5 * (mat_a(n-2,n-2) - mat_a(n-1, n-1));
+    if(abs(sigma) < std::numeric_limits<DType>::epsilon() && abs(mat_a(n-1, n-1)) < std::numeric_limits<DType>::epsilon())
+        return DType(0);
     DType sign = sigma > 0 ? 1. : -1.;
     DType mu = mat_a(n-1, n-1) - (sign * mat_a(n-1, n-2) * mat_a(n-1, n-2)) / (abs(sigma) + sqrt(sigma * sigma) + mat_a(n-1, n-1) * mat_a(n-1, n-1));
     return mu;
@@ -363,12 +370,83 @@ std::vector<Complex<DType>> eigvals2x2(const MatrixBase<MatrixType<DType>>& mat)
     {
         ret.at(0) = Complex<DType>({DType(0.5) * (tr + sqrt(delta)), 0});
         ret.at(1) = Complex<DType>({DType(0.5) * (tr - sqrt(delta)), 0});
+        // std::cout << "tr: " << tr <<", det: " << det << ", delta: " << delta << std::endl;
+        // std::cout << "mat: \n" << mxm::to_string(mat) << std::endl;
     }else
     {
         ret.at(0) = Complex<DType>({DType(0.5) * tr,  DType(0.5) * sqrt(-delta)});
         ret.at(1) = Complex<DType>({DType(0.5) * tr, -DType(0.5) * sqrt(-delta)});
+        // std::cout << "<0" << std::endl;
     }
     return ret;
+}
+
+template<typename DType>
+Matrix<DType> shiftedQRIteration(
+    const Matrix<DType>& mat,
+    Matrix<DType>* p_orthogonal=nullptr,
+    qr::TraverseSeq idx_seq=qr::eUpperTrianglize,
+    size_t max_it=40,
+    DType tol=std::numeric_limits<DType>::epsilon() * std::numeric_limits<DType>::epsilon())
+{
+    std::array<Matrix<DType>, 2> q_r;
+    Matrix<DType> ret(mat);
+    Matrix<DType> eye = Matrix<DType>::identity(mat.shape(0));
+
+    for(size_t i = 0; i < max_it; i++)
+    {
+        // FloatType rho = 1;
+        DType rho = qr::wilkinsonShiftStrategy(ret);
+        Matrix<DType> shift = eye * rho;
+        q_r = qr::decomposeByRotation(ret - shift, idx_seq);
+        ret = q_r[1].matmul(q_r[0]) + shift;
+        if(p_orthogonal) *p_orthogonal = p_orthogonal->matmul(q_r[0]);
+        if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
+    }
+    return ret;
+}
+
+// A = QTQ', where
+// Q is a real, orthogonal matrix,
+// T is a real, quasi-upper-triangular matrix that has a block upper-triangular structure
+// Reference:
+// [1] http://www.math.usm.edu/lambers/mat610/sum10/lecture15.pdf
+template<typename DType>
+Matrix<DType> realSchurDecomposition(const Matrix<DType>& mat, Matrix<DType>* p_orthogonal=nullptr)
+{
+    size_t n = mat.shape(0);
+    if(n < 3)
+    {
+        if(p_orthogonal) *p_orthogonal = Matrix<DType>::identity(n);
+        return mat;
+    }
+#if 0
+    const size_t max_it = 30;
+    const DType tol = std::numeric_limits<DType>::epsilon() * std::numeric_limits<DType>::epsilon();
+
+    auto q_hesson = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
+    Matrix<DType> block_diag = q_hesson[1];
+    if(p_orthogonal) *p_orthogonal = q_hesson[0];
+
+    std::array<Matrix<DType>, 2> q_r;
+
+    for(size_t i = 0; i < max_it; i++)
+    {
+        // FloatType rho = 1;
+        DType rho = qr::wilkinsonShiftStrategy(block_diag);
+        Matrix<DType> shift = Matrix<DType>::identity(n) * rho;
+        q_r = qr::decomposeByRotation(block_diag - shift, qr::eSubdiagonal);
+        block_diag = q_r[1].matmul(q_r[0]) + shift;
+        if(p_orthogonal) *p_orthogonal = p_orthogonal->matmul(q_r[0]);
+        if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
+    }
+
+    return block_diag;
+#else
+    auto q_hesson = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
+    if(p_orthogonal) *p_orthogonal = q_hesson[0];
+    return shiftedQRIteration(q_hesson[1], p_orthogonal, qr::eSubdiagonal);
+#endif
 }
 
 // Reference:
@@ -380,41 +458,22 @@ std::vector<Complex<DType>> eigvals(const Matrix<DType>& mat)
     if(!mat.square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
     size_t n = mat.shape(0);
-    DType tol = 1e-13;
-    size_t max_it = 30;
-
-    if(2 == n) return eigvals2x2(mat);
-
-    Matrix<DType> hessenberg = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true)[1];
-    Matrix<DType> quasi = hessenberg;
-
-    std::array<Matrix<DType>, 2> q_r;
-
-    for(size_t i = 0; i < max_it; i++)
-    {
-        // FloatType rho = 1;
-        DType rho = qr::wilkinsonShiftStrategy(quasi);
-        Matrix<DType> shift = Matrix<DType>::identity(n) * rho;
-        q_r = qr::decomposeByRotation(quasi - shift, qr::eSubdiagonal);
-        quasi = q_r[1].matmul(q_r[0]) + shift;
-        if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
-    }
-
-    // std::cout << mxm::to_string(quasi) << std::endl;
-
+    auto quasi_upper_triangle = realSchurDecomposition(mat);
+    // std::cout << mxm::to_string(quasi_upper_triangle, 12) << std::endl;
     std::vector<Complex<DType>> ret(n);
     for(size_t i = 0; i < n;)
     {
-        if(i < n-1 && abs(q_r[0](i,i) - q_r[0](i+1, i+1)) < tol && abs(q_r[0](i+1,i)) > tol)
+        // if(i < n-1 && abs(q_r[0](i,i) - q_r[0](i+1, i+1)) < tol && abs(q_r[0](i+1,i)) > tol)
+        if(i < n-1 && abs(quasi_upper_triangle(i+1,i)) > 50 * std::numeric_limits<DType>::epsilon())
         {
             // ret.setBlock(i,0, eigvals2x2(quasi(Block({i,i+2},{i,i+2}))));
-            auto eig_pair = eigvals2x2(quasi(Block({i,i+2},{i,i+2})));
+            auto eig_pair = eigvals2x2(quasi_upper_triangle(Block({i,i+2},{i,i+2})));
             ret.at(i) = eig_pair.at(0);
             ret.at(i+1) = eig_pair.at(1);
             i += 2;
         }else
         {
-            ret.at(i) = Complex<DType>({quasi(i,i), 0});
+            ret.at(i) = Complex<DType>({quasi_upper_triangle(i,i), 0});
             i++;
         }
     }
@@ -514,8 +573,7 @@ eig(const Matrix<DType>& mat)
     eig_vals = Matrix<Complex<DType>>({n,1});
     eig_vecs = Matrix<Complex<DType>>({n,n});
 
-    Matrix<Complex<FloatType>> cmat = Matrix<Complex<FloatType>>::zeros({n,n});
-    cmat.traverse([&](auto i, auto j){cmat(i,j)(0) = mat(i,j);});
+    Matrix<Complex<DType>> cmat(mat);
 
     std::vector<Complex<DType>> prio_que = eigvals(mat);
     std::sort(prio_que.begin(), prio_que.end(), [](auto lhs, auto rhs){return lhs.norm() > rhs.norm();});
