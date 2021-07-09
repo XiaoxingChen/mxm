@@ -8,11 +8,14 @@ namespace mxm
 
 // input: x, y, z
 // north pole: z axis
-// return latitude, longitude, height(radius)
+// return:
+//  latitude: [-pi/2, pi/2], (same as range of asin())
+//  longitude: [-pi, pi], (same as range of atan2())
+//  height(radius): [0, inf]
 // Reference:
 // [1] https://en.wikipedia.org/wiki/Spherical_coordinate_system
 template<typename DType>
-Matrix<DType> cartesianToSpherical(const Matrix<DType>& cartesian)
+Matrix<DType> sphericalFromCartesian(const Matrix<DType>& cartesian)
 {
     Matrix<DType> spherical(cartesian.shape());
     for(size_t i = 0; i < cartesian.shape(1); i++)
@@ -34,18 +37,18 @@ Matrix<DType> cartesianToSpherical(const Matrix<DType>& cartesian)
 // Reference:
 // [1] https://en.wikipedia.org/wiki/Spherical_coordinate_system
 template<typename DType>
-Matrix<DType> sphericalToCartesian(const Matrix<DType>& spherical)
+Matrix<DType> cartesianFromSpherical(const Matrix<DType>& spherical)
 {
     Matrix<DType> cartesian(spherical.shape());
     for(size_t i = 0; i < cartesian.shape(1); i++)
     {
-        const DType& lon = spherical(0, i);
-        const DType& lat = spherical(1, i);
+        const DType& lat = spherical(0, i);
+        const DType& lon = spherical(1, i);
         const DType& r   = spherical(2, i);
 
-        cartesian(0, i) = r * cos(lon) * cos(lat);
-        cartesian(1, i) = r * cos(lon) * sin(lat);
-        cartesian(2, i) = r * sin(lon);
+        cartesian(0, i) = r * cos(lat) * cos(lon);
+        cartesian(1, i) = r * cos(lat) * sin(lon);
+        cartesian(2, i) = r * sin(lat);
     }
     return cartesian;
 }

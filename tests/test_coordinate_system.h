@@ -14,7 +14,7 @@ inline void testCoordinateSystem()
         0,0,1
         }, COL);
 
-        auto inv_inv = sphericalToCartesian(cartesianToSpherical(cartesian));
+        auto inv_inv = cartesianFromSpherical(sphericalFromCartesian(cartesian));
 
         if(norm(inv_inv - cartesian) > std::numeric_limits<float>::epsilon())
         {
