@@ -190,6 +190,7 @@ DType angularDistance(DType theta1, DType theta2)
 
 #endif
 }
+#if 0
 namespace so_n
 {
 template<typename DType>
@@ -430,6 +431,7 @@ Matrix<DType> exp(const Matrix<DType>& skew)
 }
 
 } // namespace so_n
+#endif
 
 template<typename DType>
 void toAxisAngle3D(const Quaternion<DType> & q, Vector<DType>& axis, DType& angle)

@@ -20,6 +20,7 @@
 #include "test_optical_flow.h"
 #include "test_hamming_space.h"
 #include "test_coordinate_system.h"
+#include "test_lie_special_orthogonal.h"
 
 int main(int argc, char const *argv[])
 {
@@ -46,6 +47,7 @@ int main(int argc, char const *argv[])
   testOpticalFlow01();
   testHammingSpace();
   testCoordinateSystem();
+  testLieSpecialOrthogonal();
   std::cout << "done" << std::endl;
   return 0;
 }

@@ -7,6 +7,7 @@
 
 #include "mxm/rotation.h"
 #include "mxm/string.h"
+#include "mxm/lie_special_orthogonal.h"
 #include <iostream>
 
 using namespace mxm;
@@ -115,13 +116,15 @@ inline void testRotation()
     rotationTestCase6();
     rotationTestDeterminant();
 
-    { // test so3 slerp
-        auto mid_expected = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2));
-        auto r1 = rodrigues3D(Vector<float>({1,1,1}), float(M_PI));
+    if(1){ // test so3 slerp
+        auto mid_expected = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2 * 0.5));
+        auto r1 = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2));
         auto r0 = Matrix<float>::identity(3);
-        auto mid = so_n::slerp(r0, r1, 0.5f);
+        auto mid = SO::slerp(r0, r1, 0.5f);
         if(norm(mid - mid_expected) > 10 * std::numeric_limits<float>::epsilon())
         {
+            std::cout << mxm::to_string(r1) << std::endl;
+            std::cout << mxm::to_string(so::exp<3>(1.f * SO::log<3>(r1))) << std::endl;
             std::cout << mxm::to_string(mid) << std::endl;
             std::cout << mxm::to_string(mid_expected) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
@@ -173,7 +176,7 @@ inline void testRotation()
          4.81917029e-04,  6.33156375e-01, -4.73611309e-01, 2.52124640e-01,  5.57887325e-01,
          4.50001318e-01,  6.10591729e-01,  3.88872076e-01, -5.05228157e-01, -1.34905788e-01});
 
-        auto angles = so_n::toAngles(rot);
+        auto angles = SO::findAngles(rot);
         std::cout << "angles size: " << angles.size() << std::endl;
         std::cout << mxm::to_string(angles.T()) << std::endl;
     }
@@ -181,7 +184,7 @@ inline void testRotation()
     {
         float angle = 0.4;
         Rotation r1 = Rotation::fromAxisAngle(Vec({0,0,1}), angle);
-        auto angles = so_n::toAngles(r1.asMatrix());
+        auto angles = SO::findAngles(r1.asMatrix());
         if(abs(angles(0) - angle) > std::numeric_limits<float>::epsilon())
         {
             std::cout << "angles size: " << angles.size() << std::endl;
@@ -224,41 +227,6 @@ inline void testRotation()
     }
 #endif
 
-    if(1){
-        size_t n = 5;
-        Mat rot({n,n}, {
-            0.8606430292, -0.0866019130, -0.1694403887, 0.4272221625, -0.2014071941,
-            0.2661026716, 0.8530187011, 0.2963767946, -0.3091226518, -0.1347314417,
-            -0.2259227931, 0.1157709658, 0.6333417892, 0.7310451865, 0.0026819520,
-            -0.0206990279, 0.3864032328, -0.4326551259, 0.3044715226, 0.7552289963,
-            0.3701532483, -0.3196074963, 0.5432665348, -0.3078871667, 0.6090193987});
-
-        auto inv_inv = so_n::exp(so_n::log(rot));
-        if(norm(inv_inv - rot) > 5 * std::numeric_limits<float>::epsilon())
-        {
-            std::cout << mxm::to_string(inv_inv) << std::endl;
-            std::cout << "error: " << (norm(inv_inv - rot)) << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
-
-    }
-
-    if(1)
-    {
-        auto axis = Vector<float>({1,2,3}).normalized();
-        auto rot = Rotation::fromAxisAngle(axis, 1.).asMatrix();
-
-        auto skew = so_n::log(rot);
-        auto inv_inv = so_n::exp(skew);
-        if(norm(inv_inv - rot) > std::numeric_limits<float>::epsilon() * 5)
-        {
-            std::cout << "error: " << (norm(inv_inv - rot)) << std::endl;
-            std::cout << mxm::to_string(rot) << std::endl;
-            std::cout << mxm::to_string(skew) << std::endl;
-            std::cout << mxm::to_string(so_n::exp(skew)) << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
-    }
 }
 #else
 inline void testRotation(){}

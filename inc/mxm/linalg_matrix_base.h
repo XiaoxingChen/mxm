@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <math.h>
 #include <string>
+#include <limits>
 
 namespace mxm
 {
@@ -25,6 +26,8 @@ std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 
 template<typename DType, typename>
 typename Traits<DType>::ArithType norm(const DType& m);
+template<typename DType>
+typename std::enable_if<std::is_floating_point<DType>::value, DType>::type norm(const DType& in);
 
 template<typename DType>
 struct Traits<DType, std::enable_if_t<std::is_arithmetic<DType>::value, void>>
@@ -453,6 +456,51 @@ conj(const MatrixBase<DeriveType>& in)
     return ret;
 }
 #endif
+
+template<typename DeriveType>
+bool isSquare(const MatrixBase<DeriveType>& mat)
+{
+    return mat.shape(0) == mat.shape(1);
+}
+
+template<typename DeriveType>
+bool isIdentity(
+    const MatrixBase<DeriveType>& mat,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+{
+    using ArithType = typename Traits<DeriveType>::ArithType;
+    const ArithType ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
+    for(size_t i = 0; i < mat.shape(0); i++)
+    {
+        for(size_t j = 0; j < mat.shape(1); j++)
+        {
+            if(i == j)
+            {
+                if(norm(mat(i,j) - ONE) > tol) return false;
+            }else
+            {
+                if(norm(mat(i,j)) > tol) return false;
+            }
+        }
+    }
+    return true;
+}
+
+template<typename DeriveType>
+bool isZero(
+    const MatrixBase<DeriveType>& mat,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+{
+    for(size_t i = 0; i < mat.shape(0); i++)
+    {
+        for(size_t j = 0; j < mat.shape(1); j++)
+        {
+            if(norm(mat(i,j)) > tol) return false;
+        }
+    }
+    return true;
+}
+
 } // namespace mxm
 
 
