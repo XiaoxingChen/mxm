@@ -14,8 +14,8 @@ using namespace mxm;
 
 inline void rotationTestCase1()
 {
-    Rotation r1 = Rotation::fromAxisAngle(Vec({0,0,1}), 0.4);
-    Rotation r2 = Rotation::fromAxisAngle(Vec({0,0,1}), 0.2);
+    auto r1 = Rotation<float>::fromAxisAngle(Vec({0,0,1}), 0.4);
+    auto r2 = Rotation<float>::fromAxisAngle(Vec({0,0,1}), 0.2);
     Vec v({1,0,0});
     auto result = (r1 * r2).apply(v);
     Vec expect({0.82533561, 0.56464247, 0.});
@@ -29,7 +29,7 @@ inline void rotationTestCase2()
 {
     Vec u1({1, 0, 0.1});
     Vec u2({1, 1, 0.1});
-    auto r = Rotation::fromMatrix(mxm::bivectorToRotationMatrix(u1, u2));
+    auto r = Rotation<float>::fromMatrix(mxm::bivectorToRotationMatrix(u1, u2));
 
     Vec v({1,0,1});
     Vec v1(r.apply(v));
@@ -49,7 +49,7 @@ inline void rotationTestCase4()
     expect(1,1) = -1;
     expect(2,2) = -1;
 
-    Rotation r(Rotation::fromPlaneAngle(Vec({0,1,0}), Vec({0,0,1}), M_PI));
+    auto r(Rotation<float>::fromPlaneAngle(Vec({0,1,0}), Vec({0,0,1}), M_PI));
     if((r.asMatrix() - expect).norm() > 5*eps())
     {
         std::cout << "\n" << mxm::to_string(r.asMatrix());
@@ -97,7 +97,7 @@ inline void rotationTestDeterminant()
 {
     for(size_t i = 0; i < 10; i++)
     {
-        Rotation r(Rotation::fromAxisAngle(Vec({1.,1,1}), 0.1 * i));
+        auto r(Rotation<float>::fromAxisAngle(Vec({1.,1,1}), 0.1 * i));
         if(fabs(mxm::det(r.asMatrix()) - 1) > 4 * eps())
         {
             std::cout << mxm::det(r.asMatrix()) - 1 << std::endl;
@@ -183,7 +183,7 @@ inline void testRotation()
 
     {
         float angle = 0.4;
-        Rotation r1 = Rotation::fromAxisAngle(Vec({0,0,1}), angle);
+        auto r1 = Rotation<float>::fromAxisAngle(Vec({0,0,1}), angle);
         auto angles = SO::findAngles(r1.asMatrix());
         if(abs(angles(0) - angle) > std::numeric_limits<float>::epsilon())
         {

@@ -5,6 +5,7 @@
 #include "cv_kernel.h"
 #include "interpolation.h"
 #include "linalg_utils.h"
+#include "model_camera.h"
 
 #include <functional>
 #include <map>
@@ -394,6 +395,23 @@ Matrix<DType> findHomographyMatrix(
         v(3,0),v(4,0),v(5,0),
         v(6,0),v(7,0),v(8,0)}) * (DType(1) / v(8,0));
 }
+
+#if 0
+template<typename PType>
+Matrix<PType> undistort(
+    const Matrix<PType>& img_src,
+    const Camera<typename Traits<PType>::ArithType, 3>& cam,
+    const RadialTangentialDistortion<typename Traits<PType>::ArithType>& distortion)
+{
+    Matrix<PType> img_out(img_src.shape());
+    img_out.traverse([&](auto i, auto j){
+        auto dir = cam.pixelDirection(Vector<size_t>{i,j});
+        auto coord = cam.matrix().matmul(distortion.distort(dir));
+        img_out(i,j) = interp::bilinearUnitSquare(coord, img_src, "zero")(0,0);
+    });
+    return img_out;
+}
+#endif
 
 } // namespace mxm
 

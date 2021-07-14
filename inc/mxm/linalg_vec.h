@@ -30,6 +30,13 @@ public:
     Vector(size_t size): BaseType({size, 1}){}
     Vector(const std::vector<DType>& v): BaseType({v.size(), 1}, v){}
     Vector(std::vector<DType>&& v): BaseType({v.size(), 1}, std::move(v)){}
+    Vector(std::initializer_list<DType> v): BaseType({v.size(), 1})
+    {
+        for(size_t i = 0; i < std::distance(v.begin(), v.end()); i++)
+        {
+            (*this)(i) = *(v.begin() + i);
+        }
+    }
 
     Vector(const BaseType& mat)
         : BaseType(mat.shape(1) == 1 ? mat : mat.T())

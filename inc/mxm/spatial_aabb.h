@@ -14,8 +14,8 @@ class AxisAlignedBoundingBox
   public:
     AxisAlignedBoundingBox(Vec min_pt, Vec max_pt):
         min_(min_pt), max_(max_pt) { checkDimension(__FILE__, __LINE__); }
-    AxisAlignedBoundingBox(const std::vector<FloatType>& min_pt, const std::vector<FloatType>& max_pt):
-        min_(min_pt), max_(max_pt) { checkDimension(__FILE__, __LINE__); }
+    // AxisAlignedBoundingBox(const std::vector<FloatType>& min_pt, const std::vector<FloatType>& max_pt):
+    //     min_(min_pt), max_(max_pt) { checkDimension(__FILE__, __LINE__); }
 
     AxisAlignedBoundingBox(size_t dim):
         min_(dim), max_(dim) { clear(); }

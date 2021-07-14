@@ -14,8 +14,8 @@ public:
     Ray(size_t dimension):origin_(dimension), direction_(dimension), t_min_(mxm::tMin()), t_max_(mxm::tMax()){}
     Ray(const Vec& origin, const Vec& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
     origin_(origin), direction_(direction), t_min_(t_min), t_max_(t_max) { checkDimension(); }
-    Ray(const std::vector<FloatType>& origin, const std::vector<FloatType>& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
-    origin_(origin), direction_(direction), t_min_(t_min), t_max_(t_max) { checkDimension(); }
+    // Ray(const std::vector<FloatType>& origin, const std::vector<FloatType>& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
+    // origin_(origin), direction_(direction), t_min_(t_min), t_max_(t_max) { checkDimension(); }
 
     const Ray& checkDimension(size_t dim=0) const
     {
