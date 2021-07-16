@@ -597,6 +597,7 @@ svd(const Matrix<DType>& mat)
 
     size_t n = std::min(mat.shape(0), mat.shape(1));
     u_s_vh[1] = Matrix<DType>({n,1});
+    auto inv_sv = Matrix<DType>({n,1});
 
     std::vector<size_t> idx_buffer(n);
     for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
@@ -607,13 +608,16 @@ svd(const Matrix<DType>& mat)
         for(size_t i = 0; i < n; i++)
         {
             u_s_vh[1](i,0) = sqrt(val_vec[0](i,0));
+            inv_sv(i,0) = DType(1.)/u_s_vh[1](i,0);
         }
+
+        u_s_vh[2] = diagonalMatrix(inv_sv).matmul(u_s_vh[0].T()).matmul(mat);
         // std::cout << mxm::to_string(val_vec[0]) << std::endl;
     }
 
     {
-        auto val_vec = symmetricEig(mat.T().matmul(mat));
-        u_s_vh[2] = val_vec[1].T();
+        // auto val_vec = symmetricEig(mat.T().matmul(mat));
+        // u_s_vh[2] = val_vec[1].T();
         // std::cout << mxm::to_string(val_vec[0]) << std::endl;
     }
     return u_s_vh;

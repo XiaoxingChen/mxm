@@ -450,18 +450,29 @@ inline void testEigenvalues()
         }
     }
 
-    #if(0)
+    #if(1)
     {
         auto u_s_vh = svd(mat_a);
         // u_s_vh[2](Row(0)) *= -1;
-        std::cout << mxm::to_string(u_s_vh) << std::endl;
-        auto err = (u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2]) - mat_a).norm();
-        // std::cout << u_s_vh[0].det() << std::endl;
-        // std::cout << u_s_vh[2].det() << std::endl;
 
-        if(err > eps())
+        auto err = (u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2]) - mat_a).norm();
+
+        if(!isIdentity(u_s_vh[0].matmul(u_s_vh[0].T()), 15 * eps()))
         {
-            std::cout << err << std::endl;
+            std::cout << mxm::to_string (u_s_vh[0].matmul(u_s_vh[0].T())) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(!isIdentity(u_s_vh[2].matmul(u_s_vh[2].T()), 50 * eps()))
+        {
+            std::cout << mxm::to_string (u_s_vh[2].matmul(u_s_vh[2].T())) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(err > 15 * eps())
+        {
+            std::cout << mxm::to_string(u_s_vh) << std::endl;
+            std::cout << "error: " << err << std::endl;
             std::cout << "recover: \n" << mxm::to_string(u_s_vh[0].matmul(diagonalMatrix(u_s_vh[1])).matmul(u_s_vh[2])) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
