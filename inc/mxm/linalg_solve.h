@@ -601,6 +601,7 @@ svd(const Matrix<DType>& mat)
     bool positive_definite = true;
 
     auto val_vec = symmetricEig(mat.matmul(mat.T()));
+    Matrix<DType> vec_rhs = symmetricEig(mat.T().matmul(mat))[1].T();
     std::vector<size_t> zero_idx;
 
     u_s_vh[0] = val_vec[1];
@@ -618,15 +619,16 @@ svd(const Matrix<DType>& mat)
         }
     }
 
-    u_s_vh[2] = diagonalMatrix(inv_sv).matmul(u_s_vh[0].T()).matmul(mat);
-    if(!positive_definite){
-        auto singular_vec_rhs = symmetricEig(mat.matmul(mat.T()))[1].T();
-        for(const auto & idx : zero_idx)
+    auto rough_vh = diagonalMatrix(inv_sv).matmul(u_s_vh[0].T()).matmul(mat);
+    for(size_t i = 0; i < rough_vh.shape(0); i++)
+    {
+        MatrixRef<DType> row_vec = vec_rhs(Row(i));
+        if(row_vec.matmul(rough_vh(Row(i)).T())(0,0) < 0)
         {
-            u_s_vh[2](Row(idx)) = singular_vec_rhs(Row(idx));
+            row_vec *= -1;
         }
     }
-
+    u_s_vh[2] = vec_rhs;
 
     return u_s_vh;
 }

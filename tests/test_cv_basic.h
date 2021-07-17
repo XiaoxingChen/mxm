@@ -9,6 +9,7 @@
 #include "mxm/cv_kernel.h"
 #include "mxm/random.h"
 #include "mxm/cv_corner.h"
+#include "mxm/cv_3d.h"
 
 
 using namespace mxm;
@@ -259,6 +260,29 @@ inline void testHomography()
     }
 }
 
+inline void testICP()
+{
+    {
+        size_t pt_num = 30;
+        size_t dim = 3;
+        Rotation<float> rot = Rotation<float>::fromAxisAngle({1,0,0}, M_PI * 0.25);
+        auto pts = random::uniform<float>({dim, pt_num});
+        for(size_t i = 0; i < dim; i++)
+        {
+            pts(Row(i)) -= mxm::sum(pts(Row(i))) / pt_num;
+        }
+        auto pts2 = rot.apply(pts);
+        auto result = icpFindRotation(pts, pts2);
+        if(!isIdentity(rot.asMatrix().matmul(result.asMatrix().T()), 5 * std::numeric_limits<float>::epsilon()))
+        {
+            std::cout << mxm::to_string(rot.asMatrix()) << std::endl;
+            std::cout << mxm::to_string(result.asMatrix()) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+}
+
 inline void testCvBasic()
 {
     testPixel();
@@ -268,6 +292,7 @@ inline void testCvBasic()
     testBresenhamCircle();
     testBriefDescriptor();
     testHomography();
+    testICP();
 }
 #else
 inline void testCvBasic(){}

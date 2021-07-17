@@ -466,7 +466,8 @@ bool isSquare(const MatrixBase<DeriveType>& mat)
 template<typename DeriveType>
 bool isIdentity(
     const MatrixBase<DeriveType>& mat,
-    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon(),
+    typename Traits<DeriveType>::ArithType* p_error=nullptr)
 {
     using ArithType = typename Traits<DeriveType>::ArithType;
     const ArithType ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
@@ -474,12 +475,11 @@ bool isIdentity(
     {
         for(size_t j = 0; j < mat.shape(1); j++)
         {
-            if(i == j)
+            auto error = i == j ? norm(mat(i,j) - ONE) : norm(mat(i,j));
+            if(error > tol)
             {
-                if(norm(mat(i,j) - ONE) > tol) return false;
-            }else
-            {
-                if(norm(mat(i,j)) > tol) return false;
+                if(p_error) *p_error = error;
+                return false;
             }
         }
     }
