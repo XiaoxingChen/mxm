@@ -32,6 +32,7 @@
 #include "mxm/linalg_complex.h"
 #endif
 
+#include "mxm/random.h"
 
 
 
@@ -502,6 +503,22 @@ inline void testEigenvalues()
             std::cout << mxm::to_string(eig_vals) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
+    }
+
+    {
+        for(size_t n = 3; n < 10; n++)
+        {
+            Matrix<float> mat = random::uniform<float>({n,n});
+            auto u_d_vh = svd(mat);
+            auto restore = u_d_vh[0].matmul(diagonalMatrix(u_d_vh[1])).matmul(u_d_vh[2]);
+            if(norm(mat - restore) / (n * n) > 2 * std::numeric_limits<float>::epsilon())
+            {
+                std::cout << mxm::to_string( mat ) << std::endl;
+                std::cout << "error: " << ( norm(mat - restore) / (n * n)) << std::endl;
+                throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+            }
+        }
+
     }
 
 

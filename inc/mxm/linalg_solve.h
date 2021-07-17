@@ -598,28 +598,36 @@ svd(const Matrix<DType>& mat)
     size_t n = std::min(mat.shape(0), mat.shape(1));
     u_s_vh[1] = Matrix<DType>({n,1});
     auto inv_sv = Matrix<DType>({n,1});
+    bool positive_definite = true;
 
-    std::vector<size_t> idx_buffer(n);
-    for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
+    auto val_vec = symmetricEig(mat.matmul(mat.T()));
+    std::vector<size_t> zero_idx;
 
+    u_s_vh[0] = val_vec[1];
+    for(size_t i = 0; i < n; i++)
     {
-        auto val_vec = symmetricEig(mat.matmul(mat.T()));
-        u_s_vh[0] = val_vec[1];
-        for(size_t i = 0; i < n; i++)
+        if(norm(val_vec[0](i,0)) < std::numeric_limits<typename Traits<DType>::ArithType>::epsilon())
+        {
+            inv_sv(i,0) = 0;
+            positive_definite = false;
+            zero_idx.push_back(i);
+        }else
         {
             u_s_vh[1](i,0) = sqrt(val_vec[0](i,0));
             inv_sv(i,0) = DType(1.)/u_s_vh[1](i,0);
         }
-
-        u_s_vh[2] = diagonalMatrix(inv_sv).matmul(u_s_vh[0].T()).matmul(mat);
-        // std::cout << mxm::to_string(val_vec[0]) << std::endl;
     }
 
-    {
-        // auto val_vec = symmetricEig(mat.T().matmul(mat));
-        // u_s_vh[2] = val_vec[1].T();
-        // std::cout << mxm::to_string(val_vec[0]) << std::endl;
+    u_s_vh[2] = diagonalMatrix(inv_sv).matmul(u_s_vh[0].T()).matmul(mat);
+    if(!positive_definite){
+        auto singular_vec_rhs = symmetricEig(mat.matmul(mat.T()))[1].T();
+        for(const auto & idx : zero_idx)
+        {
+            u_s_vh[2](Row(idx)) = singular_vec_rhs(Row(idx));
+        }
     }
+
+
     return u_s_vh;
 }
 #endif
