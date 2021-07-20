@@ -387,7 +387,7 @@ Matrix<DType> shiftedQRIteration(
     Matrix<DType>* p_orthogonal=nullptr,
     qr::TraverseSeq idx_seq=qr::eUpperTrianglize,
     size_t max_it=40,
-    DType tol=std::numeric_limits<DType>::epsilon() * std::numeric_limits<DType>::epsilon())
+    DType tol=std::numeric_limits<DType>::epsilon())
 {
     std::array<Matrix<DType>, 2> q_r;
     Matrix<DType> ret(mat);
@@ -401,7 +401,8 @@ Matrix<DType> shiftedQRIteration(
         q_r = qr::decomposeByRotation(ret - shift, idx_seq);
         ret = q_r[1].matmul(q_r[0]) + shift;
         if(p_orthogonal) *p_orthogonal = p_orthogonal->matmul(q_r[0]);
-        if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
+        // if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
+        if(isIdentity(q_r[0], tol)) break;
     }
     return ret;
 }
@@ -498,40 +499,21 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
 
     std::array<Matrix<DType>, 2> val_vec{Matrix<DType>({n,1}), Matrix<DType>({n,n})};
 
-    auto eig_vecs = Matrix<DType>::identity(n);
+    auto q_r = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
+    auto eig_vecs = q_r[0];
 
-    Matrix<DType> mat_k = mat;
-    if(n > 2)
-    {
-        auto q_r = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
-        eig_vecs = q_r[0].matmul(eig_vecs);
-        mat_k = q_r[1];
-    }
+    Matrix<DType> diag = shiftedQRIteration(q_r[1], &eig_vecs, qr::eSubdiagonal, max_it);
 
-    // std::cout << mxm::to_string(mat_k) << std::endl;
-
-    for(size_t i = 0; i < max_it; i++)
-    {
-        DType rho = qr::wilkinsonShiftStrategy(mat_k);
-        Matrix<DType> shift = Matrix<DType>::identity(n) * rho;
-        auto q_r = qr::decomposeByRotation(mat_k - shift, qr::eSubdiagonal);
-        mat_k = q_r[1].matmul(q_r[0]) + shift;
-        eig_vecs = eig_vecs.matmul(q_r[0]);
-        if(qr::errorOrthogonalBlockDiagonal(mat_k) < tol) break;
-        // std::cout << "i: " << i << ", err: " << qr::errorOrthogonalBlockDiagonal(mat_k) << std::endl;
-    }
-
-    // std::cout << mxm::to_string(mat_k) << std::endl;
     std::vector<size_t> idx_buffer;
     for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
-    std::sort(idx_buffer.begin(), idx_buffer.end(), [&](size_t i, size_t j) { return mat_k(i,i) > mat_k(j,j); });
+    std::sort(idx_buffer.begin(), idx_buffer.end(), [&](size_t i, size_t j) { return diag(i,i) > diag(j,j); });
 
     // std::cout << mxm::to_string(idx_buffer) << std::endl;
 
     for(size_t i = 0; i < n; i++)
     {
         size_t idx = idx_buffer.at(i);
-        val_vec[0](i,0) = mat_k(idx,idx);
+        val_vec[0](i,0) = diag(idx,idx);
         val_vec[1](Col(i)) = eig_vecs(Col(idx));
     }
 

@@ -50,7 +50,7 @@ inline void testLieSpecialOrthogonal()
     {
         auto rot = testDataSO5();
         auto inv_inv = so::exp(SO::log(rot));
-        if(norm(inv_inv - rot) > 5 * std::numeric_limits<float>::epsilon())
+        if(norm(inv_inv - rot) > 15 * std::numeric_limits<float>::epsilon())
         {
             std::cout << mxm::to_string(inv_inv) << std::endl;
             std::cout << "error: " << (norm(inv_inv - rot)) << std::endl;

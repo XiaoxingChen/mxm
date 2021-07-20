@@ -459,7 +459,7 @@ inline void testEigenvalues()
     }
 
     {
-        Mat mat_b = mat_a.T().matmul(mat_a);
+        Matrix<double> mat_b(mat_a.T().matmul(mat_a));
 
         auto eig_val_vec = symmetricEig(mat_b);
 
@@ -470,7 +470,7 @@ inline void testEigenvalues()
         {
             auto eig_vec = eig_val_vec[1](Col(i));
             auto err = (mat_b.matmul(eig_vec) - eig_val_vec[0](i,0) * eig_vec).norm();
-            if(err > 15 * eps())
+            if(err > 15 * std::numeric_limits<double>::epsilon())
             {
                 std::cout << "Error! " << __FILE__ << ":" << __LINE__ << std::endl;
                 std::cout << "i: " << i << ", error: " << err << std::endl;
@@ -482,7 +482,15 @@ inline void testEigenvalues()
     {
         auto u_s_vh = svd(mat_a);
         // u_s_vh[2](Row(0)) *= -1;
-        checkValidSVD(mat_a, u_s_vh);
+        try
+        {
+            checkValidSVD(mat_a, u_s_vh);
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << e.what() << '\n';
+            std::cout << "Catch error! " << __FILE__ << ":" << __LINE__ << std::endl;
+        }
     }
     #endif
 
@@ -513,9 +521,17 @@ inline void testEigenvalues()
     {
         for(size_t n = 3; n < 5; n++)
         {
-            Matrix<float> mat = random::uniform<float>({n,n});
+            Matrix<double> mat = random::uniform<double>({n,n});
             auto u_d_vh = svd(mat);
-            checkValidSVD(mat, u_d_vh);
+            try
+            {
+                checkValidSVD(mat, u_d_vh);
+            }
+            catch(const std::exception& e)
+            {
+                std::cout << e.what() << '\n';
+                std::cout << "Catch error! " << __FILE__ << ":" << __LINE__ << std::endl;
+            }
         }
 
         std::cout << "TODO: SVD large error at n > 5." << std::endl;
@@ -907,6 +923,62 @@ inline void testCombinations()
 inline void testCombinations(){}
 #endif
 
+template<typename DType=double>
+Matrix<DType> testDataRandom5x5()
+{
+    Matrix<DType> mat_a({5,5}, {
+            0.95850398, 0.3389291 , 0.0071609 , 0.74223576, 0.08585814,
+            0.75156501, 0.87193671, 0.87278104, 0.25092665, 0.36739847,
+            0.26376434, 0.87153321, 0.44203283, 0.74565173, 0.05153192,
+            0.19369754, 0.68500599, 0.16890462, 0.09378345, 0.33960549,
+            0.18433456, 0.83782842, 0.40354753, 0.79179645, 0.01594465});
+    return mat_a;
+}
+
+template<typename DType=double>
+void testSvdPipelineError()
+{
+    if(0){ // qr decomposition
+        auto mat_a = testDataRandom5x5<DType>();
+        auto mat_ata = mat_a.T().matmul(mat_a);
+        auto q_r = qr::decomposeByRotation(mat_ata, qr::eUpperHessenbergize, true);
+        auto restore = q_r[0].matmul(q_r[1]).matmul(q_r[0].T());
+        auto diff = mat_ata - restore;
+        DType error(0);
+        isZero(diff, 0., &error);
+
+        std::cout << mxm::to_string(diff, 15) << std::endl;
+        std::cout << "upper hessenberg error: " << error << std::endl;
+
+        auto orth = q_r[0];
+        auto quasi = shiftedQRIteration(q_r[1], &orth, qr::eSubdiagonal);
+        std::cout << mxm::to_string(quasi, 15) << std::endl;
+        restore = orth.matmul(quasi).matmul(orth.T());
+        diff = mat_ata - restore;
+        isZero(diff, 0., &error);
+        std::cout << mxm::to_string(diff, 15) << std::endl;
+        std::cout << "qr iteration error: " << error << std::endl;
+    }
+
+    if(1){
+        auto mat_a = testDataRandom5x5<DType>();
+        auto mat_ata = mat_a.T().matmul(mat_a);
+        auto val_vec = symmetricEig(mat_ata);
+        auto restore = val_vec[1].matmul(diagonalMatrix(val_vec[0])).matmul(val_vec[1].T());
+        auto diff = mat_ata - restore;
+        DType error(0);
+        isZero(diff, 0., &error);
+        if(error > 1e-6)
+        {
+            std::cout << "eps: " << std::numeric_limits<DType>::epsilon() << std::endl;
+            std::cout << mxm::to_string(diff, 15) << std::endl;
+            std::cout << "symmetric eigen error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+}
+
 inline void testLinearAlgebra()
 {
     Mat m1({3,3},{1,1,1, 2,2,2, 3,3,3});
@@ -924,7 +996,6 @@ inline void testLinearAlgebra()
     if(fabs(mxm::det(Mat::identity(3)) - 1.) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 #endif
-
 
     testMatRef();
     testOrthogonalComplement();
@@ -944,6 +1015,8 @@ inline void testLinearAlgebra()
     // testUnsymmetrixEigenvaluePipeline02();
 
     testCombinations();
+    testSvdPipelineError<double>();
+    testSvdPipelineError<float>();
 
 }
 

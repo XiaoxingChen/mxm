@@ -471,6 +471,7 @@ bool isIdentity(
 {
     using ArithType = typename Traits<DeriveType>::ArithType;
     const ArithType ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
+    bool result = true;
     for(size_t i = 0; i < mat.shape(0); i++)
     {
         for(size_t j = 0; j < mat.shape(1); j++)
@@ -478,27 +479,36 @@ bool isIdentity(
             auto error = i == j ? norm(mat(i,j) - ONE) : norm(mat(i,j));
             if(error > tol)
             {
-                if(p_error) *p_error = error;
-                return false;
+                if(nullptr == p_error) return false;
+                *p_error = std::max(error, *p_error);
+                result = false;
             }
         }
     }
-    return true;
+    return result;
 }
 
 template<typename DeriveType>
 bool isZero(
     const MatrixBase<DeriveType>& mat,
-    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon(),
+    typename Traits<DeriveType>::ArithType* p_error=nullptr)
 {
+    bool result = true;
     for(size_t i = 0; i < mat.shape(0); i++)
     {
         for(size_t j = 0; j < mat.shape(1); j++)
         {
-            if(norm(mat(i,j)) > tol) return false;
+            auto error = norm(mat(i,j));
+            if(error > tol)
+            {
+                if(nullptr == p_error) return false;
+                *p_error = std::max(error, *p_error);
+                result = false;
+            }
         }
     }
-    return true;
+    return result;
 }
 
 } // namespace mxm
