@@ -80,9 +80,16 @@ public:
 
     void traverse(std::function< void(size_t, size_t)> f) const
     {
-        for(size_t i = 0; i < reinterpret_cast<const DeriveType*>(this)->shape(0); i++)
-            for(size_t j = 0; j < reinterpret_cast<const DeriveType*>(this)->shape(1); j++)
+        for(size_t i = 0; i < shape(0); i++)
+            for(size_t j = 0; j < shape(1); j++)
                 f(i,j);
+    }
+
+    void breakableTraverse(std::function< bool(size_t, size_t)> f) const
+    {
+        for(size_t i = 0; i < shape(0); i++)
+            for(size_t j = 0; j < shape(1); j++)
+                if(!f(i,j)) return;
     }
 
     EntryType& operator () (size_t i, size_t j) { return reinterpret_cast<DeriveType&>(*this)(i,j); }
@@ -129,45 +136,19 @@ public:
     operator - (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) -= scalar; }
 
 
-    template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) *= reinterpret_cast<const T &>(rhs)(i,j);}); return self;}
-    template<typename T> DeriveType & operator += (const MatrixBase<T>& rhs)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) += reinterpret_cast<const T &>(rhs)(i,j);}); return self;}
-    template<typename T> DeriveType & operator -= (const MatrixBase<T>& rhs)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) -= reinterpret_cast<const T &>(rhs)(i,j);}); return self;}
+    template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
+    template<typename T> DeriveType & operator += (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, plus<EntryType, typename Traits<T>::EntryType>()); }
+    template<typename T> DeriveType & operator -= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, minus<EntryType, typename Traits<T>::EntryType>()); }
 
-    template<typename T, typename OpType>
-    auto binaryOp(const MatrixBase<T>& rhs, OpType f) const
-    {
-        auto& self = reinterpret_cast<const DeriveType&>(*this);
-        auto& rhs_d = reinterpret_cast<const T&>(rhs);
-        Matrix<typename OpType::ReturnType> ret(self.shape());
-        ret.traverse([&](size_t i, size_t j){ret(i,j) = f(self(i,j), rhs_d(i,j));});
-        return ret;
-    }
+    template<typename RhsDeriveType, typename OpType>
+    Matrix<typename OpType::ReturnType> binaryOp(const MatrixBase<RhsDeriveType>& rhs, OpType f) const;
+
+    template<typename RhsDeriveType, typename OpType>
+    DeriveType & compoundAssign(const MatrixBase<RhsDeriveType>& rhs, OpType f);
 #if 1
     template<typename T> auto operator * (const MatrixBase<T>& rhs) const { return binaryOp(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> auto operator + (const MatrixBase<T>& rhs) const { return binaryOp(rhs, plus<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> auto operator - (const MatrixBase<T>& rhs) const { return binaryOp(rhs, minus<EntryType, typename Traits<T>::EntryType>()); }
-#else
-    template<typename T> auto operator * (const MatrixBase<T>& rhs)
-    {
-        auto& self = reinterpret_cast<DeriveType&>(*this);
-        Matrix<decltype(typename Traits<DeriveType>::EntryType() * typename Traits<T>::EntryType())> ret(self.shape());
-        ret.traverse([&](size_t i, size_t j){ret(i,j) = self(i,j) * reinterpret_cast<const T&>(rhs)(i,j);});
-        return ret;
-    }
-    template<typename T> auto operator + (const MatrixBase<T>& rhs)
-    {
-        auto& self = reinterpret_cast<DeriveType&>(*this);
-        Matrix<decltype(typename Traits<DeriveType>::EntryType() + typename Traits<T>::EntryType())> ret(self.shape());
-        ret.traverse([&](size_t i, size_t j){ret(i,j) = self(i,j) + reinterpret_cast<const T&>(rhs)(i,j);});
-        return ret;
-    }
-    template<typename T> auto operator - (const MatrixBase<T>& rhs)
-    {
-        auto& self = reinterpret_cast<DeriveType&>(*this);
-        Matrix<decltype(typename Traits<DeriveType>::EntryType() - typename Traits<T>::EntryType())> ret(self.shape());
-        ret.traverse([&](size_t i, size_t j){ret(i,j) = self(i,j) - reinterpret_cast<const T&>(rhs)(i,j);});
-        return ret;
-    }
 #endif
 
     DeriveType operator -() const
@@ -420,6 +401,51 @@ Matrix<typename Traits<DeriveType>::EntryType> MatrixBase<DeriveType>::normalize
     return ret.normalize();
 }
 
+template<typename DeriveType>
+template<typename RhsDeriveType, typename OpType>
+Matrix<typename OpType::ReturnType>
+MatrixBase<DeriveType>::binaryOp(const MatrixBase<RhsDeriveType>& rhs, OpType f) const
+{
+    using ReturnType = typename OpType::ReturnType;
+    if(shape() == rhs.shape() || (1 == rhs.shape(0) ^ 1 == rhs.shape(1)))
+    {
+        Matrix<ReturnType> ret(*this);
+        return ret.compoundAssign(rhs, f);
+    }
+    // lhs is to broadcast
+    if(1 == shape(0))
+    {
+        return Matrix<ReturnType>::ones({rhs.shape(0), 1}).matmul(*this).compoundAssign(rhs, f);
+    }
+    if(1 == shape(1))
+    {
+        return this->matmul(Matrix<ReturnType>::ones({1, rhs.shape(1)})).compoundAssign(rhs, f);
+    }
+    assert(false && "broad cast error!");
+    return (*this);
+}
+
+template<typename DeriveType>
+template<typename RhsDeriveType, typename OpType>
+DeriveType & MatrixBase<DeriveType>::compoundAssign(const MatrixBase<RhsDeriveType>& rhs, OpType f)
+{
+        if(shape() == rhs.shape())
+        {
+            this->traverse([&](size_t i, size_t j){(*this)(i,j) = f((*this)(i,j), rhs(i,j));});
+            return reinterpret_cast<DeriveType&>(*this);
+        }
+        assert(shape(0) > rhs.shape(0) ^ shape(1) > rhs.shape(1)); //only one axis to broadcast is allow
+        size_t broadcast_axis = shape(0) > rhs.shape(0) ? 0 : 1;
+        assert(1 == rhs.shape(broadcast_axis));
+
+        if(0 == broadcast_axis)
+            this->traverse([&](size_t i, size_t j){(*this)(i,j) = f((*this)(i,j), rhs(0,j));});
+        else if(1 == broadcast_axis)
+            this->traverse([&](size_t i, size_t j){(*this)(i,j) = f((*this)(i,j), rhs(i,0));});
+
+        return reinterpret_cast<DeriveType&>(*this);
+    }
+
 // for float point type
 
 template<typename DType,
@@ -466,48 +492,49 @@ bool isSquare(const MatrixBase<DeriveType>& mat)
 template<typename DeriveType>
 bool isIdentity(
     const MatrixBase<DeriveType>& mat,
-    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon(),
-    typename Traits<DeriveType>::ArithType* p_error=nullptr)
+    typename Traits<DeriveType>::ArithType* p_error=nullptr,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
 {
     using ArithType = typename Traits<DeriveType>::ArithType;
     const ArithType ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
     bool result = true;
-    for(size_t i = 0; i < mat.shape(0); i++)
-    {
-        for(size_t j = 0; j < mat.shape(1); j++)
+
+    mat.breakableTraverse([&](auto i, auto j)->bool{
+        auto error = i == j ? norm(mat(i,j) - ONE) : norm(mat(i,j));
+        if(p_error)
         {
-            auto error = i == j ? norm(mat(i,j) - ONE) : norm(mat(i,j));
-            if(error > tol)
-            {
-                if(nullptr == p_error) return false;
-                *p_error = std::max(error, *p_error);
-                result = false;
-            }
+            *p_error = std::max(error, *p_error);
+            return true;
         }
-    }
+        if(error < tol) return true;
+        result = false;
+        return false;
+
+    });
+
     return result;
 }
 
 template<typename DeriveType>
 bool isZero(
     const MatrixBase<DeriveType>& mat,
-    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon(),
-    typename Traits<DeriveType>::ArithType* p_error=nullptr)
+    typename Traits<DeriveType>::ArithType* p_error=nullptr,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
 {
     bool result = true;
-    for(size_t i = 0; i < mat.shape(0); i++)
-    {
-        for(size_t j = 0; j < mat.shape(1); j++)
+
+    mat.breakableTraverse([&](auto i, auto j)->bool{
+        auto error = norm(mat(i,j));
+        if(p_error)
         {
-            auto error = norm(mat(i,j));
-            if(error > tol)
-            {
-                if(nullptr == p_error) return false;
-                *p_error = std::max(error, *p_error);
-                result = false;
-            }
+            *p_error = std::max(error, *p_error);
+            return true;
         }
-    }
+        if(error < tol) return true;
+        result = false;
+        return false;
+
+    });
     return result;
 }
 

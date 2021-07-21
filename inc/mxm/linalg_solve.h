@@ -402,7 +402,7 @@ Matrix<DType> shiftedQRIteration(
         ret = q_r[1].matmul(q_r[0]) + shift;
         if(p_orthogonal) *p_orthogonal = p_orthogonal->matmul(q_r[0]);
         // if(qr::errorOrthogonalBlockDiagonal(q_r[0]) < tol) break;
-        if(isIdentity(q_r[0], tol)) break;
+        if(isIdentity(q_r[0], nullptr, tol)) break;
     }
     return ret;
 }

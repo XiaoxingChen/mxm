@@ -261,5 +261,21 @@ typename Traits<DeriveType>::EntryType sum(const MatrixBase<DeriveType>& src)
     return ret;
 }
 
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+sum(const MatrixBase<DeriveType>& src, size_t axis)
+{
+    using EntryType = typename Traits<DeriveType>::EntryType;
+    if(0 == axis)
+    {
+        if(1 == src.shape(0)) return src;
+        Matrix<EntryType> ret = Matrix<EntryType>::zeros({1, src.shape(1)});
+        src.traverse([&](auto i, auto j){ ret(0, j) += src(i,j); });
+        return ret;
+    }
+    // 1 == axis
+    return sum(src.T(), 0).T();
+}
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H

@@ -26,6 +26,7 @@ std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 class AutoShape;
 AutoShape fixRow(size_t n);
 AutoShape fixCol(size_t n);
+AutoShape square();
 
 template<typename DType>
 struct Traits<Matrix<DType>>
@@ -93,21 +94,35 @@ public:
     const MatrixRef<DType> operator () (const Block& b) const { return MatrixBase<ThisType>::operator()(b); };
 
     const DType * data() const { return data_.data(); }
+    void reshape(const AutoShape& shape, bool major);
 
 };
 
 class AutoShape
 {
 public:
-    enum EnumDynamic{eUndefined};
+    enum EnumDynamic{
+        eRowDefined = 0,
+        eColDefined = 1,
+        eFullyDefined,
+        eSquare,
+        eUndefined};
+#if 0
     AutoShape(const Shape& shape): shape_(shape), defined_{true, true} {}
     AutoShape(std::initializer_list<size_t> shape): shape_{*shape.begin(), *(shape.begin() + 1)}, defined_{true, true} {}
     AutoShape(size_t row, size_t col, bool row_def, bool col_def): shape_{row, col}, defined_{row_def, col_def} {}
+
+#else
+    AutoShape(const Shape& shape): shape_(shape), state_(eFullyDefined) {}
+    AutoShape(std::initializer_list<size_t> shape): shape_{*shape.begin(), *(shape.begin() + 1)}, state_(eFullyDefined) { assert(2 == shape.size()); }
+    AutoShape(const EnumDynamic& state, size_t row, size_t col): shape_{row, col}, state_(state) {}
+#endif
     std::array<size_t, 2> deduct(size_t total_num) const;
 
 private:
     std::array<size_t, 2> shape_;
-    std::array<bool, 2> defined_;
+    // std::array<bool, 2> defined_;
+    EnumDynamic state_;
 };
 
 //
@@ -207,6 +222,15 @@ void Matrix<DType>::operator = (Matrix<DType>&& rhs)
 }
 //
 // end of ref operation
+
+template<typename DType>
+void Matrix<DType>::reshape(const AutoShape& shape, bool major)
+{
+    auto new_shape = shape.deduct(data_.size());
+    assert(new_shape[0] * new_shape[1] == data_.size());
+    shape_ = new_shape;
+    major_ = major;
+}
 
 inline size_t index1D(size_t i, size_t j, bool major, const Shape& shape)
 {

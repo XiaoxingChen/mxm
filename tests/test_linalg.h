@@ -383,13 +383,14 @@ void checkValidSVD(
         std::cout << "error: " << ( norm(mat - restore) / area) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
-    if(!isIdentity(u_d_vh[0].matmul(u_d_vh[0].T()), 15 * eps()))
+    DType error(0);
+    if(!isIdentity(u_d_vh[0].matmul(u_d_vh[0].T()), &error, 15 * eps()))
     {
         std::cout << mxm::to_string( u_d_vh[0] ) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
-    DType error(0);
-    if(!isIdentity(u_d_vh[2].matmul(u_d_vh[2].T()), 50 * eps(), &error))
+
+    if(!isIdentity(u_d_vh[2].matmul(u_d_vh[2].T()), &error, 50 * eps()))
     {
         std::cout << mxm::to_string(u_d_vh[2].matmul(u_d_vh[2].T())) << std::endl;
         std::cout << "error: " << error << std::endl;
@@ -945,7 +946,7 @@ void testSvdPipelineError()
         auto restore = q_r[0].matmul(q_r[1]).matmul(q_r[0].T());
         auto diff = mat_ata - restore;
         DType error(0);
-        isZero(diff, 0., &error);
+        isZero(diff, &error, 0.);
 
         std::cout << mxm::to_string(diff, 15) << std::endl;
         std::cout << "upper hessenberg error: " << error << std::endl;
@@ -955,7 +956,7 @@ void testSvdPipelineError()
         std::cout << mxm::to_string(quasi, 15) << std::endl;
         restore = orth.matmul(quasi).matmul(orth.T());
         diff = mat_ata - restore;
-        isZero(diff, 0., &error);
+        isZero(diff, &error, 0.);
         std::cout << mxm::to_string(diff, 15) << std::endl;
         std::cout << "qr iteration error: " << error << std::endl;
     }
@@ -967,7 +968,7 @@ void testSvdPipelineError()
         auto restore = val_vec[1].matmul(diagonalMatrix(val_vec[0])).matmul(val_vec[1].T());
         auto diff = mat_ata - restore;
         DType error(0);
-        isZero(diff, 0., &error);
+        isZero(diff, &error, 0.);
         if(error > 1e-6)
         {
             std::cout << "eps: " << std::numeric_limits<DType>::epsilon() << std::endl;
@@ -996,6 +997,31 @@ inline void testLinearAlgebra()
     if(fabs(mxm::det(Mat::identity(3)) - 1.) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 #endif
+
+    {
+        auto result = Matrix<float>::ones({2,5}) + Matrix<float>::ones({2,1});
+        float error(0);
+        if(!isZero(result - 2 * Matrix<float>::ones({2,5}), &error, std::numeric_limits<float>::epsilon()))
+        {
+            std::cout << mxm::to_string(result) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+
+    {
+        auto test_data = Matrix<size_t>::ones({5,6});
+        auto val1 = sum(sum(test_data, 0), 1)(0,0);
+        auto val2 = sum(test_data);
+        if(val1 != val2)
+        {
+            std::cout << val2 << std::endl;
+            std::cout << val1 << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
 
     testMatRef();
     testOrthogonalComplement();

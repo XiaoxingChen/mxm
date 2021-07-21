@@ -17,10 +17,10 @@ namespace mxm
 namespace so
 {
 template<typename DType>
-bool isValid(const Matrix<DType>& mat, DType tol=std::numeric_limits<DType>::epsilon())
+bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=std::numeric_limits<DType>::epsilon())
 {
     if(! isSquare(mat)) return false;
-    return isZero(mat + mat.T(), tol);
+    return isZero(mat + mat.T(), error, tol);
 }
 
 template<size_t N, typename DType>
@@ -208,9 +208,9 @@ namespace SO
 {
 
 template<typename DType>
-bool isValid(const Matrix<DType>& mat, DType tol=std::numeric_limits<DType>::epsilon())
+bool isValid(const Matrix<DType>& mat, DType* p_error=nullptr, DType tol=std::numeric_limits<DType>::epsilon())
 {
-    return isIdentity(mat.T().matmul(mat), tol) && norm(mxm::det(mat) - DType(1)) < tol;
+    return isIdentity(mat.T().matmul(mat), p_error, tol) && norm(mxm::det(mat) - DType(1)) < tol;
 }
 
 template<size_t N, typename DeriveType>
