@@ -318,12 +318,14 @@ DType Matrix<DType>::det() const
     return det;
 }
 #endif
+
+// calculate the determinant of a matrix
+// available in both real and complex field.
 template <typename DeriveType>
 typename Traits<DeriveType>::EntryType
-det(const MatrixBase<DeriveType>& mat_in)
+det(const MatrixBase<DeriveType>& mat)
 {
     using DType = typename Traits<DeriveType>::EntryType;
-    auto & mat = reinterpret_cast<const DeriveType&>(mat_in);
     if(mat.square() && mat.shape(0) == 2)
         return mat(0,0) * mat(1,1) - mat(1,0)*mat(0,1);
 

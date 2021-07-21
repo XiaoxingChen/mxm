@@ -467,6 +467,14 @@ Matrix<DType> toSO3(const Quaternion<DType> & q_in)
     return rodrigues3D(axis, angle);
 }
 
+template<typename DType>
+Matrix<DType> asRotationMatrix(const Quaternion<DType>& q)
+{
+    Matrix<DType> lhs(matrixFromLeftQuaternion(q));
+    Matrix<DType> rhs(matrixFromRightQuaternion(q.conj()));
+    return lhs.matmul(rhs)(Block({1,},{1,}));
+}
+
 
 
 

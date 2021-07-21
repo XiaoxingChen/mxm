@@ -496,7 +496,7 @@ bool isIdentity(
     typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
 {
     using ArithType = typename Traits<DeriveType>::ArithType;
-    const ArithType ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
+    const auto ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
     bool result = true;
 
     mat.breakableTraverse([&](auto i, auto j)->bool{

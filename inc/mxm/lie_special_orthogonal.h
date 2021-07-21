@@ -23,6 +23,12 @@ bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=std::nume
     return isZero(mat + mat.T(), error, tol);
 }
 
+template<typename DType>
+Matrix<DType> normalized(const Matrix<DType>& input)
+{
+    return DType(0.5) * (input - input.T());
+}
+
 template<size_t N, typename DType>
 std::enable_if_t<3 == N, DType>
 findAngle(const Matrix<DType>& skew)
@@ -211,6 +217,13 @@ template<typename DType>
 bool isValid(const Matrix<DType>& mat, DType* p_error=nullptr, DType tol=std::numeric_limits<DType>::epsilon())
 {
     return isIdentity(mat.T().matmul(mat), p_error, tol) && norm(mxm::det(mat) - DType(1)) < tol;
+}
+
+template<typename DType>
+Matrix<DType> normalized(const Matrix<DType>& input)
+{
+    auto u_d_vh = svd(input);
+    return u_d_vh[0].matmul(u_d_vh[2]);
 }
 
 template<size_t N, typename DeriveType>

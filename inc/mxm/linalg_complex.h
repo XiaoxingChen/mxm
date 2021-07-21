@@ -104,17 +104,42 @@ Hypercomplex<DType, 2> complexMul(const Hypercomplex<DType, 2>& lhs, const Hyper
         lhs(0) * rhs(0) - lhs(1) * rhs(1),
         lhs(0) * rhs(1) + lhs(1) * rhs(0)});
 }
+// Reference:
+// [1] Geometric Methods and Applications
+// Chapter 9.1
+template<typename DType, unsigned int N>
+std::enable_if_t<4 == N, std::vector<DType>>
+matrixFromLhsComplex(const Hypercomplex<DType, N>& q)
+{
+    std::vector<DType> ret{
+        q(0), -q(1), -q(2), -q(3),
+        q(1),  q(0), -q(3), q(2),
+        q(2),  q(3),  q(0), -q(1),
+        q(3), -q(2),  q(1),  q(0)};
+    return ret;
+}
+
+// Reference:
+// [1] Geometric Methods and Applications
+// Chapter 9.1
+template<typename DType, unsigned int N>
+std::enable_if_t<4 == N, std::vector<DType>>
+matrixFromRhsComplex(const Hypercomplex<DType, N>& q)
+{
+    std::vector<DType> ret{
+        q(0),  q(1),  q(2), q(3),
+        -q(1), q(0), -q(3), q(2),
+        -q(2), q(3),  q(0), -q(1),
+        -q(3), -q(2), q(1),  q(0)};
+    return ret;
+}
 
 template<typename DType>
 Hypercomplex<DType, 4> complexMul(const Hypercomplex<DType, 4>& lhs, const Hypercomplex<DType, 4>& rhs)
 {
     const size_t N(4);
     std::array<DType, N> ret_data;
-    std::array<DType, N * N> mat = {
-        lhs(0), -lhs(1), -lhs(2), -lhs(3),
-        lhs(1),  lhs(0), -lhs(3), lhs(2),
-        lhs(2),  lhs(3),  lhs(0), -lhs(1),
-        lhs(3), -lhs(2),  lhs(1),  lhs(0)};
+    std::vector<DType> mat = matrixFromLhsComplex(lhs);
 
     for(size_t i = 0; i < N; i++)
     {
