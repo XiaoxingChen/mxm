@@ -53,14 +53,21 @@ struct multiplies: public std::binary_function<LhsType,RhsType,ReturnType_>
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs * rhs; }
 };
 
-template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()*RhsType())>
+template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()/RhsType())>
+struct divides: public std::binary_function<LhsType,RhsType,ReturnType_>
+{
+    using ReturnType = ReturnType_;
+    ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs / rhs; }
+};
+
+template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()+RhsType())>
 struct plus: public std::binary_function<LhsType,RhsType,ReturnType_>
 {
     using ReturnType = ReturnType_;
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs + rhs; }
 };
 
-template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()*RhsType())>
+template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()-RhsType())>
 struct minus: public std::binary_function<LhsType,RhsType,ReturnType_>
 {
     using ReturnType = ReturnType_;
@@ -137,6 +144,7 @@ public:
 
 
     template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
+    template<typename T> DeriveType & operator /= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, divides<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> DeriveType & operator += (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, plus<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> DeriveType & operator -= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, minus<EntryType, typename Traits<T>::EntryType>()); }
 
@@ -147,6 +155,7 @@ public:
     DeriveType & compoundAssign(const MatrixBase<RhsDeriveType>& rhs, OpType f);
 #if 1
     template<typename T> auto operator * (const MatrixBase<T>& rhs) const { return binaryOp(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
+    template<typename T> auto operator / (const MatrixBase<T>& rhs) const { return binaryOp(rhs, divides<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> auto operator + (const MatrixBase<T>& rhs) const { return binaryOp(rhs, plus<EntryType, typename Traits<T>::EntryType>()); }
     template<typename T> auto operator - (const MatrixBase<T>& rhs) const { return binaryOp(rhs, minus<EntryType, typename Traits<T>::EntryType>()); }
 #endif
@@ -252,6 +261,16 @@ operator + (ScalarType scalar, const MatrixBase<DeriveType>& rhs) { return rhs +
 template<typename ScalarType, typename DeriveType>
 std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , typename Traits<DeriveType>::DerefType>
 operator - (ScalarType scalar, const MatrixBase<DeriveType>& rhs) { return rhs - scalar; }
+
+template<typename ScalarType, typename DeriveType>
+std::enable_if_t<Operatable<typename Traits<DeriveType>::EntryType, ScalarType>::value , typename Traits<DeriveType>::DerefType>
+operator / (ScalarType scalar, const MatrixBase<DeriveType>& rhs)
+{
+    using EntryType = typename Traits<DeriveType>::EntryType;
+    Matrix<EntryType> ret(rhs.shape());
+    ret.traverse([&](auto i, auto j){ ret(i,j) = Traits<EntryType>::inv(rhs(i,j)) * scalar; });
+    return ret;
+}
 
 #if 0
 template <typename T, typename=void>
