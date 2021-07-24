@@ -10,6 +10,8 @@
 #include "mxm/random.h"
 #include "mxm/cv_corner.h"
 #include "mxm/cv_3d.h"
+#include "mxm/model_camera.h"
+#include "mxm/lie_special_orthogonal.h"
 
 
 using namespace mxm;
@@ -283,6 +285,160 @@ inline void testICP()
     }
 }
 
+inline void testEpipolarGeometry()
+{
+#if 0
+    { // test eight point
+        const size_t PT_NUM = 8;
+        Camera<float> cam;
+        cam.setFocalLength({500,500}).setPrincipalOffset({0, 0});
+        Matrix<float> pts({3,PT_NUM});
+        for(uint8_t i = 0; i < PT_NUM; i++)
+        {
+            pts(Col(i)) = binaryToVector<float>(3, i);
+        }
+        pts(Row(2)) += 5;
+        cam.setPosition({-0.5, 0, 0});
+        auto pose1 = cam.pose();
+        auto pts1 = cam.project(pts);
+        auto homo1 = cam.pose().inv().apply(pts);
+        homo1 /= homo1(Row(2));
+        auto mat_norm1 = findNormalizeMatrix(pts1);
+        auto homo_px1 = vstack(pts1, decltype(pts1)::ones({1, pts1.shape(1)}));
+        auto norm_pts1 = mat_norm1.matmul(homo_px1);
+
+        cam.setPosition({0.5, 0, 0});
+        auto pose2 = cam.pose();
+        auto pts2 = cam.project(pts);
+        auto homo2 = cam.pose().inv().apply(pts);
+        homo2 /= homo2(Row(2));
+        auto mat_norm2 = findNormalizeMatrix(pts2);
+        auto homo_px2 = vstack(pts2, decltype(pts2)::ones({1, pts2.shape(1)}));
+        auto norm_pts2 = mat_norm2.matmul(homo_px2);
+
+        std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
+        std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
+        std::cout << "All data ready." << std::endl;
+
+        auto actual_essential = so::wedge(Vector<float>{1.f, 0, 0});
+        auto actual_fundamental = cam.invMatrix().T().matmul(actual_essential).matmul(cam.invMatrix());
+
+
+        auto mat_f_normalized = epipolarEightPoint(norm_pts1, norm_pts2);
+
+        auto expect_zero = checkEpipolarConstraints(mat_f_normalized, norm_pts1, norm_pts2);
+        std::cout << "constraits: " << mxm::to_string(expect_zero) << std::endl;
+        auto mat_f = mat_norm2.T().matmul(mat_f_normalized).matmul(mat_norm1);
+        expect_zero = checkEpipolarConstraints(mat_f, homo_px1, homo_px2);
+        std::cout << "constraits: " << mxm::to_string(expect_zero) << std::endl;
+
+
+        std::cout << "mat_f:\n" << mxm::to_string(mat_f) << std::endl;
+        std::cout << "actual mat_f:\n" << mxm::to_string(actual_fundamental) << std::endl;
+
+        auto u_d_vh = svd(mat_f);
+        auto sigma = (u_d_vh[1](0,0) + u_d_vh[1](1,0)) * 0.5f;
+        mat_f = u_d_vh[0].matmul(diagonalMatrix(Vector<float>{sigma, sigma,0})).matmul(u_d_vh[2]);
+        // mat_f *= (1.f / mat_f(2,2));
+
+        std::cout << "fundamental svd: \n" << mxm::to_string(u_d_vh) << std::endl;
+        std::cout << "mat_f projected:\n" << mxm::to_string(mat_f) << std::endl;
+
+        auto mat_e = cam.matrix().T().matmul(mat_f).matmul(cam.matrix());
+        expect_zero = checkEpipolarConstraints(mat_e, homo1, homo2);
+        std::cout << "essential constraints:\n" << mxm::to_string(expect_zero) << std::endl;
+        auto actual_zero = checkEpipolarConstraints(actual_essential, homo1, homo2);;
+        std::cout << "actual_zero:\n" << mxm::to_string(actual_zero) << std::endl;
+        std::cout << "mat_e:\n" << mxm::to_string(mat_e) << std::endl;
+
+        std::cout << "actual_essential:\n" << mxm::to_string(actual_essential) << std::endl;
+    }
+#endif
+
+
+    {
+        // test eight point
+        // two questions remained to be answered:
+        // 1. After replacing the singular values of the solution of Direct Linear Method with [1,1,0],
+        //    does the essential matrix that projected to the manifold still preserves the epipolar constraints?
+        // 2. While extracting the rotation and translation from the essential matrix, the rotation was
+        //    composed from R = (U R_z V^h). R_z was gauranteed that det(R_z) = 1, but the orthogonal matrices U and V
+        //    have determinant 1 or -1. Therefore, it's possible that the final rotation matrix R is not in SO3.
+        //    It happens when det(U) = -1, det(V) = 1 and det(R) = -1.
+#if 0
+        const size_t PT_NUM = 8;
+        Camera<float> cam;
+        cam.setFocalLength({500,500}).setPrincipalOffset({0, 0});
+        Matrix<float> pts({3,PT_NUM});
+        for(uint8_t i = 0; i < PT_NUM; i++)
+        {
+            pts(Col(i)) = binaryToVector<float>(3, i);
+        }
+        pts = Rotation<float>::fromAxisAngle({1.,1,1}, M_PI / 4.).apply(pts);
+        pts(Row(2)) += 5;
+
+        cam.setPosition({-0.5, 0, 0});
+        auto pose1 = cam.pose();
+        auto pts1 = cam.project(pts);
+        auto homo1 = cam.pose().inv().apply(pts);
+        homo1 /= homo1(Row(2));
+        auto mat_norm1 = findNormalizeMatrix(homo1(Block({0, end()-1}, {})));
+        auto norm_pts1 = mat_norm1.matmul(homo1);
+
+        cam.setPosition({0.5, 0, 0});
+        auto pose2 = cam.pose();
+        auto pts2 = cam.project(pts);
+        auto homo2 = cam.pose().inv().apply(pts);
+        homo2 /= homo2(Row(2));
+        auto mat_norm2 = findNormalizeMatrix(homo2(Block({0, end()-1}, {})));
+        auto norm_pts2 = mat_norm2.matmul(homo2);
+
+        auto actual_essential = so::wedge(Vector<float>{1.f, 0, 0});
+
+        std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
+        std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
+        std::cout << "All data ready." << std::endl;
+
+        auto mat_e_normalized = epipolarEightPoint(norm_pts1, norm_pts2);
+
+        auto expect_zero = checkEpipolarConstraints(mat_e_normalized, norm_pts1, norm_pts2);
+        std::cout << "constraits: " << mxm::to_string(expect_zero) << std::endl;
+        auto mat_e = mat_norm2.T().matmul(mat_e_normalized).matmul(mat_norm1);
+        expect_zero = checkEpipolarConstraints(mat_e, homo1, homo2);
+        std::cout << "constraits: " << mxm::to_string(expect_zero) << std::endl;
+
+        std::cout << "mat_e:\n" << mxm::to_string(mat_e) << std::endl;
+
+        expect_zero = checkEpipolarConstraints(mat_e, homo1, homo2);
+        std::cout << "constraits: " << mxm::to_string(expect_zero) << std::endl;
+
+        std::cout << "mat_e:\n" << mxm::to_string(mat_e) << std::endl;
+        std::cout << "actual_essential:\n" << mxm::to_string(actual_essential) << std::endl;
+
+        auto u_d_vh = svd(mat_e);
+        std::cout << "essential svd: \n" << mxm::to_string(u_d_vh) << std::endl;
+
+        Matrix<float> rot_zp({3,3},{0,1,0, -1,0,0, 0,0,1}, ROW);
+        auto rot_zn = rot_zp.T();
+
+        auto r1 = u_d_vh[0].matmul(rot_zp).matmul(u_d_vh[2]);
+        auto r2 = u_d_vh[0].matmul(rot_zn).matmul(u_d_vh[2]);
+        auto t1 = so::vee(u_d_vh[0].matmul(rot_zp).matmul(u_d_vh[0].T()));
+        auto t2 = so::vee(u_d_vh[0].matmul(rot_zn).matmul(u_d_vh[0].T()));
+        std::cout << "r1:\n" << mxm::to_string(r1) << std::endl;
+        std::cout << "r2:\n" << mxm::to_string(r2) << std::endl;
+        std::cout << "t1:\n" << mxm::to_string(t1) << std::endl;
+        std::cout << "t2:\n" << mxm::to_string(t2) << std::endl;
+        std::cout << "det:\n" << mxm::det(u_d_vh[0].matmul(u_d_vh[2])) << std::endl;
+        std::cout << "angle: " << SO::findAngle<3>(r2) * 180 / M_PI << std::endl;
+        // auto sigma = (u_d_vh[1](0,0) + u_d_vh[1](1,0)) * 0.5f;
+        // u_d_vh[1](2,0) = 0;
+        // mat_e = u_d_vh[0].matmul(diagonalMatrix(u_d_vh[1])).matmul(u_d_vh[2]);
+#endif
+    }
+
+}
+
 inline void testCvBasic()
 {
     testPixel();
@@ -293,6 +449,7 @@ inline void testCvBasic()
     testBriefDescriptor();
     testHomography();
     testICP();
+    testEpipolarGeometry();
 }
 #else
 inline void testCvBasic(){}

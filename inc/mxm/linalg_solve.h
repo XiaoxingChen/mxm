@@ -59,6 +59,19 @@ solveUpperTriangle(const MatrixBase<DeriveType1>& upper, const MatrixBase<Derive
     return solveLUTriangle(upper, b, 0);
 }
 
+inline size_t inversionNumber(const std::vector<size_t>& seq)
+{
+    size_t cnt = 0;
+    if(seq.size() < 2) return cnt;
+    for(size_t i = 1; i < seq.size(); i++)
+    {
+        for(size_t j = 0; j < i; j++)
+        {
+            if(seq.at(j) > seq.at(i)) cnt++;
+        }
+    }
+    return cnt;
+}
 namespace qr
 {
 // u: column vector, direction
@@ -519,6 +532,7 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
         val_vec[1](Col(i)) = eig_vecs(Col(idx));
     }
 
+    // if(1 == inversionNumber(idx_buffer) % 2) val_vec[1](Col(n-1)) *= -1;
     return val_vec;
 }
 
@@ -591,7 +605,7 @@ svd(const Matrix<DType>& mat)
     u_s_vh[0] = val_vec[1];
     for(size_t i = 0; i < n; i++)
     {
-        if(norm(val_vec[0](i,0)) < std::numeric_limits<typename Traits<DType>::ArithType>::epsilon())
+        if(val_vec[0](i,0) < 0 || norm(val_vec[0](i,0)) < std::numeric_limits<typename Traits<DType>::ArithType>::epsilon())
         {
             inv_sv(i,0) = 0;
             positive_definite = false;
