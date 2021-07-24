@@ -56,41 +56,44 @@ public:
     }
 
     // input points should be in normalized plane
-    virtual Matrix<DType> distort(const Matrix<DType>& pts_3d) const override
+    // either {x/z, y/z, 1} or {x/z, y/z}
+    virtual Matrix<DType> distort(const Matrix<DType>& homo_pts) const override
     {
-        Matrix<DType> ret(pts_3d.shape());
-        for(size_t i = 0; i < pts_3d.shape(1); i++)
+        Matrix<DType> ret(homo_pts.shape());
+        for(size_t i = 0; i < homo_pts.shape(1); i++)
         {
-            assert(norm(pts_3d(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
+            assert(2 == homo_pts.shape(0) || norm(homo_pts(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
 
-            const auto& x = pts_3d(0, i);
-            const auto& y = pts_3d(1, i);
+            const auto& x = homo_pts(0, i);
+            const auto& y = homo_pts(1, i);
             auto r2 = x*x + y*y;
 
             auto kr = radial(r2);
             ret(0, i) = x * kr + tangential(0, r2, x, y);
             ret(1, i) = y * kr + tangential(1, r2, x, y);
-            ret(2, i) = 1;
+            if(3 == ret.shape(0)) ret(2, i) = 1;
         }
         return ret;
     }
 
     // input points should be in normalized plane
-    virtual Matrix<DType> undistort(const Matrix<DType>& pts_3d) const override
+    // either {x/z, y/z, 1} or {x/z, y/z}
+    virtual Matrix<DType> undistort(const Matrix<DType>& homo_pts) const override
     {
-        Matrix<DType> ret(pts_3d);
+        Matrix<DType> ret(homo_pts.shape());
         size_t iter = 5;
-        for(size_t i = 0; i < pts_3d.shape(1); i++)
+        for(size_t i = 0; i < homo_pts.shape(1); i++)
         {
-            assert(norm(pts_3d(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
+            assert(2 == homo_pts.shape(0) || norm(homo_pts(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
             for(size_t j = 0; j < iter; j++)
             {
-                const auto& x = pts_3d(0, i);
-                const auto& y = pts_3d(1, i);
+                const auto& x = homo_pts(0, i);
+                const auto& y = homo_pts(1, i);
                 auto r2 = x*x + y*y;
                 auto kr = radial(r2);
                 ret(0, i) = (x - tangential(0, r2, x, y)) / kr;
                 ret(1, i) = (y - tangential(1, r2, x, y)) / kr;
+                if(3 == ret.shape(0)) ret(2, i) = 1;
                 // std::cout << mxm::to_string(ret.T()) << std::endl;
             }
 
@@ -126,14 +129,6 @@ public:
         updateCameraMatrix();
         checkDimension();
     }
-#if 0
-    Camera(std::vector<DType>&& focus, std::vector<DType>&& optical_center, std::vector<size_t>&& reso)
-        :pose_(RigidTransform<DType>::identity(focus.size() + 1)), f_(std::move(focus)), c_(std::move(optical_center)), resolution_(std::move(reso))
-    {
-        checkDimension();
-        updateCameraMatrix();
-    }
-#endif
 
     ThisType & setFocalLength(const Vector<DType>& f)
     {
@@ -169,57 +164,31 @@ public:
         return Ray(pose_.translation(), pixelDirection(Vector<size_t>(pixel_coordinate)));
     }
 
-    Matrix<DType> pixelDirection(const Matrix<size_t>& pixels) const
+    Matrix<DType> pixelDirection(const Matrix<size_t>& pixels, DType z_dir=DType(1.)) const
     {
-        Matrix<DType> homo_coord({pixels.shape(0) + 1, pixels.shape(1)});
-
-        pixels.traverse([&](auto i, auto j){homo_coord(i,j) = pixels(i,j);});
-        homo_coord(Row(end() - 1)) = Matrix<DType>::ones({1,pixels.shape(1)});
-        auto local_dir = cam_mat_inv_.matmul(homo_coord);
-
+        auto norm_plane_points =  vstack((pixels - c_) / f_, z_dir * Matrix<DType>::ones({1, pixels.shape(1)}));
         if(p_distortion)
         {
-            for(size_t j = 0; j < local_dir.shape(1); j++)
-            {
-                local_dir(0, j) /= local_dir(2, j);
-                local_dir(1, j) /= local_dir(2, j);
-                local_dir(2, j) = 1;
-            }
-            local_dir = p_distortion->distort(local_dir);
+            norm_plane_points = p_distortion->distort(norm_plane_points);
         }
-
-        Matrix<DType> directions = pose_.rotation().asMatrix().matmul(local_dir);
+        Matrix<DType> directions = pose_.rotation().apply(norm_plane_points);
         return directions;
     }
 
     const RigidTransform<DType>& pose() const { return pose_; }
     RigidTransform<DType>& pose() { return pose_; }
 
-#if 0
-    std::vector<size_t> resolution() const
-    {
-        std::vector<size_t> res;
-        for(size_t i = 0; i < c_.size(); i++)
-            res.push_back( static_cast<size_t>(2 * c_(i) + 0.5) );
-        return res;
-    }
-#endif
 
     Matrix<DType> project(const Matrix<DType>& points) const
     {
         Matrix<DType> body_frame_points = pose_.inv().apply(points);
-        for(size_t i = 0; i < body_frame_points.shape(1); i++)
-        {
-            body_frame_points(0,i) /= body_frame_points(2,i);
-            body_frame_points(1,i) /= body_frame_points(2,i);
-            body_frame_points(2,i) = 1;
-        }
+
+        Matrix<DType> norm_plane_points = body_frame_points(Block({0, end() - 1}, {})) / body_frame_points(Row(end() - 1));
         if(p_distortion)
         {
-            body_frame_points = p_distortion->distort(body_frame_points);
+            norm_plane_points = p_distortion->distort(norm_plane_points);
         }
-
-        return cam_mat_.matmul(body_frame_points);
+        return norm_plane_points * f_ + c_;
     }
 
     template<typename PType>
@@ -235,8 +204,6 @@ public:
         return img_out;
     }
 
-    // const Matrix<DType>& matrix() const { return cam_mat_; }
-
     size_t resolution(size_t i) const { return resolution_(i); }
 
     // Field of View
@@ -245,11 +212,14 @@ public:
     DType fov(size_t axis) const { return 2 * atan2( DType(resolution_(axis)) , 2 * f_(axis)); }
     DType diagFov() const { return 2 * atan2(Vector<DType>(resolution_).norm(), 2 * f_(0)); }
 
+    const Matrix<DType>& invMatrix() const { return cam_mat_inv_; }
+    const Matrix<DType>& matrix() const { return cam_mat_; }
+
 private:
 
     void updateCameraMatrix()
     {
-        cam_mat_ = Matrix<DType>::zeros({pose_.dim() - 1, pose_.dim()});
+        cam_mat_ = Matrix<DType>::identity(pose_.dim());
         cam_mat_inv_ = Matrix<DType>::identity(pose_.dim());
         for(size_t i = 0; i < pose_.dim() - 1; i++)
         {

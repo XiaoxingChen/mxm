@@ -37,6 +37,38 @@ inline void testCamera()
 {
     cameraTest1();
     cameraTest2();
+    {
+        Camera<double> cam;
+        cam.setFocalLength({457.296, 458.654}).setResolution({480, 752}).setPrincipalOffset({248.375, 367.215});
+        cam.setOrientation(Rotation<double>::fromAxisAngle({1,0,0}, M_PI_4));
+        cam.setPosition({1,2,3});
+
+        Matrix<size_t> px_src(fixRow(2), {100,100, 0,300, 234,123, 324,222, 335,123}, COL);
+
+        auto px_pt = cam.pixelDirection(px_src) + cam.pose().translation();
+        auto px_coord = cam.project(px_pt);
+        double error(0);
+        if(!isZero(px_src - px_coord, &error, 1e-12))
+        {
+            std::cout << "error: " << error << std::endl;
+            std::cout << "eps: " << eps<double>() << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        auto p_distor = Distortion<double>::radialTangential({-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05});
+        cam.setDistortion(p_distor);
+
+        px_pt = cam.pixelDirection(px_src) + cam.pose().translation();
+        px_coord = cam.project(px_pt);
+        if(!isZero(px_src - px_coord, &error, 10))
+        {
+            std::cout << "Warning! Reprojection error: " << error << std::endl;
+            // std::cout << mxm::to_string(px_src - px_coord) << std::endl;
+            // throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+
+    }
 }
 #else
 inline void testCamera(){}

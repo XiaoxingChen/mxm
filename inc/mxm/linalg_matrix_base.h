@@ -507,7 +507,7 @@ bool isSquare(const MatrixBase<DeriveType>& mat)
 {
     return mat.shape(0) == mat.shape(1);
 }
-
+#if 0
 template<typename DeriveType>
 bool isIdentity(
     const MatrixBase<DeriveType>& mat,
@@ -556,7 +556,41 @@ bool isZero(
     });
     return result;
 }
+#else
+template<typename DeriveType>
+bool isIdentity(
+    const MatrixBase<DeriveType>& mat,
+    typename Traits<DeriveType>::ArithType* p_error=nullptr,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+{
+    using ArithType = typename Traits<DeriveType>::ArithType;
+    const auto ONE = Traits< typename Traits<DeriveType>::EntryType>::identity();
+    ArithType max_error(0);
 
+    mat.traverse([&](auto i, auto j){
+        auto error = (i == j ? norm(mat(i,j) - ONE) : norm(mat(i,j)));
+        max_error = std::max(error, max_error);
+    });
+    if(p_error) *p_error = max_error;
+    return max_error < tol;
+}
+
+template<typename DeriveType>
+bool isZero(
+    const MatrixBase<DeriveType>& mat,
+    typename Traits<DeriveType>::ArithType* p_error=nullptr,
+    typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
+{
+    using ArithType = typename Traits<DeriveType>::ArithType;
+    ArithType max_error(0);
+
+    mat.traverse([&](auto i, auto j){
+        max_error = std::max(norm(mat(i,j)), max_error);
+    });
+    if(p_error) *p_error = max_error;
+    return max_error < tol;
+}
+#endif
 } // namespace mxm
 
 

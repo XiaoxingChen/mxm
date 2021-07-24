@@ -19,10 +19,13 @@
 #define MXM_INLINE inline
 #endif // #ifdef MXM_COMPILED_LIB
 
+#include <limits>
+
 namespace mxm{
 using FloatType = float;
 
-inline constexpr FloatType eps() {return 1e-7;}
+template<typename DType=float>
+inline constexpr DType eps() {return std::numeric_limits<DType>::epsilon();}
 
 inline constexpr FloatType tMin() {return 1e-4;}
 inline constexpr FloatType tMax() {return 10000.;}
