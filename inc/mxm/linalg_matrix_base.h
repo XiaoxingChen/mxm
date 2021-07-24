@@ -131,6 +131,9 @@ public:
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
     operator -= (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) -= scalar;}); return self;}
 
+    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
+    operator /= (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) /= scalar;}); return self;}
+
 
     // Binary Operator
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
@@ -141,6 +144,9 @@ public:
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
     operator - (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) -= scalar; }
+
+    template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
+    operator / (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) /= scalar; }
 
 
     template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
