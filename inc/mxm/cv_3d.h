@@ -51,13 +51,16 @@ findNormalizeMatrix(
     DType inv_pt_num = DType(1) / pts.shape(1);
     Matrix<DType> weight_center = sum(pts, 1) * inv_pt_num;
     auto residual = pts - weight_center;
-    DType mean_dist = norm(residual) * inv_pt_num;
+    auto dist_sum = sum(residual*residual, 0);
+    dist_sum.traverse([&](auto i, auto j) { dist_sum(i,j) = sqrt(dist_sum(i,j)); });
+
+    DType mean_dist = sum(dist_sum) * inv_pt_num;
     DType k = mean_dist / target_mean_dist;
     Matrix<DType> denorm = Matrix<DType>::identity(pts.shape(0) + 1);
     for(size_t i = 0; i < pts.shape(0); i++)
     {
         denorm(i,i) = k;
-        denorm(i, pts.shape(0)) = -weight_center(i,0);
+        denorm(i, pts.shape(0)) = weight_center(i,0);
     }
     return invDiagHomogeneous(denorm);
 }
@@ -75,7 +78,7 @@ epipolarEightPoint(const Matrix<DType>& pts1, const Matrix<DType>& pts2)
     static const size_t N = 8;
     assert(N == pts1.shape(1));
     assert(pts1.shape() == pts2.shape());
-
+#if 1
     Matrix<DType> coeff({N,N+1});
     for(size_t i = 0; i < N; i++)
     {
@@ -86,20 +89,29 @@ epipolarEightPoint(const Matrix<DType>& pts1, const Matrix<DType>& pts2)
     }
 
     // auto solution = orthogonalComplement(coeff);
-    Matrix<DType> solution = svd(coeff)[2](Row(end() - 1));
+    // Matrix<DType> solution = svd(coeff)[2](Row(end() - 1));
+    Matrix<DType> solution = symmetricEig(coeff.T().matmul(coeff))[1](Col(end() - 1));
     // std::cout << mxm::to_string(coeff.matmul(solution.T()))  << std::endl;
     // std::cout << mxm::to_string(coeff)  << std::endl;
     // std::cout << mxm::to_string(solution)  << std::endl;
     solution.reshape({3,3}, ROW);
 
     return solution;
+#else
+    Matrix<DType> sym = Matrix<DType>::zeros({N+1,N+1});
+    for(size_t i = 0; i < N; i++)
+    {
+        auto r = Matrix<DType>({1, N+1}, {
+            pts2(0, i) * pts1(0, i), pts2(0, i) * pts1(1, i), pts2(0, i),
+            pts2(1, i) * pts1(0, i), pts2(1, i) * pts1(1, i), pts2(1, i),
+            pts1(0, i),              pts1(1, i),              1 });
 
-    Matrix<DType> diag = diagonalMatrix(Vector<DType>{DType(1),1,0});
-    auto u_d_vh = svd(solution);
-    // std::cout << mxm::to_string(qr::decomposeByRotation(coeff(Block({},{1,})))) << std::endl;
-    // std::cout << mxm::to_string(coeff) << std::endl;
-    // std::cout << mxm::to_string(solution) << std::endl;
-    return u_d_vh[0].matmul(diag).matmul(u_d_vh[2]);
+        sym += r.T().matmul(r);
+    }
+    Matrix<DType> solution = symmetricEig(sym)[1](Col(end() - 1));
+    solution.reshape({3,3}, ROW);
+    return solution;
+#endif
 }
 
 template<typename DType>

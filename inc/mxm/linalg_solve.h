@@ -587,10 +587,11 @@ eig(const Matrix<DType>& mat)
 }
 
 #if 1
-template<typename DType>
-std::array<Matrix<DType>, 3>
-svd(const Matrix<DType>& mat)
+template<typename DeriveType>
+std::array<Matrix<typename Traits<DeriveType>::EntryType>, 3>
+svd(const MatrixBase<DeriveType>& mat)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     std::array<Matrix<DType>, 3> u_s_vh;
 
     size_t n = std::min(mat.shape(0), mat.shape(1));
