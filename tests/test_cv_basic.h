@@ -469,6 +469,48 @@ inline void testEpipolarGeometry()
 
     }
 #endif
+
+#if 0
+    {
+        const size_t PT_NUM = 8;
+        Camera<float> cam;
+        cam.setFocalLength({500,500}).setPrincipalOffset({240, 320});
+        Matrix<float> pts({3,PT_NUM});
+        for(uint8_t i = 0; i < PT_NUM; i++)
+        {
+            pts(Col(i)) = binaryToVector<float>(3, i);
+        }
+        // std::cout << "original points:\n" << mxm::to_string(pts) << std::endl;
+        pts = Rotation<float>::fromAxisAngle({1.,1,1}, M_PI / 4.).apply(pts);
+
+        pts(Row(2)) += 5;
+
+        cam.setPosition({-0.5, 0, 0});
+        auto pose1 = cam.pose();
+        auto pts1 = cam.project(pts);
+        auto homo1 = cam.pose().inv().apply(pts);
+        homo1 /= homo1(Row(2));
+        auto mat_norm1 = findNormalizeMatrix(homo1(Block({0, end()-1}, {})));
+        auto norm_pts1 = mat_norm1.matmul(homo1);
+
+        cam.setPosition({0.5, 0, 0});
+        auto pose2 = cam.pose();
+        auto pts2 = cam.project(pts);
+        auto homo2 = cam.pose().inv().apply(pts);
+        homo2 /= homo2(Row(2));
+        auto mat_norm2 = findNormalizeMatrix(homo2(Block({0, end()-1}, {})));
+        auto norm_pts2 = mat_norm2.matmul(homo2);
+
+        auto actual_essential = so::wedge(Vector<float>{1.f, 0, 0});
+
+        std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
+        std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
+        std::cout << "All data ready." << std::endl;
+
+        auto t_r = epipolarLeastSquare(homo1, homo2);
+        std::cout << mxm::to_string(t_r) << std::endl;
+    }
+#endif
 }
 
 inline void testCvBasic()

@@ -311,6 +311,8 @@ std::enable_if_t<3 == N, Matrix<DType>>
 log(const Matrix<DType>& rot_mat)
 {
     DType theta = findAngle<N>(rot_mat);
+    if(abs(theta) < eps<DType>()) return Matrix<DType>::zeros({3,3});
+
     auto plane = Matrix<DType>({N, 2});
 
     Matrix<DType> skew = rot_mat - rot_mat.T();

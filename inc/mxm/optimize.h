@@ -13,7 +13,7 @@ template<typename DType>
 class NoneLinearProblem
 {
 public:
-    DType cost() const { return residual_.T().dot(residual_); }
+    DType cost() const { return residual_.T().matmul(residual_)(0,0); }
     const Matrix<DType>& jac() const { return jacobian_; }
     const Vector<DType>& res() const { return residual_; }
     const Vector<DType>& state() const { return state_; }
@@ -47,9 +47,14 @@ template<typename DType>
 void NoneLinearProblem<DType>::solve(const Vector<DType>& guess, uint8_t step, uint8_t verbose, std::string method)
 {
     state_ = guess;
+    update(Vector<DType>::zeros(guess.size()));
     Vector<DType> inc;
     for(size_t i = 0; i < step; i++)
     {
+        if(verbose > 0) std::cout << "cost: " << cost() << std::endl;;
+        if(verbose > 1) std::cout << "inc: " << mxm::to_string(inc.T());
+        if(verbose > 2) std::cout << "jac: " << mxm::to_string(jac());
+        if( cost() < 10 * eps<DType>()) break;
         if(method == "gn")
         {
             inc = gaussNewtonIncrement(*this, verbose);
