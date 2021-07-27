@@ -470,45 +470,64 @@ inline void testEpipolarGeometry()
     }
 #endif
 
-#if 0
+#if 1
     {
+        using DType = double;
         const size_t PT_NUM = 8;
-        Camera<float> cam;
-        cam.setFocalLength({500,500}).setPrincipalOffset({240, 320});
-        Matrix<float> pts({3,PT_NUM});
+        Camera<DType> cam;
+        cam.setFocalLength({500,500}).setPrincipalOffset({0, 0});
+        Matrix<DType> pts({3,PT_NUM});
         for(uint8_t i = 0; i < PT_NUM; i++)
         {
-            pts(Col(i)) = binaryToVector<float>(3, i);
+            pts(Col(i)) = binaryToVector<DType>(3, i);
         }
-        // std::cout << "original points:\n" << mxm::to_string(pts) << std::endl;
-        pts = Rotation<float>::fromAxisAngle({1.,1,1}, M_PI / 4.).apply(pts);
+        pts *= 2.f;
+        pts = Rotation<DType>::fromAxisAngle({1.,1,1}, M_PI / 4.).apply(pts);
 
         pts(Row(2)) += 5;
 
-        cam.setPosition({-0.5, 0, 0});
+        cam.setPosition({0, 0, 0});
         auto pose1 = cam.pose();
         auto pts1 = cam.project(pts);
         auto homo1 = cam.pose().inv().apply(pts);
         homo1 /= homo1(Row(2));
-        auto mat_norm1 = findNormalizeMatrix(homo1(Block({0, end()-1}, {})));
-        auto norm_pts1 = mat_norm1.matmul(homo1);
 
-        cam.setPosition({0.5, 0, 0});
+        cam.setPosition({1, 0.2, 0});
+        cam.setOrientation(Rotation<DType>::fromAxisAngle({0,0,1}, -0.3f));
         auto pose2 = cam.pose();
         auto pts2 = cam.project(pts);
         auto homo2 = cam.pose().inv().apply(pts);
         homo2 /= homo2(Row(2));
-        auto mat_norm2 = findNormalizeMatrix(homo2(Block({0, end()-1}, {})));
-        auto norm_pts2 = mat_norm2.matmul(homo2);
 
-        auto actual_essential = so::wedge(Vector<float>{1.f, 0, 0});
+        // std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
+        // std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
 
-        std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
-        std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
-        std::cout << "All data ready." << std::endl;
+        auto t_r = epipolarLeastSquare(homo1, homo2, {-1.f,0,0});
+        auto rotation_expected = (pose1.rotation() * pose2.rotation().inv()).asMatrix();
+        auto translation_expected = (pose1 * pose2.inv()).translation();
 
-        auto t_r = epipolarLeastSquare(homo1, homo2);
-        std::cout << mxm::to_string(t_r) << std::endl;
+        DType t_error(0);
+        DType r_error(0);
+        DType tol(1e-8);
+
+        if(!isZero(so::wedge(t_r[0]).matmul(translation_expected), &t_error, tol)
+        || !isZero(rotation_expected - t_r[1], &r_error, tol))
+        {
+            std::cout << "t_error: " << t_error << std::endl;
+            std::cout << "expected:\n" << mxm::to_string(translation_expected) << std::endl;
+            std::cout << "get:\n" << mxm::to_string(t_r[0]) << std::endl;
+
+            std::cout << "r_error: " << r_error << std::endl;
+            std::cout << "expected:\n" << mxm::to_string(rotation_expected) << std::endl;
+            std::cout << "get:\n" << mxm::to_string(t_r[1]) << std::endl;
+
+            auto cost = checkEpipolarConstraints(so::wedge(t_r[0]).matmul(t_r[1]) , homo1, homo2);
+            std::cout << "residual:\n" << mxm::to_string (cost) << std::endl;
+            auto cost_true = checkEpipolarConstraints(so::wedge(translation_expected).matmul(rotation_expected) , homo1, homo2);
+            std::cout << "residual ref:\n" << mxm::to_string (cost) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
     }
 #endif
 }

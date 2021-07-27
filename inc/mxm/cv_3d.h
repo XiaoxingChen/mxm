@@ -126,6 +126,21 @@ Matrix<DType> checkEpipolarConstraints(const Matrix<DType>& mat, const Matrix<DT
     return ret;
 }
 
+template<typename DType>
+std::array<Matrix<DType>, 2>
+basisForUpdate(const Matrix<DType>& v)
+{
+    Vector<DType> ref_v{1,0,0};
+    if(DType(1) - norm(v.T().matmul(ref_v)) < DType(0.01)) ref_v = Vector<DType>{0,1,0};
+
+    auto wedge_v = so::wedge(v);
+    Vector<DType> vx = (wedge_v.matmul(ref_v)).normalized();
+    Vector<DType> vy = (wedge_v.matmul(vx)).normalized();
+
+    std::array<Matrix<DType>, 2> ret{so::wedge(vx), so::wedge(vy)};
+    return ret;
+}
+
 // The epipolar constraits was modified from p2^T (t^wedge R) p1
 // to -p2^T (Rp1)^wedge t
 template<typename DType>
@@ -139,50 +154,70 @@ public:
         assert(pts1.shape(1) >= 5);
 
         this->residual_ = Vector<DType>(pt_num_);
-        this->jacobian_ = Matrix<DType>({pt_num_, 6});
+        this->jacobian_ = Matrix<DType>({pt_num_, 5});
     }
-    static std::array<Matrix<DType>, 2> tRFromVector(const Matrix<DType>& increment);
+    static std::array<Matrix<DType>, 2> rotationFromIncrement(const Matrix<DType>& increment, const Matrix<DType>& t_state);
     static Vector<DType> vecFromTR(const Matrix<DType>& t, const Matrix<DType>& rot);
-    // state_: tx ty tz rx ry rz
+    // state_: tx ty rx ry rz
+    // update: rotate vector t, rotate matrix r
     virtual void update(const Vector<DType>& increment) override
     {
-        auto t_r = tRFromVector(this->state_);
-        auto t_r_inc = tRFromVector(increment);
-        t_r[0] += t_r_inc[0];
-        t_r[1] = t_r_inc[1].matmul(t_r[1]);
-        DType t_norm = mxm::norm(t_r[0]);
-        assert(t_norm > eps<DType>());
-        if(t_norm > DType(2))
-            t_r[0] /= t_norm;
+        auto t_r_inc = rotationFromIncrement(increment, t_state_);
+        t_state_ = t_r_inc[0].matmul(t_state_);
+        r_state_ = t_r_inc[1].matmul(r_state_);
 
-        // update state vector
-        this->state_ = vecFromTR(t_r[0], t_r[1]);
+        DType t_norm = mxm::norm(t_state_);
+        if(t_norm < eps<DType>())
+            t_state_ = Vector<DType>{1,0,0};
+        else
+            t_state_ /= t_norm;
+        t_state_ *= DType(10);
+
+        auto t_basis = basisForUpdate(t_state_);
 
         for(size_t i = 0; i < pt_num_; i++)
         {
-            auto rot_p1_wedge = so::wedge(t_r[1].matmul(pts1_(Col(i))));
+            auto rot_p1_wedge = so::wedge(r_state_.matmul(pts1_(Col(i))));
+            auto residual_term = -pts2_(Col(i)).T().matmul(rot_p1_wedge);
             // update res
-            this->residual_(i) = -pts2_(Col(i)).T().matmul(rot_p1_wedge).matmul(t_r[0])(0,0);
-            // update jac
-            this->jacobian_(Block({i, i+1}, {0, 3})) = pts2_(Col(i)).T().matmul(rot_p1_wedge);
-            this->jacobian_(Block({i, i+1}, {3, 6})) = -pts2_(Col(i)).T().matmul(so::wedge(t_r[0])).matmul(rot_p1_wedge);
+            this->residual_(i) = residual_term.matmul(t_state_)(0,0);
+            // update jac t
+            auto t_inc = eps<DType>() * 10;
+            auto t_x_perturb = so::exp<3>(t_basis[0] * t_inc).matmul(t_state_);
+            auto t_y_perturb = so::exp<3>(t_basis[1] * t_inc).matmul(t_state_);
+            this->jacobian_(i, 0) = (residual_term.matmul(t_x_perturb)(0,0) - this->residual_(i)) / t_inc;
+            this->jacobian_(i, 1) = (residual_term.matmul(t_y_perturb)(0,0) - this->residual_(i)) / t_inc;
+            // update jac r
+            this->jacobian_(Block({i, i+1}, {2, 5})) = -pts2_(Col(i)).T().matmul(so::wedge(t_state_)).matmul(rot_p1_wedge);
         }
     }
+
+    void initialGuess(const Matrix<DType>& t_init, const Matrix<DType>& r_init)
+    {
+        t_state_ = t_init;
+        r_state_ = r_init;
+    }
+    const Vector<DType>& tState() const { return t_state_; }
+    const Matrix<DType>& rState() const { return r_state_; }
+
 private:
     Matrix<DType> pts1_;
     Matrix<DType> pts2_;
     size_t pt_num_;
+    Vector<DType> t_state_;
+    Matrix<DType> r_state_;
 };
 
 template<typename DType> std::array<Matrix<DType>, 2>
-EpipolarOptimize<DType>::tRFromVector(const Matrix<DType>& vec)
+EpipolarOptimize<DType>::rotationFromIncrement(const Matrix<DType>& vec, const Matrix<DType>& t_state)
 {
     std::array<Matrix<DType>, 2> t_r;
-    t_r[0] = vec(Block({0,3},{}));
-    t_r[1] = so::exp<3>(so::wedge(vec(Block({3,6},{}))));
+    auto t_basis = basisForUpdate(t_state);
+    t_r[0] = so::exp<3>(t_basis[0] * vec(0, 0) + t_basis[1] * vec(1, 0));
+    t_r[1] = so::exp<3>(so::wedge(vec(Block({2,5},{}))));
     return t_r;
 }
-
+#if 0
 template<typename DType> Vector<DType>
 EpipolarOptimize<DType>::vecFromTR(const Matrix<DType>& t, const Matrix<DType>& rot)
 {
@@ -195,14 +230,18 @@ EpipolarOptimize<DType>::vecFromTR(const Matrix<DType>& t, const Matrix<DType>& 
     }
     return ret;
 }
+#endif
 
 template<typename DType>
 std::array<Matrix<DType>, 2>
-epipolarLeastSquare(const Matrix<DType>& pts1, const Matrix<DType>& pts2)
+epipolarLeastSquare(const Matrix<DType>& pts1, const Matrix<DType>& pts2, const Vector<DType>& t_guess)
 {
     EpipolarOptimize<DType> problem(pts1, pts2);
-    problem.solve(Vector<DType>({1,1,0,0,0,0}), 3, 5);
-    return EpipolarOptimize<DType>::tRFromVector(problem.state());
+    problem.initialGuess(t_guess, Matrix<DType>::identity(3));
+    problem.solve(10, 0);
+    std::array<Matrix<DType>, 2> ret{problem.tState().normalized(), problem.rState()};
+    return ret;
+    // return EpipolarOptimize<DType>::rotationFromIncrement(problem.state());
 }
 
 
