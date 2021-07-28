@@ -137,7 +137,7 @@ basisForUpdate(const Matrix<DType>& v)
     Vector<DType> vx = (wedge_v.matmul(ref_v)).normalized();
     Vector<DType> vy = (wedge_v.matmul(vx)).normalized();
 
-    std::array<Matrix<DType>, 2> ret{so::wedge(vx), so::wedge(vy)};
+    std::array<Matrix<DType>, 2> ret{vx, vy};
     return ret;
 }
 
@@ -178,15 +178,12 @@ public:
         for(size_t i = 0; i < pt_num_; i++)
         {
             auto rot_p1_wedge = so::wedge(r_state_.matmul(pts1_(Col(i))));
-            auto residual_term = -pts2_(Col(i)).T().matmul(rot_p1_wedge);
+            auto residual_term = pts2_(Col(i)).T().matmul(rot_p1_wedge);
             // update res
-            this->residual_(i) = residual_term.matmul(t_state_)(0,0);
+            this->residual_(i) = -residual_term.matmul(t_state_)(0,0);
             // update jac t
-            auto t_inc = eps<DType>() * 10;
-            auto t_x_perturb = so::exp<3>(t_basis[0] * t_inc).matmul(t_state_);
-            auto t_y_perturb = so::exp<3>(t_basis[1] * t_inc).matmul(t_state_);
-            this->jacobian_(i, 0) = (residual_term.matmul(t_x_perturb)(0,0) - this->residual_(i)) / t_inc;
-            this->jacobian_(i, 1) = (residual_term.matmul(t_y_perturb)(0,0) - this->residual_(i)) / t_inc;
+            this->jacobian_(i, 0) = residual_term.matmul(so::wedge(t_state_)).matmul((t_basis[0]))(0,0);
+            this->jacobian_(i, 1) = residual_term.matmul(so::wedge(t_state_)).matmul((t_basis[1]))(0,0);
             // update jac r
             this->jacobian_(Block({i, i+1}, {2, 5})) = -pts2_(Col(i)).T().matmul(so::wedge(t_state_)).matmul(rot_p1_wedge);
         }
@@ -213,7 +210,8 @@ EpipolarOptimize<DType>::rotationFromIncrement(const Matrix<DType>& vec, const M
 {
     std::array<Matrix<DType>, 2> t_r;
     auto t_basis = basisForUpdate(t_state);
-    t_r[0] = so::exp<3>(t_basis[0] * vec(0, 0) + t_basis[1] * vec(1, 0));
+    t_r[0] = so::exp<3>(
+        so::wedge(t_basis[0] * vec(0, 0) + t_basis[1] * vec(1, 0)));
     t_r[1] = so::exp<3>(so::wedge(vec(Block({2,5},{}))));
     return t_r;
 }
