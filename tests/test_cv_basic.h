@@ -492,8 +492,8 @@ inline void testEpipolarGeometry()
         auto homo1 = cam.pose().inv().apply(pts);
         homo1 /= homo1(Row(2));
 
-        cam.setPosition({1, 0.2, 0});
-        cam.setOrientation(Rotation<DType>::fromAxisAngle({0,0,1}, -0.3f));
+        cam.setPosition({1, 0.2, -0.4});
+        cam.setOrientation(Rotation<DType>::fromAxisAngle({1,0,1}, -0.3f));
         auto pose2 = cam.pose();
         auto pts2 = cam.project(pts);
         auto homo2 = cam.pose().inv().apply(pts);
@@ -502,9 +502,11 @@ inline void testEpipolarGeometry()
         // std::cout << "pts1: \n" << mxm::to_string(pts1) << std::endl;
         // std::cout << "pts2: \n" << mxm::to_string(pts2) << std::endl;
 
-        auto t_r = epipolarLeastSquare(homo1, homo2, {-1.f,0,0});
+        auto good_guess = Vector<DType>{-1.f,0,0};
+        auto local_minimum_guess = Vector<DType>{-0.f,0,1};
+        auto t_r = epipolarLeastSquare(homo1, homo2, good_guess);
         auto rotation_expected = (pose1.rotation() * pose2.rotation().inv()).asMatrix();
-        auto translation_expected = (pose1 * pose2.inv()).translation();
+        auto translation_expected = (pose1 * pose2.inv()).translation().normalized();
 
         DType t_error(0);
         DType r_error(0);

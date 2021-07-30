@@ -56,8 +56,6 @@ Vector<DType> gaussNewtonIncrement(const NoneLinearProblem<DType>& p, uint8_t ve
 template<typename DType>
 void NoneLinearProblem<DType>::solve(uint8_t step, uint8_t verbose, std::string method)
 {
-    // state_ = guess;
-    update(Vector<DType>::zeros(jac().shape(1)));
     std::cout << mxm::to_string(*this, verbose);
 
     Vector<DType> inc;
@@ -69,7 +67,7 @@ void NoneLinearProblem<DType>::solve(uint8_t step, uint8_t verbose, std::string 
             inc = gaussNewtonIncrement(*this, verbose);
         }
         update(inc);
-        if(verbose > 0) std::cout << "\n\ni: " << i << std::endl;
+        if(verbose > 0) std::cout << "\ni: " << i << std::endl;
         std::cout << mxm::to_string(*this, verbose);
     }
 }
