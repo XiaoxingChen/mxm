@@ -50,6 +50,7 @@ int main(int argc, char const *argv[])
   testCoordinateSystem();
   testLieSpecialOrthogonal();
   testLieSpecialUnitary();
+  testLieSpecialEuclidean();
 
   std::cout << "done" << std::endl;
   return 0;

@@ -29,10 +29,11 @@ Matrix<DType> normalized(const Matrix<DType>& input)
     return DType(0.5) * (input - input.T());
 }
 
-template<size_t N, typename DType>
-std::enable_if_t<3 == N, DType>
-findAngle(const Matrix<DType>& skew)
+template<size_t N, typename DeriveType>
+std::enable_if_t<3 == N, typename Traits<DeriveType>::EntryType>
+findAngle(const MatrixBase<DeriveType>& skew)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     DType x = skew(2,1);
     DType y = skew(0,2);
     DType z = skew(1,0);
@@ -167,10 +168,11 @@ Matrix<DType> skewFlattenedGeneralRodrigues(const Matrix<DType>& coeff, const Ve
     return ret;
 }
 
-template <size_t N, typename DType>
-std::enable_if_t<3 == N, Matrix<DType>>
-exp(const Matrix<DType>& skew)
+template <size_t N, typename DeriveType>
+std::enable_if_t<3 == N, Matrix<typename Traits<DeriveType>::EntryType>>
+exp(const MatrixBase<DeriveType>& skew)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     DType theta = findAngle<N>(skew);
     if(abs(theta) < std::numeric_limits<DType>::epsilon())
         return Matrix<DType>::identity(N);
@@ -207,9 +209,29 @@ Matrix<DType> unsignedWedge(const Matrix<DType>& coeff, const Vector<DType>& the
     return ret;
 }
 
-template <typename DType>
-Matrix<DType> jacobLeftInv(const Matrix<DType>& skew)
+// By default left jacob
+template <typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+jacob(const MatrixBase<DeriveType>& skew)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
+    static const size_t N(3);
+    auto angle = findAngle<N>(skew);
+    if(abs(angle) < eps<DType>()) return Matrix<DType>::identity(N);
+
+    auto i_angle = DType(1.) / angle;
+    auto i_angle_2 = i_angle * i_angle;
+    Matrix<DType> jac = Matrix<DType>::identity(N)
+        + skew * (1 - cos(angle)) * i_angle_2
+        + skew.matmul(skew) * (1 - sin(angle) * i_angle) * i_angle_2;
+    return jac;
+}
+
+template <typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+jacobInv(const MatrixBase<DeriveType>& skew)
+{
+    using DType = typename Traits<DeriveType>::EntryType;
     static const size_t N(3);
     auto angle = findAngle<N>(skew);
     if(abs(angle) < eps<DType>()) return Matrix<DType>::identity(N);
@@ -319,9 +341,11 @@ log(const Matrix<DType>& rot_mat)
     return Matrix<DType>({2,2},{0, -theta, theta, 0}, ROW);
 }
 
-template<typename DType>
-Matrix<DType> planeOfSingleRotation(const Matrix<DType>& rot_mat)
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+planeOfSingleRotation(const MatrixBase<DeriveType>& rot_mat)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     Matrix<DType> skew = rot_mat - rot_mat.T();
     Matrix<DType> col_norm = mxm::sum(skew * skew, 0);
     size_t max_col_idx = argMax(col_norm)[1];
@@ -334,10 +358,11 @@ Matrix<DType> planeOfSingleRotation(const Matrix<DType>& rot_mat)
     return plane;
 }
 
-template <size_t N, typename DType>
-std::enable_if_t<3 == N, Matrix<DType>>
-log(const Matrix<DType>& rot_mat)
+template <size_t N, typename DeriveType>
+std::enable_if_t<3 == N, Matrix<typename Traits<DeriveType>::EntryType>>
+log(const MatrixBase<DeriveType>& rot_mat)
 {
+    using DType = typename Traits<DeriveType>::EntryType;
     DType theta = findAngle<N>(rot_mat);
     if(abs(theta) < eps<DType>()) return Matrix<DType>::zeros({3,3});
 
@@ -382,4 +407,4 @@ Matrix<DType> slerp(const Matrix<DType>& r0, const Matrix<DType>& r1, DType t)
 
 
 
-#endif // _GROUP_SPECIAL_ORTHOGONAL_H_
+#endif // _LIE_SPECIAL_ORTHOGONAL_H_

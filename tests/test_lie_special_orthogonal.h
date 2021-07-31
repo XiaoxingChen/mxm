@@ -2,6 +2,7 @@
 #define _TEST_LIE_SPECIAL_ORTHOGONAL_H_
 
 #include "mxm/lie_special_orthogonal.h"
+#include "mxm/lie_special_euclidean.h"
 
 using namespace mxm;
 
@@ -79,13 +80,46 @@ inline void testLieSpecialOrthogonal()
         auto skew2 = so::wedge(Vector<double>{2,1,1});
 
         auto direct_log = SO::log<3>( so::exp<3>(skew1).matmul(so::exp<3>(skew2)));
-        auto jac_log = so::jacobLeftInv(skew2).matmul(skew1) + skew2;
+        auto jac_inv_log = so::jacobInv(skew2).matmul(skew1) + skew2;
+
+
 
         DType error(0);
-        if(!isZero(direct_log - jac_log, &error, 10*eps<DType>()))
+        if(!isZero(direct_log - jac_inv_log, &error, 10*eps<DType>()))
         {
             std::cout << mxm::to_string(direct_log) << std::endl;
-            std::cout << mxm::to_string(jac_log) << std::endl;
+            std::cout << mxm::to_string(jac_inv_log) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        auto expect_identity = so::jacobInv(skew2).matmul(so::jacob(skew2));
+
+        if(!isIdentity(expect_identity, &error))
+        {
+            std::cout << "error: " << error << std::endl;
+            std::cout << mxm::to_string(expect_identity) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+}
+
+inline void testLieSpecialEuclidean()
+{
+    {
+        using DType = double;
+        auto rot = so::exp<3>(so::wedge(Vector<double>{2,1,1}));
+        auto pose = Matrix<DType>::identity(4);
+        pose(se::rotBlk<3>()) = rot;
+        pose(se::traBlk<3>()) = Vector<DType>{1,2,3};
+
+        auto pose_sym = se::exp<3>(SE::log<3>(pose));
+
+        DType error(0);
+        if(!isZero(pose - pose_sym, &error, 10*eps<DType>()))
+        {
+            std::cout << mxm::to_string(pose) << std::endl;
+            std::cout << mxm::to_string(pose_sym) << std::endl;
             std::cout << "error: " << error << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
@@ -94,3 +128,4 @@ inline void testLieSpecialOrthogonal()
 
 
 #endif // _TEST_LIE_SPECIAL_ORTHOGONAL_H_
+
