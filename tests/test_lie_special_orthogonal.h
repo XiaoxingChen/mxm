@@ -72,6 +72,24 @@ inline void testLieSpecialOrthogonal()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }
+
+    { // test jacob left inv
+        using DType = double;
+        auto skew1 = so::wedge(Vector<double>{1,2,3} * eps<DType>());
+        auto skew2 = so::wedge(Vector<double>{2,1,1});
+
+        auto direct_log = SO::log<3>( so::exp<3>(skew1).matmul(so::exp<3>(skew2)));
+        auto jac_log = so::jacobLeftInv(skew2).matmul(skew1) + skew2;
+
+        DType error(0);
+        if(!isZero(direct_log - jac_log, &error, 10*eps<DType>()))
+        {
+            std::cout << mxm::to_string(direct_log) << std::endl;
+            std::cout << mxm::to_string(jac_log) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 
 

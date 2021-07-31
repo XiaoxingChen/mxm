@@ -108,11 +108,12 @@ inline void simpleRotationToPlaneAngle(const Matrix<DType>& R, Matrix<DType>& pl
     DType cos_theta = 0.5 * (R.trace() - dim) + 1;
     angle = acos(cos_theta);
     Matrix<DType> skew = R - R.T();
-    std::vector<std::pair<size_t, DType>> col_norm(dim);
-    for(size_t i = 0; i < dim; i++) col_norm[i] = {i,skew(Col(i)).norm()};
-    std::sort(col_norm.begin(), col_norm.end(), [](auto a, auto b){return a.second > b.second;});
-    plane(Col(0)) = skew(Col(col_norm.at(0).first)).normalized();
-    plane(Col(1)) = skew(Col(col_norm.at(1).first)).normalized();
+    Matrix<DType> col_norm = mxm::sum(skew * skew, 0);
+    size_t max_col_idx = argMax(col_norm)[1];
+
+    auto vec_x = skew(Col(max_col_idx)).normalized();
+    plane(Col(0)) = vec_x;
+    plane(Col(1)) = skew.matmul(vec_x);
     // std::cout << "plane: " << mxm::to_string(plane.T()) << std::endl;
 }
 

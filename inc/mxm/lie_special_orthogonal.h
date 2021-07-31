@@ -207,6 +207,19 @@ Matrix<DType> unsignedWedge(const Matrix<DType>& coeff, const Vector<DType>& the
     return ret;
 }
 
+template <typename DType>
+Matrix<DType> jacobLeftInv(const Matrix<DType>& skew)
+{
+    static const size_t N(3);
+    auto angle = findAngle<N>(skew);
+    if(abs(angle) < eps<DType>()) return Matrix<DType>::identity(N);
+
+    auto cot_half = DType(1.) / tan(0.5 * angle);
+    auto i_angle = DType(1.) / angle;
+    Matrix<DType> j_inv = Matrix<DType>::identity(N) - 0.5 * skew + i_angle * (i_angle - 0.5 * cot_half) * skew.matmul(skew);
+    return j_inv;
+}
+
 } // namespace so
 
 // Special Orthogonal Lie Group
@@ -306,6 +319,21 @@ log(const Matrix<DType>& rot_mat)
     return Matrix<DType>({2,2},{0, -theta, theta, 0}, ROW);
 }
 
+template<typename DType>
+Matrix<DType> planeOfSingleRotation(const Matrix<DType>& rot_mat)
+{
+    Matrix<DType> skew = rot_mat - rot_mat.T();
+    Matrix<DType> col_norm = mxm::sum(skew * skew, 0);
+    size_t max_col_idx = argMax(col_norm)[1];
+
+    auto plane = Matrix<DType>({rot_mat.shape(0), 2});
+
+    auto vec_x = skew(Col(max_col_idx)).normalized();
+    plane(Col(0)) = vec_x;
+    plane(Col(1)) = skew.matmul(vec_x);
+    return plane;
+}
+
 template <size_t N, typename DType>
 std::enable_if_t<3 == N, Matrix<DType>>
 log(const Matrix<DType>& rot_mat)
@@ -313,14 +341,7 @@ log(const Matrix<DType>& rot_mat)
     DType theta = findAngle<N>(rot_mat);
     if(abs(theta) < eps<DType>()) return Matrix<DType>::zeros({3,3});
 
-    auto plane = Matrix<DType>({N, 2});
-
-    Matrix<DType> skew = rot_mat - rot_mat.T();
-    std::vector<std::pair<size_t, DType>> col_norm(N);
-    for(size_t i = 0; i < N; i++) col_norm[i] = {i,skew(Col(i)).norm()};
-    std::sort(col_norm.begin(), col_norm.end(), [](auto a, auto b){return a.second > b.second;});
-    plane(Col(0)) = skew(Col(col_norm.at(0).first));
-    plane(Col(1)) = skew(Col(col_norm.at(1).first));
+    auto plane = planeOfSingleRotation(rot_mat);
     auto axis = theta * orthogonalComplement(plane).normalized();
     return so::wedge(axis);
 }
