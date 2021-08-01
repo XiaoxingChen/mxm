@@ -120,7 +120,7 @@ inline void testRotation()
         auto mid_expected = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2 * 0.5));
         auto r1 = rodrigues3D(Vector<float>({1,1,1}), float(M_PI_2));
         auto r0 = Matrix<float>::identity(3);
-        auto mid = SO::slerp(r0, r1, 0.5f);
+        auto mid = SO::interp(r0, r1, 0.5f);
         if(norm(mid - mid_expected) > 10 * std::numeric_limits<float>::epsilon())
         {
             std::cout << mxm::to_string(r1) << std::endl;

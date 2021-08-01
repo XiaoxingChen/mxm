@@ -396,9 +396,38 @@ pow(const Matrix<DType>& r, DType y)
 }
 
 template<typename DType>
-Matrix<DType> slerp(const Matrix<DType>& r0, const Matrix<DType>& r1, DType t)
+Matrix<DType> interp(const Matrix<DType>& r0, const Matrix<DType>& r1, DType t)
 {
     return pow<3>(r1.matmul(r0.T()), t).matmul(r0);
+}
+
+// left lie derivative:
+// d Rp / dR
+template<size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+derivPoint(const Matrix<DType>& rot, const Matrix<DType>& p)
+{
+    return -so::wedge(rot.matmul(p));
+}
+
+// left lie derivative:
+// d ln(R R_1) / dR
+template<size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+derivDistance(const Matrix<DType>& rot, const Matrix<DType>& rot_1)
+{
+    return so::jacobInv(SO::log<N>(rot.matmul(rot_1)));
+}
+
+// template <size_t DIM>
+// struct DoF
+// {
+//     static const size_t val = DIM * (DIM - 1) / 2;
+// };
+template <size_t DIM>
+constexpr size_t dof()
+{
+    return DIM * (DIM - 1) / 2;
 }
 
 } // namespace SO

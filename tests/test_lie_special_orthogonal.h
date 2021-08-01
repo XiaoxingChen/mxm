@@ -124,6 +124,26 @@ inline void testLieSpecialEuclidean()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
     }
+
+    {
+        using DType = double;
+        auto rot = so::exp<3>(so::wedge(Vector<double>{2,1,1}));
+        auto pose = Matrix<DType>::identity(4);
+        pose(se::rotBlk<3>()) = rot;
+        pose(se::traBlk<3>()) = Vector<DType>{1,2,3};
+
+        auto mid_pose = SE::interp(Matrix<DType>::identity(4), pose, 0.5);
+        auto pose_sym = mid_pose.matmul(mid_pose);
+
+        DType error(0);
+        if(!isZero(pose - pose_sym, &error, 10*eps<DType>()))
+        {
+            std::cout << mxm::to_string(pose) << std::endl;
+            std::cout << mxm::to_string(pose_sym) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
 }
 
 
