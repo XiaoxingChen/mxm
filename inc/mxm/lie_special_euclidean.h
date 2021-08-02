@@ -43,6 +43,79 @@ exp(const Matrix<DType>& alg)
     return mat_rt;
 }
 
+// formula 7.51a
+template <size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+adj(const Matrix<DType>& alg)
+{
+    Matrix<DType> ret = Matrix<DType>::identity(2*N);
+    auto rot = alg(rotBlk<N>());
+    ret.setBlock(0,0, rot);
+    ret.setBlock(N,N, rot);
+    ret.setBlock(0,N, so::wedge(alg(traBlk<N>())));
+    return ret;
+}
+
+
+// formula 7.86a
+template <size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+matQ(const Matrix<DType>& mat)
+{
+    Matrix<DType> phi = mat(rotBlk<N>());
+    DType angle = so::findAngle<N>(phi);
+    if(abs(angle) < eps<DType>()) assert(false);
+
+    DType i_angle = DType(1) / angle;
+    DType i_angle3 = i_angle * i_angle * i_angle;
+    DType i_angle4 = i_angle * i_angle3;
+    DType i_angle5 = i_angle * i_angle4;
+
+
+    Matrix<DType> phi2 = phi.matmul(phi);
+    Matrix<DType> rho = so::wedge(mat(traBlk<N>()));
+    Matrix<DType> phi_rho_phi = phi.matmul(rho).matmul(phi);
+
+    Matrix<DType> mat_q = rho * 0.5;
+    mat_q += (angle - sin(angle)) * i_angle3 * (phi.matmul(rho) + rho.matmul(phi) + phi_rho_phi);
+    mat_q += (angle * angle + 2 * cos(angle) - 2) * 0.5 * i_angle4 * (phi2.matmul(rho) + rho.matmul(phi2) - phi_rho_phi * 3.);
+    mat_q += (2 * angle - 3 * sin(angle) + angle * cos(angle)) * 0.5 * i_angle5 * (phi_rho_phi.matmul(phi) + phi.matmul(phi_rho_phi));
+    return mat_q;
+}
+
+template <size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+jacob(const Matrix<DType>& mat)
+{
+    auto ret = Matrix<DType>::identity(2*N);
+    auto so_jac = so::jacob(mat(rotBlk<N>()));
+    ret.setBlock(0,0, so_jac);
+    ret.setBlock(N,N, so_jac);
+    ret.setBlock(0,N, matQ(mat));
+    return ret;
+}
+
+// formula 7.95b
+template <size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+jacobInv(const Matrix<DType>& mat)
+{
+    auto ret = Matrix<DType>::identity(2*N);
+    auto so_jac_inv = so::jacobInv(mat(rotBlk<N>()));
+    ret.setBlock(0,0, so_jac_inv);
+    ret.setBlock(N,N, so_jac_inv);
+    ret.setBlock(0,N, - so_jac_inv.matmul(matQ(mat)).matmul(so_jac_inv) );
+    return ret;
+}
+
+// formula 7.94
+template <size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+jacob2(const Matrix<DType>& mat)
+{
+
+}
+
 } // namespace se
 
 namespace SE
@@ -119,10 +192,20 @@ Matrix<DType> adj(const Matrix<DType> mat)
 {
     Matrix<DType> ret = Matrix<DType>::zeros({2*N, 2*N});
     auto rot = mat(rotBlk<N>());
-    ret(Block({0, N}, {0, N})) = rot;
-    ret(Block({0, N}, {N, 2*N})) = so::wedge(mat(traBlk<N>())).matmul(rot);
-    ret(Block({N, 2*N}, {N, 2*N})) = rot;
+    ret.setBlock(0,0, rot);
+    ret.setBlock(N,N, rot);
+    ret.setBlock(0,N, so::wedge(mat(traBlk<N>())).matmul(rot));
+
     return ret;
+}
+
+// left lie derivative:
+// d Tp / dR
+template<size_t N=3, typename DType>
+std::enable_if_t<3 == N, Matrix<DType>>
+derivDistance(const Matrix<DType>& tf, const Matrix<DType>& tf_1)
+{
+    return jacobInv(SE::log<N>(tf.matmul(tf_1)));
 }
 
 
