@@ -58,6 +58,8 @@ public:
 
     virtual DType& operator () (size_t i) { return BaseType::operator()(i, 0); }
     virtual const DType& operator () (size_t i) const { return BaseType::operator()(i, 0); }
+    MatrixRef<DType> operator () (const Block& b) { return BaseType::operator()(b); }
+    const MatrixRef<DType> operator () (const Block& b) const { return BaseType::operator()(b); }
 
     DType dot(const ThisType& rhs) const
     {

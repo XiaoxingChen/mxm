@@ -104,6 +104,26 @@ inline void testLieSpecialOrthogonal()
     }
 }
 
+template<typename DType>
+Matrix<DType> testDataPose()
+{
+    auto rot = so::exp<3>(so::wedge(Vector<double>{2,1,1}));
+    auto pose = Matrix<DType>::identity(4);
+    pose(se::rotBlk<3>()) = rot;
+    pose(se::traBlk<3>()) = Vector<DType>{1,2,3};
+    return pose;
+}
+
+template<typename DType>
+Matrix<DType> testDataPose1()
+{
+    auto rot = so::exp<3>(so::wedge(Vector<double>{-1,2,1}));
+    auto pose = Matrix<DType>::identity(4);
+    pose(se::rotBlk<3>()) = rot;
+    pose(se::traBlk<3>()) = Vector<DType>{1,1,0.5};
+    return pose;
+}
+
 inline void testLieSpecialEuclidean()
 {
     {
@@ -140,6 +160,68 @@ inline void testLieSpecialEuclidean()
         {
             std::cout << mxm::to_string(pose) << std::endl;
             std::cout << mxm::to_string(pose_sym) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    { //test mat_q
+        using DType = double;
+        auto pose = testDataPose<DType>();
+        const size_t LARGE_NUM = 20;
+        auto mat_q_by_sum = Matrix<DType>::zeros({3,3});
+        auto pose_alg = SE::log(pose);
+        auto rho = so::wedge(pose_alg(se::traBlk()));
+        auto phi = pose_alg(se::rotBlk());
+        auto phi_n = Matrix<DType>::identity(3);
+        for(size_t n = 0; n < LARGE_NUM; n++)
+        {
+            auto tmp = phi_n.matmul(rho) * (DType(1) / factorial(n+2));;
+            for(size_t m = 0; m < LARGE_NUM; m++)
+            {
+                mat_q_by_sum += tmp;
+                tmp = tmp.matmul(phi) * (DType(1) / (n+m+3));
+            }
+            phi_n = phi_n.matmul(phi);
+        }
+
+        auto mat_q = se::matQ(pose_alg);
+        DType error(0);
+        if(!isZero(mat_q_by_sum - mat_q, &error, 1e-10))
+        {
+            std::cout << "mat_q_by_sum:\n" << mxm::to_string(mat_q_by_sum) << std::endl;
+            std::cout << "mat_q:\n" << mxm::to_string(mat_q) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+    }
+
+    { //test derive distance
+        using DType = double;
+        const size_t N = 3;
+        auto pose1 = testDataPose<DType>();
+        auto pose2 = testDataPose1<DType>();
+
+        auto deriv = SE::derivDistance(pose1, SE::inv(pose2));
+
+        DType delta = 1e-6;
+        auto perturb = Matrix<DType>::identity(2*N) * delta;
+        auto numerical_deriv = Matrix<DType>::identity(2*N);
+
+        auto actual_cost = SE::log(pose1.matmul(SE::inv(pose2)));
+        for(size_t i = 0; i < perturb.shape(1); i++)
+        {
+            auto perturbed_pose1 = se::exp(se::wedge(perturb(Col(i)))).matmul(pose1);
+            auto perturbed_cost = SE::log(perturbed_pose1.matmul(SE::inv(pose2)));
+            numerical_deriv(Col(i)) = se::vee(perturbed_cost - actual_cost) / delta;
+        }
+
+        DType error(0);
+        if(!isZero(numerical_deriv - deriv, &error, 1e-5))
+        {
+            std::cout << "numerical_deriv:\n" << mxm::to_string(numerical_deriv) << std::endl;
+            std::cout << "deriv:\n" << mxm::to_string(deriv) << std::endl;
             std::cout << "error: " << error << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }

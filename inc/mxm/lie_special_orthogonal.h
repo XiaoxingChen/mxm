@@ -81,14 +81,16 @@ Matrix<DType> unsignedVee(const Matrix<DType>& skew)
     return Matrix<DType>(fixCol(1), std::move(data));
 }
 
-template<typename DType>
-Vector<DType> vee(const Matrix<DType>& skew)
+template<typename DeriveType>
+Vector<typename Traits<DeriveType>::EntryType>
+vee(const MatrixBase<DeriveType>& skew)
 {
-    return Vector<DType>({skew(2,1), skew(0,2), skew(1,0)});
+    return Vector<typename Traits<DeriveType>::EntryType>({skew(2,1), skew(0,2), skew(1,0)});
 }
 
 template<typename DeriveType>
-Matrix<typename Traits<DeriveType>::EntryType> wedge(const MatrixBase<DeriveType>& v)
+Matrix<typename Traits<DeriveType>::EntryType>
+wedge(const MatrixBase<DeriveType>& v)
 {
     return Matrix<typename Traits<DeriveType>::EntryType>({3,3},
     {0, -v(2,0), v(1,0),

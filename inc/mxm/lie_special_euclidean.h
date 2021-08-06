@@ -16,21 +16,21 @@ bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=eps<DType
     return true;
 }
 
-template <size_t N>
+template <size_t N=3>
 const Block& rotBlk()
 {
     static const Block blk({0,N},{0,N});
     return blk;
 }
 
-template <size_t N>
+template <size_t N=3>
 const Block& traBlk()
 {
     static const Block blk({0,N}, {N, N+1});
     return blk;
 }
 
-template <size_t N, typename DType>
+template <size_t N=3, typename DType>
 std::enable_if_t<3 == N, Matrix<DType>>
 exp(const Matrix<DType>& alg)
 {
@@ -41,6 +41,28 @@ exp(const Matrix<DType>& alg)
     mat_rt(traBlk<N>()) = so::jacob(skew).matmul(alg( traBlk<N>()));
 
     return mat_rt;
+}
+
+template <size_t N=3, typename DeriveType>
+std::enable_if_t<3 == N, Matrix<typename Traits<DeriveType>::EntryType>>
+wedge(const MatrixBase<DeriveType>& vec)
+{
+    using DType = typename Traits<DeriveType>::EntryType;
+    auto mat_se = Matrix<DType>::identity(N+1);
+    mat_se(traBlk<N>()) = vec(Block({0, N},{}));
+    mat_se(rotBlk<N>()) = so::wedge(vec(Block({N, end()},{})));
+    return mat_se;
+}
+
+template <size_t N=3, typename DeriveType>
+std::enable_if_t<3 == N, Vector<typename Traits<DeriveType>::EntryType>>
+vee(const MatrixBase<DeriveType>& mat_se)
+{
+    using DType = typename Traits<DeriveType>::EntryType;
+    Vector<DType> vec(N*2);
+    vec(Block({0, N},{})) = mat_se(traBlk<N>());
+    vec(Block({N, end()},{})) = so::vee(mat_se(rotBlk<N>()));
+    return vec;
 }
 
 // formula 7.51a
@@ -133,7 +155,7 @@ bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=eps<DType
     return true;
 }
 
-template <size_t N, typename DType>
+template <size_t N=3, typename DType>
 Matrix<DType> inv(const Matrix<DType>& mat)
 {
     // return mat.T();
@@ -144,7 +166,7 @@ Matrix<DType> inv(const Matrix<DType>& mat)
     return ret;
 }
 
-template <size_t N, typename DType>
+template <size_t N=3, typename DType>
 std::enable_if_t<3 == N, Matrix<DType>>
 log(const Matrix<DType>& grp)
 {
@@ -200,13 +222,14 @@ Matrix<DType> adj(const Matrix<DType> mat)
 }
 
 // left lie derivative:
-// d Tp / dR
+// d ln(T T_1) / dT
 template<size_t N=3, typename DType>
 std::enable_if_t<3 == N, Matrix<DType>>
 derivDistance(const Matrix<DType>& tf, const Matrix<DType>& tf_1)
 {
-    return jacobInv(SE::log<N>(tf.matmul(tf_1)));
+    return se::jacobInv<N>(SE::log<N>(tf.matmul(tf_1)));
 }
+
 
 
 } // namespace SE
