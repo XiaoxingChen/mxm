@@ -19,6 +19,10 @@ namespace mxm
 // class Pixel;
 template<typename DType>
 class Matrix;
+
+template<typename DType>
+class MatrixRef;
+class Block;
 template<typename DType>
 class Vector: public Matrix<DType>
 {

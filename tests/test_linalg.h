@@ -149,7 +149,7 @@ inline void testQRcalcMatQ()
         {0.00000000e+00,  5.55111512e-17, -1.00000000e+00,
         -4.31263911e-01, -9.02225825e-01, -5.55111512e-17,
         -9.02225825e-01,  4.31263911e-01,  1.11022302e-16});
-        Mat mat_q = qr::calcMatQ(mat_a);
+        Mat mat_q = qr::decomposeByRotation(mat_a)[0];
         if((mat_q - expect_q).norm() > 2 * eps())
         {
             std::cout << mxm::to_string(mat_q) << std::endl;
@@ -318,6 +318,26 @@ inline void testQRIteration()
     }
 
 }
+
+namespace mxm
+{
+
+namespace qr
+{
+template<typename DType>
+DType wilkinsonShiftStrategy(const Matrix<DType> mat_a);
+} // namespace qr
+
+template<typename DType>
+Matrix<DType> shiftedQRIteration(
+    const Matrix<DType>& mat,
+    Matrix<DType>* p_orthogonal,
+    qr::TraverseSeq idx_seq=qr::eUpperTrianglize,
+    size_t max_it=40,
+    DType tol=eps<DType>());
+
+} // namespace mxm
+
 
 inline void testUnsymmetrixEigenvaluePipeline01()
 {
@@ -586,43 +606,6 @@ inline void testEigenvalues2()
 }
 
 
-inline void testTridiagonalizeSkewSymmetric()
-{
-    {
-        Mat skew({5,5},
-        {0, 1, 2, 3, 4,
-        -1, 0, 3, 6, 7,
-        -2,-3, 0, 8, 2,
-        -3,-6,-8, 0, 1,
-        -4,-7,-2,-1, 0});
-
-        Mat expected({5,5},
-            {0.0000000000000000, -5.4772253036499023, -0.0000000000000000, -0.0000000000000000, 0.0000000000000000,
-            5.4772253036499023, 0.0000000000000000, -11.6404466629028320, -0.0000000000000000, 0.0000000000000000,
-            0.0000000000000000, 11.6404457092285156, 0.0000000000000000, -3.3462533950805664, -0.0000000000000000,
-            0.0000000000000000, 0.0000000000000000, 3.3462533950805664, -0.0000000000000000, -4.0376458168029785,
-            -0.0000000000000000, 0.0000000000000000, 0.0000000000000000, 4.0376458168029785, 0.0000000000000000});
-
-        auto result_q_d = tridiagonalizeSkewSymmetric(skew);
-        if((result_q_d[1] - expected).norm() > eps() * 30)
-        {
-
-            std::cout << "d: \n" << mxm::to_string(result_q_d[1]) << "error: " << (result_q_d[1] - expected).norm() << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
-    }
-
-    if(0){
-        Mat skew({3,3},{
-            0, -1, 1,
-            1, 0, -1,
-            -1,1, 0});
-
-        auto result_q_d = blockDiagonalizeSkewSymmetric(skew);
-        std::cout << mxm::to_string(result_q_d[1]) << std::endl;
-    }
-
-}
 #endif
 
 inline Mat testMatRefTransposeReturn(size_t dim)

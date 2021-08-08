@@ -373,7 +373,7 @@ struct Traits<MatrixBase<DeriveType>>
 };
 // Inversion
 
-template<typename DeriveType, typename=void>
+template<typename DeriveType>
 Matrix<typename Traits<DeriveType>::EntryType>
 inv(const MatrixBase<DeriveType>& mat);
 
