@@ -9,23 +9,23 @@
 namespace mxm
 {
 
-template<typename DType>
-class FullDimensionalRotation
+template<typename DType, size_t DIM=3>
+class Rotation
 {
 public:
-    using ThisType = FullDimensionalRotation;
+    using ThisType = Rotation;
 
-    FullDimensionalRotation(const Matrix<DType>& R): matrix_(R)
+    Rotation(const Matrix<DType>& R): matrix_(R)
     {
-        if(!matrix_.square())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(matrix_.square());
+        assert(matrix_.shape(0) == DIM);
     }
 
-    FullDimensionalRotation(size_t dim): matrix_(Matrix<DType>::identity(dim))
-    {
-    }
+    // Rotation(size_t dim): matrix_(Matrix<DType>::identity(dim))
+    // {
+    // }
 
-    FullDimensionalRotation(): matrix_(){}
+    Rotation(): matrix_(){}
 
     ThisType operator*(const ThisType& rhs) const { return ThisType(matrix_.matmul(rhs.matrix_)); }
 
@@ -35,19 +35,19 @@ public:
 
     ThisType inv() const { return ThisType(matrix_.T()); }
 
-    size_t dim() const { return matrix_.shape(0); }
+    constexpr size_t dim() const { return DIM; }
 
     static ThisType fromMatrix(const Matrix<DType>& R) { return ThisType(R); }
-    static ThisType fromAngle(DType angle) { return ThisType(mxm::rodrigues2D(angle)); }
-    static ThisType fromAxisAngle(const Vector<DType>& axis, DType angle) { return ThisType(mxm::rodrigues3D(axis, angle)); }
-    static ThisType fromQuaternion(const Quaternion<DType>& q) { return ThisType(mxm::toSO3(q)); }
+    static auto fromAngle(DType angle) { return Rotation<DType, 2>(mxm::rodrigues2D(angle)); }
+    static auto fromAxisAngle(const Vector<DType>& axis, DType angle) { return Rotation<DType, 3>(mxm::rodrigues3D(axis, angle)); }
+    static auto fromQuaternion(const Quaternion<DType>& q) { return Rotation<DType, 3>(mxm::toSO3(q)); }
     static ThisType fromPlaneAngle(const Vec& u, const Vec& v, DType angle)
     {
         auto bivec = planeAngleToBivector(u, v, angle);
         return ThisType(bivectorToRotationMatrix(bivec[0], bivec[1]));
     }
 
-    static ThisType identity(size_t dim) { return ThisType(Matrix<DType>::identity(dim)); }
+    static ThisType identity() { return ThisType(Matrix<DType>::identity(DIM)); }
 
     DType norm() const { return 0. ; }
 

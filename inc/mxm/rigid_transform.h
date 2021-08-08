@@ -6,22 +6,22 @@
 
 namespace mxm
 {
-template<typename DType>
+template<typename DType, size_t DIM=3>
 class RigidTransform
 {
 public:
-    using Rotation = FullDimensionalRotation<DType>;
+
     using Translation = Vector<DType>;
-    RigidTransform(const Translation& p, const Rotation& r): translation_(p), rotation_(r)
+    RigidTransform(const Translation& p, const Rotation<DType, DIM>& r): translation_(p), rotation_(r)
     {
         if(p.size() != r.dim())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    RigidTransform(const Rotation& r): translation_(Vector<DType>::zeros(r.dim())), rotation_(r)
+    RigidTransform(const Rotation<DType, DIM>& r): translation_(Vector<DType>::zeros(r.dim())), rotation_(r)
     {}
 
-    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation::identity(p.size()))
+    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation<DType, DIM>::identity(p.size()))
     {}
 
     using ThisType = RigidTransform;
@@ -40,24 +40,24 @@ public:
     {
         Matrix<DType> ret = Matrix<DType>::identity(dim() + 1);
         ret.setBlock(0,0, rotation_.asMatrix());
-        ret.setBlock(0, dim(), translation_);
+        ret.setBlock(0, DIM, translation_);
         return ret;
     }
 
     ThisType inv() const { return ThisType(rotation_.inv().apply(-translation_), rotation_.inv()); }
 
-    size_t dim() const { return translation_.size(); }
+    constexpr size_t dim() const { return DIM; }
 
-    static ThisType identity(size_t dim) { return ThisType(Translation::zeros(dim), Rotation::identity(dim)); }
+    static ThisType identity() { return ThisType(Translation::zeros(DIM), Rotation<DType, DIM>::identity()); }
 
-    const Rotation& rotation() const {return rotation_;}
-    Rotation& rotation() {return rotation_;}
+    const Rotation<DType, DIM>& rotation() const {return rotation_;}
+    Rotation<DType, DIM>& rotation() {return rotation_;}
     const Translation& translation() const {return translation_;}
     Translation& translation() {return translation_;}
 
 private:
     Translation translation_;
-    Rotation rotation_;
+    Rotation<DType, DIM> rotation_;
 };
 
 using RigidTrans = RigidTransform<FloatType>;

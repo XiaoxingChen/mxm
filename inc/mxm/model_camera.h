@@ -117,7 +117,7 @@ class Camera
 public:
     // using DType = float;
     using ThisType = Camera;
-    Camera():pose_(RigidTransform<DType>::identity(DIM)), f_(Vec::ones(DIM - 1) * 500.), c_(Vec::ones(DIM - 1) * 300.), resolution_(DIM - 1)
+    Camera():pose_(RigidTransform<DType, DIM>::identity()), f_(Vec::ones(DIM - 1) * 500.), c_(Vec::ones(DIM - 1) * 300.), resolution_(DIM - 1)
     {
         updateCameraMatrix();
         checkDimension();

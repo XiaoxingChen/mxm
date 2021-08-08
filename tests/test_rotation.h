@@ -193,6 +193,10 @@ inline void testRotation()
 
     }
 
+    {
+        auto r = Rotation<float, 4>::identity();
+    }
+
 #if 0
 // special case, single rotation of SO(5)
     {

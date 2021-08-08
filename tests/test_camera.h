@@ -9,7 +9,7 @@ using namespace mxm;
 
 inline void cameraTest1()
 {
-    Camera<float> cam(RigidTrans::identity(3), Vec({100, 100}), Vec({2,2}));
+    Camera<float> cam(RigidTrans::identity(), Vec({100, 100}), Vec({2,2}));
     auto ray = cam.pixelRay({1,1});
     if((ray.direction() - Vec({0,0,1})).norm() > eps())
     {
@@ -20,7 +20,7 @@ inline void cameraTest1()
 
 inline void cameraTest2()
 {
-    Camera<float> cam(RigidTrans::identity(3), Vec({320,240}), Vec({640, 480}));
+    Camera<float> cam(RigidTrans::identity(), Vec({320,240}), Vec({640, 480}));
     Mat points({3,3}, {1, 1, 1, 0, 0, 1, -1,-1,1}, COL);
 
     Mat img = cam.project(points);

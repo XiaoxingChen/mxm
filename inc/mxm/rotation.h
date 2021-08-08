@@ -10,8 +10,8 @@ namespace mxm
 {
 
 
-template<typename DType>
-using Rotation = FullDimensionalRotation<DType>;
+// template<typename DType, size_t DIM=3>
+// using Rotation = FullDimensionalRotation<DType, DIM>;
 // using Rotation = LowDimensionalRotation;
 } // namespace mxm
 
