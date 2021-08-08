@@ -2,44 +2,44 @@
 #define __MODEL_JOINT_H__
 
 #include "rigid_transform.h"
+#include "rotation.h"
+#include <bitset>
 
 namespace mxm
 {
+template<typename DType>
 class Joint
 {
 public:
+
+    using ThisType = Joint<DType>;
     virtual void set(FloatType val) = 0;
-    Joint(const RigidTrans& zero_tf, bool rotor_output=true):
-        zero_tf_(zero_tf), state_tf_(RigidTrans::identity(3)), rotor_output_(rotor_output){}
+    Joint(const RigidTransform<DType>& zero_tf=RigidTransform<DType>::identity(3), bool install_dir=true):
+        zero_tf_(zero_tf), state_tf_(RigidTransform<DType>::identity(3)), inverse_install_(!install_dir){}
 
-    RigidTrans nominalStateTf() const
+    RigidTransform<DType> tf() const
     {
-        if(rotor_output_) return state_tf_;
-        return state_tf_.inv();
+        auto ret = zero_tf_ * state_tf_;
+        if(inverse_install_) return ret.inv();
+        return ret;
     }
 
-    RigidTrans output() const
+    void setAngle(DType val) { state_tf_.rotation() = Rotation<DType>::fromAxisAngle(Vector<DType>{0,0,1}, val); }
+    RigidTransform<DType> zeroPosition() const
     {
-        return zero_tf_ * nominalStateTf();
+        if(inverse_install_) return zero_tf_.inv();
+        return zero_tf_;
     }
+
+    bool inverseInstall() const { return inverse_install_; }
 
 protected:
-    RigidTrans zero_tf_;
-    RigidTrans state_tf_;
-    bool rotor_output_;
+    RigidTransform<DType> zero_tf_;
+    RigidTransform<DType> state_tf_;
+    bool inverse_install_;
 };
 
-// rotate around z-axis
-class AngularJoint: public Joint
-{
-public:
-    virtual void set(FloatType val) override
-    {
-        state_tf_.rotation() = RigidTrans::Rotation::fromAxisAngle(Vec({0,0,1}), val);
-    }
-private:
 
-};
 } // namespace mxm
 
 

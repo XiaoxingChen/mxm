@@ -49,6 +49,12 @@ public:
     constexpr size_t dim() const { return DIM; }
 
     static ThisType identity() { return ThisType(Translation::zeros(DIM), Rotation<DType, DIM>::identity()); }
+    static ThisType fromMatrix(const Matrix<DType>& se)
+    {
+        auto tra = Vector<DType>(se(Block({0, DIM}, {DIM, DIM + 1})));
+        auto rot = Rotation<DType, DIM>::fromMatrix(se(Block({0, DIM}, {0, DIM})));
+        return ThisType(tra, rot);
+    }
 
     const Rotation<DType, DIM>& rotation() const {return rotation_;}
     Rotation<DType, DIM>& rotation() {return rotation_;}

@@ -37,7 +37,9 @@ public:
 
     constexpr size_t dim() const { return DIM; }
 
-    static ThisType fromMatrix(const Matrix<DType>& R) { return ThisType(R); }
+    template<class DeriveType> static
+    std::enable_if_t<std::is_same<typename Traits<DeriveType>::EntryType, DType>::value, ThisType>
+    fromMatrix(const MatrixBase<DeriveType>& R) { return ThisType(R); }
     static auto fromAngle(DType angle) { return Rotation<DType, 2>(mxm::rodrigues2D(angle)); }
     static auto fromAxisAngle(const Vector<DType>& axis, DType angle) { return Rotation<DType, 3>(mxm::rodrigues3D(axis, angle)); }
     static auto fromQuaternion(const Quaternion<DType>& q) { return Rotation<DType, 3>(mxm::toSO3(q)); }

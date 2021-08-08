@@ -22,6 +22,7 @@
 #include "test_coordinate_system.h"
 #include "test_lie_alg.h"
 #include "test_lie_special_unitary.h"
+#include "test_joint.h"
 
 int main(int argc, char const *argv[])
 {
@@ -51,6 +52,7 @@ int main(int argc, char const *argv[])
   testLieSpecialOrthogonal();
   testLieSpecialUnitary();
   testLieSpecialEuclidean();
+  testJoint();
 
   std::cout << "done" << std::endl;
   return 0;

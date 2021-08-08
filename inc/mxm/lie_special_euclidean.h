@@ -48,7 +48,7 @@ std::enable_if_t<3 == N, Matrix<typename Traits<DeriveType>::EntryType>>
 wedge(const MatrixBase<DeriveType>& vec)
 {
     using DType = typename Traits<DeriveType>::EntryType;
-    auto mat_se = Matrix<DType>::identity(N+1);
+    auto mat_se = Matrix<DType>::zeros({N+1, N+1});
     mat_se(traBlk<N>()) = vec(Block({0, N},{}));
     mat_se(rotBlk<N>()) = so::wedge(vec(Block({N, end()},{})));
     return mat_se;
@@ -223,6 +223,7 @@ Matrix<DType> adj(const Matrix<DType> mat)
 
 // left lie derivative:
 // d ln(T T_1) / dT
+// formulate 7.83a
 template<size_t N=3, typename DType>
 std::enable_if_t<3 == N, Matrix<DType>>
 derivDistance(const Matrix<DType>& tf, const Matrix<DType>& tf_1)
