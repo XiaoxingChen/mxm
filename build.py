@@ -4,6 +4,7 @@ import sys
 import os
 import shutil
 import argparse
+from time import time
 sys.path.append( os.path.join(os.path.abspath(os.path.dirname(__file__)), 'scripts'))
 
 UNIX_CMAKE_STR = 'cmake {} -B{} -G "Unix Makefiles"'
@@ -190,6 +191,8 @@ def run(build_script_folder=os.path.abspath(os.path.dirname(__file__))):
     if args.sync_lfs:
         WebDrive.sync(Dir.lfs_yaml, Dir.lfs_asset)
 
+    t_start = time()
+
     build_target_cnt = 0
     for target in targets:
         target.updateFromArgs(args)
@@ -199,6 +202,9 @@ def run(build_script_folder=os.path.abspath(os.path.dirname(__file__))):
     if 0 == build_target_cnt:
         targets[0].require_build = True
         targets[0].runBuild()
+
+    t_finish = time()
+    print("Total build time: {:.3f}s".format(t_finish - t_start))
 
     for target in targets:
         target.runExecutable()
