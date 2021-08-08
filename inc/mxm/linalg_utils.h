@@ -2,6 +2,7 @@
 #define _LINALG_UTILS_H
 
 #include "linalg_mat.h"
+#include "linalg_solve.h"
 #include <algorithm>
 
 #define NO_MAT_REF 1

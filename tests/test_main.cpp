@@ -20,7 +20,7 @@
 #include "test_optical_flow.h"
 #include "test_hamming_space.h"
 #include "test_coordinate_system.h"
-#include "test_lie_special_orthogonal.h"
+#include "test_lie_alg.h"
 #include "test_lie_special_unitary.h"
 
 int main(int argc, char const *argv[])

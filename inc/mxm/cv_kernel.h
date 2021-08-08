@@ -2,9 +2,12 @@
 #define _CV_KERNEL_H_
 #include "linalg_mat.h"
 
+
 namespace mxm
 {
-
+template<typename IntType>
+typename std::enable_if_t<std::is_integral<IntType>::value, IntType>
+combinations(IntType m, IntType n);
 namespace kernel
 {
 

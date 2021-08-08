@@ -1,12 +1,9 @@
-#if !defined(_TEST_LIE_SPECIAL_ORTHOGONAL_H_)
-#define _TEST_LIE_SPECIAL_ORTHOGONAL_H_
-
 #include "mxm/lie_special_orthogonal.h"
 #include "mxm/lie_special_euclidean.h"
 
 using namespace mxm;
 
-inline Matrix<float> testDataSO3()
+Matrix<float> testDataSO3()
 {
     // theta = 0.5 * pi
     // axis = [1,1,1]
@@ -16,14 +13,14 @@ inline Matrix<float> testDataSO3()
     -0.244017, 0.910684, 0.333333});
 }
 
-inline Matrix<float> testDataSO2()
+Matrix<float> testDataSO2()
 {
     float c = cos(M_PI * 0.25);
     float s = sin(M_PI * 0.25);
     return Matrix<float>({2,2}, {c, -s, s, c}, ROW);
 }
 
-inline Matrix<float> testDataSO5()
+Matrix<float> testDataSO5()
 {
     size_t n = 5;
     const Matrix<float> rot({n,n}, {
@@ -36,7 +33,7 @@ inline Matrix<float> testDataSO5()
     return rot;
 }
 
-inline void testLieSpecialOrthogonal()
+void testLieSpecialOrthogonal()
 {
     {
         auto mat = testDataSO2();
@@ -124,7 +121,7 @@ Matrix<DType> testDataPose1()
     return pose;
 }
 
-inline void testLieSpecialEuclidean()
+void testLieSpecialEuclidean()
 {
     {
         using DType = double;
@@ -227,7 +224,3 @@ inline void testLieSpecialEuclidean()
         }
     }
 }
-
-
-#endif // _TEST_LIE_SPECIAL_ORTHOGONAL_H_
-

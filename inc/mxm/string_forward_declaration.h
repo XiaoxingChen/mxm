@@ -31,7 +31,10 @@ template<typename DType, size_t N>
 class PixelType;
 
 template<typename DType, size_t N>
-std::string to_string(const PixelType<DType, N>& px, size_t prec=6);
+std::string to_string(const PixelType<DType, N>& px, size_t prec);
+
+template<typename DType, size_t N>
+std::string to_string(const PixelType<DType, N>& px);
 
 template<class T, size_t N>
 std::string to_string(const std::array<T, N>& container, size_t prec=6);

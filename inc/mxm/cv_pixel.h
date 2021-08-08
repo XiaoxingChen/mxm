@@ -131,6 +131,12 @@ std::string to_string(const PixelType<DType, N>& px, size_t prec)
 }
 
 template<typename DType, size_t N>
+std::string to_string(const PixelType<DType, N>& px)
+{
+    return to_string(px, 6);
+}
+
+template<typename DType, size_t N>
 PixelType<DType, N> inv(const PixelType<DType, N>& val)
 {
     PixelType<DType, N> ret;

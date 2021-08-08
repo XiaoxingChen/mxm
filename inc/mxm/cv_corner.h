@@ -2,13 +2,14 @@
 #define _CV_CORNER_H_
 
 #include "cv_pixel.h"
+#include "cv_basic.h"
 #include "linalg_utils.h"
 #include <tuple>
 #include <bitset>
 
 namespace mxm
 {
-Matrix<float> harrisCornernessMap(const Matrix<float>& src, size_t window_width=5, float k=0.06)
+inline Matrix<float> harrisCornernessMap(const Matrix<float>& src, size_t window_width=5, float k=0.06)
 {
     Matrix<float> sobel = Matrix<float>({3,3}, {-1,0,1, -2,0,2, -1,0,1});
     auto sobel_x = convolute(src, sobel.T());
@@ -65,7 +66,7 @@ inline FastCornerBresehamCircle fastCornerCircle(const Matrix<float>& src, size_
 // Reference:
 // https://en.wikipedia.org/wiki/Features_from_accelerated_segment_test
 // https://medium.com/data-breach/introduction-to-fast-features-from-accelerated-segment-test-4ed33dde6d65
-bool isFastCorner(const FastCornerBresehamCircle& px, float center, float thresh=0.03)
+inline bool isFastCorner(const FastCornerBresehamCircle& px, float center, float thresh=0.03)
 {
     std::vector<size_t> idx_gt;
     std::vector<size_t> idx_lt;
@@ -101,14 +102,14 @@ bool isFastCorner(const FastCornerBresehamCircle& px, float center, float thresh
     return false;
 }
 
-float fastScore(const FastCornerBresehamCircle& pixels, float center)
+inline float fastScore(const FastCornerBresehamCircle& pixels, float center)
 {
     float score(0);
     for(const auto & px: pixels) score += abs(px - center);
     return score;
 }
 
-float sparseHarrisCornerness(
+inline float sparseHarrisCornerness(
     const Matrix<float>& src,
     std::map<std::array<size_t, 2>, std::array<float, 2>>& sobel_map,
     const std::array<size_t, 2>& coord,
@@ -143,7 +144,7 @@ float sparseHarrisCornerness(
     return (det - k * tr*tr);
 }
 
-std::vector<std::array<size_t, 2>>
+inline std::vector<std::array<size_t, 2>>
 fastCorners(const Matrix<float>& src, float thresh=0.06)
 {
     using Coord2D = std::array<size_t, 2>;
@@ -173,7 +174,7 @@ fastCorners(const Matrix<float>& src, float thresh=0.06)
 template<uint8_t K>
 const Matrix<int>& briefPatternII();
 
-template<>
+template<> inline
 const Matrix<int>& briefPatternII<8>()
 {
     static const Matrix<int> pattern(fixRow(2),
@@ -247,7 +248,7 @@ const Matrix<int>& briefPatternII<8>()
 template<uint8_t K>
 const Matrix<float>& briefPatternTableII(float angle);
 
-template<>
+template<> inline
 const Matrix<float>& briefPatternTableII<8>(float angle)
 {
     static std::vector<Matrix<float>> table;
