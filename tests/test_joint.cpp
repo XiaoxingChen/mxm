@@ -19,11 +19,38 @@ void testUR5e()
         std::cout << "error: " << error << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+}
 
+void testAccumulativeMatmul()
+{
+    auto ur5e = ElbowManipulator<float>::buy(eUR5e);
+    auto angles = Vector<float>{-30 * M_PI /180,0,0,0,0,30 * M_PI /180};
+    auto end_pose = ur5e.forwardKinematics(angles);
+    std::vector<Matrix<float>> accum_below;
+    std::vector<Matrix<float>> accum_above;
+    auto tfs = ur5e.transforms(angles);
+    accumulateMatMul(tfs, &accum_below, &accum_above);
+
+    float error(0);
+    for(size_t i = 0; i < 6; i++)
+    {
+        auto local_tf = accum_below.at(i).matmul(tfs.at(i)).matmul(accum_above.at(i));
+        if(!isZero(local_tf - end_pose, &error, 50*eps<float>()))
+        {
+            std::cout << mxm::to_string(local_tf) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+    // std::cout << mxm::to_string(ur5e.jacob(angles, end_pose)) << std::endl;
+
+    // std::cout << mxm::to_string(accum_above) << std::endl;
 
 }
 
 void testJoint()
 {
     testUR5e();
+    testAccumulativeMatmul();
 }

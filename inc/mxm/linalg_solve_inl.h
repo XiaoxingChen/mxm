@@ -7,7 +7,8 @@
 
 namespace mxm
 {
-
+template<typename DType>
+Matrix<DType> diagonalMatrix(const Matrix<DType>& vec);
 // https://en.wikipedia.org/wiki/Inversion_(discrete_mathematics)
 size_t inversionNumber(const std::vector<size_t>& seq)
 {
