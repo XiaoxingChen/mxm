@@ -23,19 +23,20 @@ void testUR5e()
 
 void testAccumulativeMatmul()
 {
-    auto ur5e = ElbowManipulator<float>::buy(eUR5e);
-    auto angles = Vector<float>{-30 * M_PI /180,0,0,0,0,30 * M_PI /180};
+    auto ur5e = ElbowManipulator<double>::buy(eUR5e);
+    // auto angles = Vector<double>{-30 * M_PI /180,0,0,0,0,30 * M_PI /180};
+    auto angles = Vector<double>{0,0,0,0,0,0};
     auto end_pose = ur5e.forwardKinematics(angles);
-    std::vector<Matrix<float>> accum_below;
-    std::vector<Matrix<float>> accum_above;
+    std::vector<Matrix<double>> accum_below;
+    std::vector<Matrix<double>> accum_above;
     auto tfs = ur5e.transforms(angles);
     accumulateMatMul(tfs, &accum_below, &accum_above);
 
-    float error(0);
+    double error(0);
     for(size_t i = 0; i < 6; i++)
     {
         auto local_tf = accum_below.at(i).matmul(tfs.at(i)).matmul(accum_above.at(i));
-        if(!isZero(local_tf - end_pose, &error, 50*eps<float>()))
+        if(!isZero(local_tf - end_pose, &error, 50*eps<double>()))
         {
             std::cout << mxm::to_string(local_tf) << std::endl;
             std::cout << "error: " << error << std::endl;
@@ -43,7 +44,28 @@ void testAccumulativeMatmul()
         }
     }
 
-    // std::cout << mxm::to_string(ur5e.jacob(angles, end_pose)) << std::endl;
+#if 0
+    std::cout << mxm::to_string(ur5e.jacob(angles, end_pose)) << std::endl;
+
+    {
+        double inc = 1e-5;
+        auto basis = Matrix<double>::identity(6);
+        auto jac_num = Matrix<double>::identity(6);
+        for(size_t i = 0; i < 6; i++)
+        {
+            auto angles_inc = angles + basis(Col(i)) * inc;
+            auto end_pose_inc = ur5e.forwardKinematics(angles_inc);
+            auto distance = se::vee(SE::log(end_pose_inc.matmul(SE::inv(end_pose))));
+            jac_num(Col(i)) = distance / inc;
+        }
+
+        std::cout << mxm::to_string(jac_num) << std::endl;
+    }
+#endif
+
+
+
+
 
     // std::cout << mxm::to_string(accum_above) << std::endl;
 

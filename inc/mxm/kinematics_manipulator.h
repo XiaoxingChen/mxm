@@ -48,21 +48,15 @@ jointJacobian(
     const Matrix<DType>& inv_desire,
     bool axis_out)
 {
-    static const Matrix<DType> inf_sm({4,4},{
-        0, -1, 0, 0,
-        1, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0});
-    if(axis_out)
+    const auto& term1 = accum_below;
+    auto term2 = accum_above.matmul(inv_desire);
+    auto joint_tf = zero_pose.matmul(axis_rot);
+    if(!axis_out)
     {
-        auto term1 = accum_below.matmul(zero_pose);
-        auto term_log = term1.matmul(axis_rot).matmul(accum_above).matmul(inv_desire);
-        auto term2 = term1.matmul(inf_sm).matmul(SE::inv<3>(term1));
-        return se::jacobInv<3>(SE::log<3>(term_log)).matmul(term2);
-    } //axis_in
-    auto term_log = accum_below.matmul(SE::inv<3>(axis_rot)).matmul(SE::inv<3>(zero_pose)).matmul(accum_above).matmul(inv_desire);
-    auto term2 = accum_below.matmul(-inf_sm).matmul(SE::inv<3>(accum_below));
-    return se::jacobInv<3>(SE::log<3>(term_log)).matmul(term2);
+        joint_tf = SE::inv<3>(joint_tf);
+    }
+    auto term_log = term1.matmul(joint_tf).matmul(term2);
+    return se::jacobInv<3>(SE::log<3>(term_log)).matmul(SE::adj<3>(term1));
 }
 
 // https://www.universal-robots.com/articles/ur/application-installation/dh-parameters-for-calculations-of-kinematics-and-dynamics/
@@ -117,9 +111,10 @@ public:
         auto inv_desire = SE::inv<3>(desire);
         auto tfs = transforms(angles);
         accumulateMatMul(tfs, &accum_below, &accum_above);
-        for (size_t i = 0; i < 1; i++)
+        for (size_t i = 0; i < JOINT_NUM; i++)
         {
-            jac = jointJacobian(accum_below.at(i), accum_above.at(i), zero_pose_.at(i).asMatrix(), tfs.at(i), inv_desire, axis_out_[i]);
+            auto joint_jac = jointJacobian(accum_below.at(i), accum_above.at(i), zero_pose_.at(i).asMatrix(), tfs.at(i), inv_desire, axis_out_[i]);
+            jac(Col(i)) = joint_jac(Col(end() - 1));
         }
 
         return jac;

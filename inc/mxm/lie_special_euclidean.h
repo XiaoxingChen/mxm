@@ -86,7 +86,7 @@ matQ(const Matrix<DType>& mat)
 {
     Matrix<DType> phi = mat(rotBlk<N>());
     DType angle = so::findAngle<N>(phi);
-    if(abs(angle) < eps<DType>()) assert(false);
+    if(abs(angle) < eps<DType>()) return Matrix<DType>::zeros({N,N});
 
     DType i_angle = DType(1) / angle;
     DType i_angle3 = i_angle * i_angle * i_angle;
