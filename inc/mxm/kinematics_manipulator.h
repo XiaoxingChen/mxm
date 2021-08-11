@@ -106,6 +106,8 @@ public:
         return ret;
     }
 
+    Matrix<DType> inverseKinematics(const Matrix<DType>& desire, const Vector<DType>& guess) const;
+
     Matrix<DType> jacob(const Vector<DType>& angles, const Matrix<DType>& desire) const
     {
         Matrix<DType> jac({6, JOINT_NUM});
@@ -190,5 +192,9 @@ ElbowManipulator<DType> ElbowManipulator<DType>::buy(const ManipulatorModels& mo
 }
 
 } // namespace mxm
+
+#ifdef MXM_HEADER_ONLY
+#include "kinematics_manipulator_inl.h"
+#endif
 
 #endif // _KINEMATICS_MANIPULATOR_H_

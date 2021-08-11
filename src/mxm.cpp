@@ -5,3 +5,4 @@
 #include "mxm/linalg_mat_inl.h"
 #include "mxm/linalg_solve_inl.h"
 #include "mxm/spatial_bvh_inl.h"
+#include "mxm/kinematics_manipulator_inl.h"

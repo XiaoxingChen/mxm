@@ -44,39 +44,49 @@ void testAccumulativeMatmul()
         }
     }
 
+}
 
+void testJacobian()
+{
+    auto ur5e = ElbowManipulator<double>::buy(eUR5e);
+    auto angles = Vector<double>{0,0,0,0,0,0};
+    auto end_pose = ur5e.forwardKinematics(angles);
+
+    double inc = 1e-5;
+    auto basis = Matrix<double>::identity(6);
+    auto jac_num = Matrix<double>::identity(6);
+    auto jac_analytical = ur5e.jacob(angles, end_pose);
+    for(size_t i = 0; i < 6; i++)
     {
-        double inc = 1e-5;
-        auto basis = Matrix<double>::identity(6);
-        auto jac_num = Matrix<double>::identity(6);
-        auto jac_analytical = ur5e.jacob(angles, end_pose);
-        for(size_t i = 0; i < 6; i++)
-        {
-            auto angles_inc = angles + basis(Col(i)) * inc;
-            auto end_pose_inc = ur5e.forwardKinematics(angles_inc);
-            auto distance = se::vee(SE::log(end_pose_inc.matmul(SE::inv(end_pose))));
-            jac_num(Col(i)) = distance / inc;
-        }
-        if(!isZero(jac_num - jac_analytical, &error, 1e-7))
-        {
-            std::cout << mxm::to_string(jac_num) << std::endl;
-            std::cout << mxm::to_string(jac_analytical) << std::endl;
-            std::cout << "error: " << error << std::endl;
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-        }
-
+        auto angles_inc = angles + basis(Col(i)) * inc;
+        auto end_pose_inc = ur5e.forwardKinematics(angles_inc);
+        auto distance = se::vee(SE::log(end_pose_inc.matmul(SE::inv(end_pose))));
+        jac_num(Col(i)) = distance / inc;
     }
+    double error(0);
+    if(!isZero(jac_num - jac_analytical, &error, 1e-7))
+    {
+        std::cout << mxm::to_string(jac_num) << std::endl;
+        std::cout << mxm::to_string(jac_analytical) << std::endl;
+        std::cout << "error: " << error << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
 
-
-
-
-
-    // std::cout << mxm::to_string(accum_above) << std::endl;
-
+void testInverseKinematics()
+{
+    auto ur5e = ElbowManipulator<double>::buy(eUR5e);
+    auto angles = Vector<double>{0.1,0.2,0,0,0,0};
+    auto guess = Vector<double>{0.11,0.19,0,0,0,0};
+    auto desire = ur5e.forwardKinematics(angles);
+    auto result = ur5e.inverseKinematics(desire, guess);
+    std::cout << mxm::to_string(result) << std::endl;
 }
 
 void testJoint()
 {
     testUR5e();
     testAccumulativeMatmul();
+    testJacobian();
+    // testInverseKinematics();
 }
