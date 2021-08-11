@@ -44,13 +44,12 @@ void testAccumulativeMatmul()
         }
     }
 
-#if 0
-    std::cout << mxm::to_string(ur5e.jacob(angles, end_pose)) << std::endl;
 
     {
         double inc = 1e-5;
         auto basis = Matrix<double>::identity(6);
         auto jac_num = Matrix<double>::identity(6);
+        auto jac_analytical = ur5e.jacob(angles, end_pose);
         for(size_t i = 0; i < 6; i++)
         {
             auto angles_inc = angles + basis(Col(i)) * inc;
@@ -58,10 +57,15 @@ void testAccumulativeMatmul()
             auto distance = se::vee(SE::log(end_pose_inc.matmul(SE::inv(end_pose))));
             jac_num(Col(i)) = distance / inc;
         }
+        if(!isZero(jac_num - jac_analytical, &error, 1e-7))
+        {
+            std::cout << mxm::to_string(jac_num) << std::endl;
+            std::cout << mxm::to_string(jac_analytical) << std::endl;
+            std::cout << "error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
 
-        std::cout << mxm::to_string(jac_num) << std::endl;
     }
-#endif
 
 
 

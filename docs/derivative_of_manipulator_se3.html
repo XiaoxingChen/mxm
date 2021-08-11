@@ -59,44 +59,61 @@ table.md, table.md td, table.md th{
 \[
     f(T) = \ln (T_b T T_a T_d ^{-1})
 \]
-<p>Denote \(T_1 = T_b, T_2 = T_a T_d ^{-1}\) : </p>
+<!-- <p>Denote \(T_1 = T_b, T_2 = T_a T_d ^{-1}\) : </p>
+\[
+    f(T) = \ln (T_1 T T_2)^ \vee
+\] -->
+
+<h2>2. Jacobian</h2>
+<p>Consider the function with form: </p>
 \[
     f(T) = \ln (T_1 T T_2)^ \vee
 \]
-
-<h2>2. Jacobian</h2>
 \[
     \begin{align}
-        \frac{df(T)}{dT} &= \frac{d}{dT} \ln (T_1 T T_2) \tag{2.1} \\
+        \frac{df(T)}{dT} &= \frac{d}{dT} \ln (T_1 T T_2)^ \vee \tag{2.1} \\
         &= \lim_{\xi \to 0}  \frac{ \ln (T_1 \exp (\xi ^ \wedge ) T  T_2)^ \vee - \ln (T_1 T T_2)^ \vee}{\xi}   \\
         &= \lim_{\xi \to 0}  \frac{ \ln (T_1 \exp (\xi ^ \wedge ) (T_1 ^{-1} T_1) T  T_2)^ \vee - \ln (T_1 T T_2)^ \vee}{\xi}   \tag{2.3}\\
-        &= \lim_{\xi \to 0} \frac{ \ln ( \exp( (Ad(T_1) \xi)^ \wedge ) T_1 T T_2 )^ \vee - \ln (T_1 T T_2)^ \vee}{\xi} \tag{2.4}\\
+        &= \lim_{\xi \to 0} \frac{ \ln ( \exp[ (Ad(T_1) \xi^ \wedge] ) T_1 T T_2 )^ \vee - \ln (T_1 T T_2)^ \vee}{\xi} \tag{2.4}\\
         &= \lim_{\xi \to 0} \frac{ \mathcal{J} ^{-1} ( \ln (T_1 T T_2) (Ad(T_1) \xi) + \ln (T_1 T T_2)^ \vee - \ln (T_1 T T_2)^ \vee ) }{\xi}  \tag{2.5}\\
         &= \lim_{\xi \to 0} \frac{ \mathcal{J} ^{-1} ( \ln (T_1 T T_2)) (Ad(T_1) \xi) }{\xi} \\
-        &= \mathcal{J} ^{-1} ( \ln (T_1 T T_2)) Ad(T_1)
+        &= \mathcal{J} ^{-1} ( \ln (T_1 T T_2)) Ad(T_1) \tag{2-6}
+    \end{align}
+\]
+
+<p>Similarly, the function with form:</p>
+\[
+    f(T) = \ln (T_1 T ^{-1} T_2)^ \vee
+\]
+
+\[
+    \begin{align}
+        \frac{df(T)}{dT} &= \frac{d}{dT} \ln (T_1 T ^{-1} T_2)^ \vee  \\
+        &= \lim_{\xi \to 0} \frac{ \mathcal{J} ^{-1} ( \ln (T_1 T ^{-1} T_2)) (Ad(T_1 T ^{-1}) (-\xi)) }{\xi} \\
+        &= -\mathcal{J} ^{-1} ( \ln (T_1 T ^{-1} T_2)) Ad(T_1 T ^{-1}) \tag{2-10}
     \end{align}
 
 \]
 
-
 <p>For Elbow Manipulator, a joint with axis output, only rotate around the Z-axis.
-    i.e. \(T = T_z T_{\theta}\) , where \(T_z\) is the zero position of the joint, \(T_{\theta}\) is the transform from motor rotation.
-    For a joint with its axis as input, \(T = T_{\theta} ^{-1} T_z ^{-1} \).
+    i.e. \(T_i = T_z T_{\theta}\) , where \(T_z\) is the zero position of the joint, \(T_{\theta}\) is the transform from motor rotation.
+    For a joint with its axis as input, \(T_i = T_{\theta} ^{-1} T_z ^{-1} \).
 </p>
 
 
-<h3>Summary</h3>
+<h2>Summary</h2>
 
-<p>For axis output joint \(J_i\) </p>
+<h3>For axis output joint \(J_i\) </h3>
 \[
-    \frac{df(T_{\theta})}{d T_{\theta}} = \mathcal{J} ^{-1} ( \ln (T_1 T_z T_{\theta} T_2)) Ad(T_1)
+    \frac{df(T)}{d T} = \mathcal{J} ^{-1} ( \ln (T_1 T T_2)) Ad(T_1)
 \]
+<p>Where \(T_1 = T_b T_z, T_2 = T_a T_d ^{-1}\) </p>
 
-<p>For axis input joint \(J_i\) </p>
+<h3>For axis input joint \(J_i\) </h3>
 \[
-    \frac{df(T_{\theta})}{d T_{\theta}} = \mathcal{J} ^{-1} ( \ln (T_1 T_{\theta} ^{-1} T_z ^{-1} T_2)) Ad(T_1)
+    \frac{df(T)}{d T} = -\mathcal{J} ^{-1} ( \ln (T_1 T ^{-1} T_2)) Ad(T_1 T ^{-1})
 \]
-<p>TODO: need confirmation.</p>
+<p>Where \(T_1 = T_b , T_2 = T_z ^{-1} T_a T_d ^{-1}\) </p>
 
 </body>
 </html>

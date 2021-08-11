@@ -38,7 +38,7 @@ void accumulateMatMul(
 }
 
 // reference:
-// mxm/docs/derivative_of_manipulator_se3.html
+// docs/derivative_of_manipulator_se3.html
 template <typename DType> Matrix<DType>
 jointJacobian(
     const Matrix<DType>& accum_below,
@@ -48,15 +48,18 @@ jointJacobian(
     const Matrix<DType>& inv_desire,
     bool axis_out)
 {
-    const auto& term1 = accum_below;
-    auto term2 = accum_above.matmul(inv_desire);
-    auto joint_tf = zero_pose.matmul(axis_rot);
-    if(!axis_out)
+    if(axis_out)
     {
-        joint_tf = SE::inv<3>(joint_tf);
+        auto term1 = accum_below.matmul(zero_pose);
+        auto term2 = accum_above.matmul(inv_desire);
+        auto term_log = term1.matmul(axis_rot).matmul(term2);
+        return se::jacobInv<3>(SE::log<3>(term_log)).matmul(SE::adj<3>(term1));
     }
-    auto term_log = term1.matmul(joint_tf).matmul(term2);
-    return se::jacobInv<3>(SE::log<3>(term_log)).matmul(SE::adj<3>(term1));
+    auto inv_rot = SE::inv<3>(axis_rot);
+    auto term1 = accum_below;
+    auto term2 = SE::inv<3>(zero_pose).matmul(accum_above).matmul(inv_desire);
+    auto term_log = term1.matmul(inv_rot).matmul(term2);
+    return -se::jacobInv<3>(SE::log<3>(term_log)).matmul(SE::adj<3>(term1.matmul(inv_rot)));
 }
 
 // https://www.universal-robots.com/articles/ur/application-installation/dh-parameters-for-calculations-of-kinematics-and-dynamics/
@@ -111,9 +114,13 @@ public:
         auto inv_desire = SE::inv<3>(desire);
         auto tfs = transforms(angles);
         accumulateMatMul(tfs, &accum_below, &accum_above);
+        Vector<DType> z_axis{0,0,1};
         for (size_t i = 0; i < JOINT_NUM; i++)
         {
-            auto joint_jac = jointJacobian(accum_below.at(i), accum_above.at(i), zero_pose_.at(i).asMatrix(), tfs.at(i), inv_desire, axis_out_[i]);
+            auto zero_pose = zero_pose_.at(i).asMatrix();
+            // auto angle_pose = SE::inv(zero_pose).matmul(tfs.at(i));
+            auto angle_pose = RigidTransform<DType>(Rotation<DType>::fromAxisAngle(z_axis, angles(i))).asMatrix();
+            auto joint_jac = jointJacobian(accum_below.at(i), accum_above.at(i),zero_pose, angle_pose, inv_desire, axis_out_[i]);
             jac(Col(i)) = joint_jac(Col(end() - 1));
         }
 
