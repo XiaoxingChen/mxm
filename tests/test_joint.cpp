@@ -78,6 +78,7 @@ void testInverseKinematics()
     auto ur5e = ElbowManipulator<double>::buy(eUR5e);
     auto angles = Vector<double>{0.1,0.2,0,0,0,0};
     auto guess = Vector<double>{0.11,0.19,0,0,0,0};
+    // auto guess = Vector<double>{0.11,0.19,0.5,0.2,0.1,-0.2};
     auto desire = ur5e.forwardKinematics(angles);
     auto result = ur5e.inverseKinematics(desire, guess);
     std::cout << mxm::to_string(result) << std::endl;

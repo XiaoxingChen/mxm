@@ -22,7 +22,15 @@ public:
     DType cost() const { return residual_.T().matmul(residual_)(0,0); }
     const Matrix<DType>& jac() const { return jacobian_; }
     const Vector<DType>& res() const { return residual_; }
-    // const Vector<DType>& state() const { return state_; }
+    virtual Vector<DType> residualOnPerturb(const Vector<DType>& increment) const { assert(false); return residual_; }
+    DType reductionRate(const Vector<DType>& increment) const
+    {
+        DType res_norm = residual_.norm() ;
+        DType actual = residualOnPerturb(increment).norm();
+        DType predict = (residual_ + jac().matmul(increment)).norm();
+        return (res_norm - actual * actual) / (res_norm - predict * predict);
+    }
+
     void solve(uint8_t step=20, uint8_t verbose=0, std::string method="gn");
 
     virtual void update(const Vector<DType>& increment) = 0;
@@ -54,7 +62,9 @@ Vector<DType> gaussNewtonIncrement(const NoneLinearProblem<DType>& p, uint8_t ve
 }
 
 // Reference:
-// [1] The Levenberg-Marquardt Algorithm: Implementation and Theory. [https://www.osti.gov/servlets/purl/7256021/]
+// [1] The Levenberg-Marquardt Algorithm: Implementation and Theory.
+//      Link: https://scholar.google.com/scholar_url?url=https://www.osti.gov/servlets/purl/7256021/&hl=en&sa=X&ei=TcsUYeflH8iWywSDwbpQ&scisig=AAGBfm2OFFcmhjfs1cUBu2CvjvQIU6bNRg&oi=scholarr
+// [2] https://github.com/RobotLocomotion/eigen-mirror/tree/master/unsupported/Eigen/src/LevenbergMarquardt
 template<typename DType>
 Vector<DType> levenbergMarquardtIncrement(const NoneLinearProblem<DType>& p, uint8_t verbose)
 {
@@ -64,29 +74,23 @@ Vector<DType> levenbergMarquardtIncrement(const NoneLinearProblem<DType>& p, uin
         return Vector<DType>::zeros(p.res().size());
     }
 
+    DType trust_radius = 2.;
+    DType damp = 0.05;
+    size_t max_it = 1;
+    Vector<DType> x = Vector<DType>::zeros(p.jac().shape(1));
     Vector<DType> b = -p.jac().T().matmul(p.res());
     Matrix<DType> hessian = p.jac().T().matmul(p.jac());
+    for( size_t i = 0; i < max_it; i++)
+    {
+        Matrix<DType> hessian_pos = hessian + damp * Matrix<DType>::identity(hessian.shape(0));
 
-    hessian += 0.05 * Matrix<DType>::identity(hessian.shape(0));
+        x = qr::solve(hessian_pos, b);
 
-    Vector<DType> x = qr::solve(hessian, b);
-#if 0
-    NoneLinearProblem<DType> virtual_p(p);
-    virtual_p.update(x);
-    DType res_2 = p.res() * p.res();
-    DType res_inc_2 = virtual_p.res() * virtual_p.res();
-    DType res_pred = p.res() + p.jac().matmul(x);
-    // formula (4.2)
-    DType rho = (res_2 - res_inc_2) / (res_2 - res_pred * res_pred);
 
-    Matrix<DType> diag = Matrix<DType>::identity(hessian.shape(0));
-    for(size_t i = 0; i < hessian.shape(0); i++) diag(i,i) = sqrt(hessian(i,i));
+    }
 
-    if(rho > 0.75) (*trust_radius) *= 2.;
-    else if(rho < 0.25) (*trust_radius) *= 0.5;
-#endif
     if(verbose > 1) std::cout << "inc: " << mxm::to_string(x.T());
-    // if(verbose > 1) std::cout << "trust_radius: " << *trust_radius << std::endl;
+    if(verbose > 1) std::cout << "damp: " << damp << std::endl;
 
     if(verbose > 3) std::cout << "b: " << mxm::to_string(b);
     if(verbose > 4) std::cout << "hessian:\n" << mxm::to_string(hessian);

@@ -30,6 +30,12 @@ public:
         this->residual_ = se::vee(SE::log<3>(end_pose.matmul(inv_desire_)));
         this->jacobian_ = manipulator_.jacob(joint_angles_, desire_);
     }
+    virtual Vector<DType> residualOnPerturb(const Vector<DType>& increment) const override
+    {
+        auto perturbed_angle = joint_angles_ + increment;
+        auto end_pose = manipulator_.forwardKinematics(perturbed_angle);
+        return se::vee(SE::log<3>(end_pose.matmul(inv_desire_)));
+    }
     const Vector<DType>& angles() const { return joint_angles_; }
 private:
     Vector<DType> joint_angles_;
