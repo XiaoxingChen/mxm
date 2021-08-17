@@ -142,18 +142,28 @@ private:
     std::bitset<JOINT_NUM> axis_out_;
 };
 
+namespace dh
+{
+    static const size_t IDX_THETA = 0;
+    static const size_t IDX_R = 1;
+    static const size_t IDX_D = 2;
+    static const size_t IDX_ALPHA = 3;
+    static const size_t PARAM_NUM = 4;
+} // namespace dh
+
+
 // Reference: https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters#Denavit%E2%80%93Hartenberg_matrix
 template<typename DType>
 std::vector<Matrix<DType>> denavitHartenbergMatrix(const Matrix<DType>& params)
 {
-    std::vector<Matrix<DType>> ret(params.shape(1));
-    for(size_t j = 0; j < params.shape(1); j++)
+    std::vector<Matrix<DType>> ret(params.shape(0));
+    for(size_t i = 0; i < params.shape(0); i++)
     {
-        const auto & theta = params(0, j);
-        const auto & r     = params(1, j);
-        const auto & d     = params(2, j);
-        const auto & alpha = params(3, j);
-        ret.at(j) = Matrix<DType>({4,4},{
+        const auto & theta = params(i, dh::IDX_THETA);
+        const auto & r     = params(i, dh::IDX_R);
+        const auto & d     = params(i, dh::IDX_D);
+        const auto & alpha = params(i, dh::IDX_ALPHA);
+        ret.at(i) = Matrix<DType>({4,4},{
             cos(theta), -sin(theta) * cos(alpha), sin(theta) * sin(alpha), r * cos(theta),
             sin(theta), cos(theta) * cos(alpha), -cos(theta) * sin(alpha), r * sin(theta),
             0         , sin(alpha)              , cos(alpha)             , d,
@@ -169,16 +179,16 @@ ElbowManipulator<DType> ElbowManipulator<DType>::buy(const ManipulatorModels& mo
     std::vector<Matrix<DType>> zero_poses(JOINT_NUM);
     if(eUR5e == model)
     {
-        static const Matrix<DType> dhParams({4,JOINT_NUM}, {
+        static const Matrix<DType> dhParams({JOINT_NUM, dh::PARAM_NUM}, {
             0, 0, 0.1625, M_PI_2,
             0, -0.425, 0, 0,
             0, -0.3922, 0, 0,
             0, 0, 0.1333, M_PI_2,
             0, 0, 0.0997, -M_PI_2,
-            0, 0, 0.0996, 0}, COL);
+            0, 0, 0.0996, 0}, ROW);
 
         auto zero_poses = denavitHartenbergMatrix(dhParams);
-        std::bitset<JOINT_NUM> inversion(0x3);
+        std::bitset<JOINT_NUM> inversion(0x3f);
         for(size_t i = 0; i < 6; i++)
         {
             if(inversion[i])
@@ -190,6 +200,26 @@ ElbowManipulator<DType> ElbowManipulator<DType>::buy(const ManipulatorModels& mo
     }
     return ThisType(std::move(zero_poses), std::bitset<JOINT_NUM>(0));
 }
+
+namespace ur5
+{
+template<typename DType>
+Vector<DType> ikAngle0(const Matrix<DType>& dh_param, const Matrix<DType>& desire);
+
+template<typename DType>
+Vector<DType> ikAngle4(const Matrix<DType>& dh_param, const Matrix<DType>& desire);
+
+template<typename DType>
+DType ikAngle5(const Matrix<DType>& dh_param, const Matrix<DType>& desire);
+
+template<typename DType>
+Vector<DType> ikAngle2(const Matrix<DType>& dh_param_in, const Matrix<DType>& desire);
+
+template<typename DType>
+DType ikAngle1(const Matrix<DType>& dh_param, const Matrix<DType>& desire);
+
+} // namespace ur5
+
 
 } // namespace mxm
 

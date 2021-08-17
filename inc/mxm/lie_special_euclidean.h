@@ -143,10 +143,10 @@ jacob2(const Matrix<DType>& mat)
 namespace SE
 {
 
-template <size_t N>
+template <size_t N=3>
 const Block& rotBlk() { return se::rotBlk<N>(); }
 
-template <size_t N>
+template <size_t N=3>
 const Block& traBlk() { return se::traBlk<N>(); }
 
 template<typename DType>

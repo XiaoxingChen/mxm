@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <math.h>
 // #include "mxm/common.h"
-// #include "mxm/linalg_mat.h"
+#include "mxm/linalg_matrix_base.h"
 
 
 namespace mxm
@@ -19,6 +19,9 @@ namespace mxm
 // class Pixel;
 template<typename DType>
 class Matrix;
+
+template<typename DeriveType>
+class MatrixBase;
 
 template<typename DType>
 class MatrixRef;
@@ -42,8 +45,9 @@ public:
         }
     }
 
-    Vector(const BaseType& mat)
-        : BaseType(mat.shape(1) == 1 ? mat : mat.T())
+    template <typename DeriveType>
+    Vector(const MatrixBase<DeriveType>& mat)
+        : BaseType(mat.shape(1) == 1 ? (mat.T().T()) : mat.T())
     {
         if(mat.shape(0) != 1 && mat.shape(1) != 1)
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
