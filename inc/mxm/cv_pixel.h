@@ -40,8 +40,8 @@ class RGBA
 public:
     // using DType = float;
     // using DType = typename DeriveType::dtype;
-    DeriveType* deriveThis() {return reinterpret_cast<DeriveType*>(this);}
-    const DeriveType* deriveThis() const {return reinterpret_cast<const DeriveType*>(this);}
+    DeriveType* deriveThis() {return static_cast<DeriveType*>(this);}
+    const DeriveType* deriveThis() const {return static_cast<const DeriveType*>(this);}
     const DType& at(size_t i) const {return (*deriveThis())(i);}
 
     const DType & r() const {return (*deriveThis())(0);}

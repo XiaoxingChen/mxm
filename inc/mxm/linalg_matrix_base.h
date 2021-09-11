@@ -7,9 +7,10 @@
 #include <array>
 #include <string>
 #include <assert.h>
-#include <math.h>
 #include <string>
 #include <limits>
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 namespace mxm
 {

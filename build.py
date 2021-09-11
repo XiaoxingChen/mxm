@@ -8,6 +8,7 @@ from time import time
 sys.path.append( os.path.join(os.path.abspath(os.path.dirname(__file__)), 'scripts'))
 
 UNIX_CMAKE_STR = 'cmake {} -B{} -G "Unix Makefiles"'
+MSVC_CMAKE_STR = 'cmake {} -B{} -G "Visual Studio 16 2019"'
 TEST_EXCUTABLE_NAME = 'test_main'
 
 def handleAutoComplete():
@@ -113,6 +114,26 @@ class LinuxNativeTarget(BuildTarget):
 
     def runExecutable(self):
         if not self.checkExecutableValid():
+            exit(1)
+        exit_code = os.system("{} {}".format(self.host_exec, self.exec_args))
+        if exit_code != 0:
+            exit(1)
+
+class WindowsNativeTarget(BuildTarget):
+    platform = 'native'
+    def runBuild(self):
+        if not self.require_build:
+            return None
+        cmake_generate_cmd = MSVC_CMAKE_STR.format(Dir.cmake_project, self.build_dir)
+        cmake_generate_cmd += self.cmakeBaseOptions()
+
+        os.system(cmake_generate_cmd)
+        exit_code = os.system('cmake --build {}'.format(self.build_dir))
+        if exit_code != 0:
+            exit(1)
+
+    def runExecutable(self):
+        if not self.checkExecutableValid():
             return None
         exit_code = os.system("{} {}".format(self.host_exec, self.exec_args))
         if exit_code != 0:
@@ -178,7 +199,8 @@ def run(build_script_folder=os.path.abspath(os.path.dirname(__file__))):
     parser = createParser()
     handleAutoComplete()
 
-    targets = [LinuxNativeTarget(), AndroidArm64Target(), AndroidArm32Target()]
+    native_target = WindowsNativeTarget() if sys.platform == 'win32' else LinuxNativeTarget()
+    targets = [native_target, AndroidArm64Target(), AndroidArm32Target()]
     for target in targets:
         target.updateArgParser(parser)
 

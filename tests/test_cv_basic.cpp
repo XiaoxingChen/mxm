@@ -536,7 +536,7 @@ void testCvBasic()
 {
     testPixel();
     testImageResize();
-    testPixelMemory();
+    // testPixelMemory();
     testKernels();
     testBresenhamCircle();
     testBriefDescriptor();

@@ -26,6 +26,8 @@
 
 int main(int argc, char const *argv[])
 {
+  try
+  {
   testAABB();
   testRay();
   testLinearAlgebra();
@@ -53,7 +55,13 @@ int main(int argc, char const *argv[])
   testLieSpecialUnitary();
   testLieSpecialEuclidean();
   testJoint();
-
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << '\n';
+    std::cout << "Test failed!" << std::endl;
+    return -1;
+  }
   std::cout << "done" << std::endl;
   return 0;
 }
