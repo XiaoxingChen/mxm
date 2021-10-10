@@ -23,6 +23,7 @@
 #include "test_lie_alg.h"
 #include "test_lie_special_unitary.h"
 #include "test_joint.h"
+#include "test_dsp_fft.h"
 
 int main(int argc, char const *argv[])
 {
@@ -55,6 +56,7 @@ int main(int argc, char const *argv[])
   testLieSpecialUnitary();
   testLieSpecialEuclidean();
   testJoint();
+  testDspFFT();
   }
   catch(const std::exception& e)
   {
