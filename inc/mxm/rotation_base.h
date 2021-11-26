@@ -126,22 +126,25 @@ void matrixToAxisAngle3D(const Matrix<DType>& R, Vector<DType>& axis, DType& ang
     axis = orthogonalComplement(plane).normalized();
 }
 
-inline Mat reflection(const Vec& u_in)
+template<typename DType>
+Matrix<DType> reflection(const Vector<DType>& u_in)
 {
-    Vec u(u_in.normalized());
-    return Mat::identity(u.size()) - 2 * u.matmul(u.T());
+    Vector<DType> u(u_in.normalized());
+    return Matrix<DType>::identity(u.size()) - 2 * u.matmul(u.T());
 }
 
-inline std::array<Vec, 2> planeAngleToBivector(const Vec& u_in, const Vec& v_in, FloatType angle)
+template<typename DType>
+inline std::array<Vector<DType>, 2> planeAngleToBivector(const Vector<DType>& u_in, const Vector<DType>& v_in, DType angle)
 {
-    Vec u = u_in.normalized();
-    Vec v = v_in.normalized();
-    Vec v_perpend(v - u.dot(v));
-    Vec v_new(cos(angle/2.) * u + sin(angle/2.) * v_perpend);
+    Vector<DType> u = u_in.normalized();
+    Vector<DType> v = v_in.normalized();
+    Vector<DType> v_perpend(v - u.dot(v));
+    Vector<DType> v_new(cos(angle/2.) * u + sin(angle/2.) * v_perpend);
     return {u,v_new};
 }
 
-inline Mat bivectorToRotationMatrix(const Vec& u, const Vec& v)
+template<typename DType>
+Matrix<DType> bivectorToRotationMatrix(const Vector<DType>& u, const Vector<DType>& v)
 {
     return reflection(v).matmul(reflection(u));
 }

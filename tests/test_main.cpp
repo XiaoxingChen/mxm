@@ -24,6 +24,7 @@
 #include "test_lie_special_unitary.h"
 #include "test_joint.h"
 #include "test_dsp_fft.h"
+#include "test_geometry_torus.h"
 
 int main(int argc, char const *argv[])
 {
@@ -57,6 +58,7 @@ int main(int argc, char const *argv[])
   testLieSpecialEuclidean();
   testJoint();
   testDspFFT();
+  testGeometryTorus();
   }
   catch(const std::exception& e)
   {

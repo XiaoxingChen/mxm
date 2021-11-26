@@ -29,7 +29,11 @@ public:
 
     ThisType operator*(const ThisType& rhs) const { return ThisType(matrix_.matmul(rhs.matrix_)); }
 
-    Matrix<DType> apply(const Matrix<DType>& vector) const { return matrix_.matmul(vector); }
+    template<class DeriveType>
+    Matrix<typename Traits<DeriveType>::EntryType>
+    apply(const MatrixBase<DeriveType>& vector) const
+    { return matrix_.matmul(vector); }
+    // Matrix<DType> apply(const Matrix<DType>& vector) const { return matrix_.matmul(vector); }
 
     Matrix<DType> asMatrix() const { return matrix_; }
 
@@ -43,7 +47,8 @@ public:
     static auto fromAngle(DType angle) { return Rotation<DType, 2>(mxm::rodrigues2D(angle)); }
     static auto fromAxisAngle(const Vector<DType>& axis, DType angle) { return Rotation<DType, 3>(mxm::rodrigues3D(axis, angle)); }
     static auto fromQuaternion(const Quaternion<DType>& q) { return Rotation<DType, 3>(mxm::toSO3(q)); }
-    static ThisType fromPlaneAngle(const Vec& u, const Vec& v, DType angle)
+
+    static ThisType fromPlaneAngle(const Vector<DType>& u, const Vector<DType>& v, DType angle)
     {
         auto bivec = planeAngleToBivector(u, v, angle);
         return ThisType(bivectorToRotationMatrix(bivec[0], bivec[1]));
