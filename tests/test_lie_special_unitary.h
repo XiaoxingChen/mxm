@@ -13,18 +13,39 @@ inline Matrix<Complex<float>> testDataSU2()
     return Matrix<Complex<float>>({2,2}, {a, -b.conj(), b, a.conj()}, ROW);
 }
 
+inline Matrix<Complex<float>> testDataSU2_01()
+{
+    Vector<float> v{0.5, 0.5, 0.5, 0.5};
+    Complex<float> a{v(0), v(1)};
+    Complex<float> b{v(2), v(3)};
+    return Matrix<Complex<float>>({2,2}, {a, -b.conj(), b, a.conj()}, ROW);
+}
+
 inline void testLieSpecialUnitary()
 {
     {
         auto mat = testDataSU2();
         float error(0);
-        bool ret = SU::isValid(mat, std::numeric_limits<float>::epsilon(), &error);
-        if(!ret)
+        if(!SU::isValid(mat, &error, eps<float>()))
         {
             std::cout << "is SU2 err: " << error << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
-        
+
+    }
+
+    {
+        auto mat = testDataSU2();
+        auto lie_alg = SU::log<2>(mat);
+        auto mat_eq = su::exp<2>(lie_alg);
+        float error;
+        if(!isZero(mat - mat_eq, &error))
+        {
+            std::cout << "error: " << error << std::endl;
+            std::cout << mxm::to_string(mat) << std::endl;
+            std::cout << mxm::to_string(lie_alg) << std::endl;
+            std::cout << mxm::to_string(mat_eq) << std::endl;
+        }
     }
 }
 
