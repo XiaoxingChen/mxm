@@ -10,6 +10,7 @@ template<size_t DIM>
 Matrix<size_t> triangulateQuad(const Matrix<size_t>& indices)
 {
     assert(false);
+    return indices;
 }
 
 template<>
