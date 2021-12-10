@@ -4,6 +4,7 @@
 #include "geometry_ray.h"
 #include "rigid_transform.h"
 #include "rotation.h"
+#include "interpolation.h"
 
 #include <memory>
 
