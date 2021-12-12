@@ -45,7 +45,7 @@ struct Traits<Matrix<DType>>
 template<typename DType>
 class Matrix: public MatrixBase<Matrix<DType>>
 {
-private:
+protected:
     Shape shape_;
     std::vector<DType> data_;
     bool major_;
