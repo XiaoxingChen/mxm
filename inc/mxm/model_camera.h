@@ -148,13 +148,15 @@ public:
     ThisType & setPose(const RigidTransform<DType, DIM>& pose) { assert(DIM == pose.dim()); pose_ = pose; return *this; }
     ThisType & setPosition(const Vector<DType>& pos) { assert(DIM == pos.size()); pose_.translation() = pos; return *this; }
     ThisType & setOrientation(const Rotation<DType, DIM>& rot) { assert(DIM == rot.dim()); pose_.rotation() = rot; return *this; }
-    ThisType & setDistortion(const DistortionPtr<DType>& p) { p_distortion = p; return *this; }
+    ThisType & setDistortion(const DistortionPtr<DType>& p) { p_distortion_ = p; return *this; }
 
     void operator=(const Camera& rhs)
     {
         pose_ = rhs.pose_;
         f_ = rhs.f_;
         c_ = rhs.c_;
+        resolution_ = rhs.resolution_;
+        p_distortion_ = rhs.p_distortion_;
         updateCameraMatrix();
     }
 
@@ -168,9 +170,9 @@ public:
     Matrix<DType> pixelDirection(const Matrix<size_t>& pixels, DType z_dir=DType(1.)) const
     {
         auto norm_plane_points =  vstack((pixels - c_) / f_, z_dir * Matrix<DType>::ones({1, pixels.shape(1)}));
-        if(p_distortion)
+        if(p_distortion_)
         {
-            norm_plane_points = p_distortion->distort(norm_plane_points);
+            norm_plane_points = p_distortion_->distort(norm_plane_points);
         }
         Matrix<DType> directions = pose_.rotation().apply(norm_plane_points);
         return directions;
@@ -185,9 +187,9 @@ public:
         Matrix<DType> body_frame_points = pose_.inv().apply(points);
 
         Matrix<DType> norm_plane_points = body_frame_points(Block({0, end() - 1}, {})) / body_frame_points(Row(end() - 1));
-        if(p_distortion)
+        if(p_distortion_)
         {
-            norm_plane_points = p_distortion->distort(norm_plane_points);
+            norm_plane_points = p_distortion_->distort(norm_plane_points);
         }
         return norm_plane_points * f_ + c_;
     }
@@ -195,11 +197,11 @@ public:
     template<typename PType>
     Matrix<PType> distort(const Matrix<PType>& img_src, bool forward=true)
     {
-        if(nullptr == p_distortion) return img_src;
+        if(nullptr == p_distortion_) return img_src;
         Matrix<PType> img_out(img_src.shape());
         img_out.traverse([&](auto i, auto j){
             auto dir = cam_mat_inv_.matmul(Vector<DType>{DType(i),DType(j),1});
-            auto coord = cam_mat_.matmul(forward ? p_distortion->undistort(dir) : p_distortion->distort(dir));
+            auto coord = cam_mat_.matmul(forward ? p_distortion_->undistort(dir) : p_distortion_->distort(dir));
             img_out(i,j) = interp::bilinearUnitSquare(coord, img_src, "zero")(0,0);
         });
         return img_out;
@@ -250,7 +252,7 @@ private:
     Vector<size_t> resolution_ = Vector<size_t>::ones(DIM) * 400;
     Matrix<DType> cam_mat_;
     Matrix<DType> cam_mat_inv_;
-    DistortionPtr<DType> p_distortion = nullptr;
+    DistortionPtr<DType> p_distortion_ = nullptr;
 };
 
 } // namespace mxm
