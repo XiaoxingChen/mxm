@@ -124,7 +124,7 @@ public:
         checkDimension();
     }
 
-    Camera(const RigidTransform<DType>& pose, const Vec& focus=Vec({500, 500}), const Vec& reso=Vec({640, 480}))
+    Camera(const RigidTransform<DType, DIM>& pose, const Vec& focus=Vec({500, 500}), const Vec& reso=Vec({640, 480}))
         :pose_(pose), f_(focus), c_(reso * 0.5), resolution_(reso)
     {
         updateCameraMatrix();
@@ -145,9 +145,9 @@ public:
         return *this;
     }
     ThisType & setResolution(const Vector<size_t>& reso) { assert(DIM - 1 == reso.size()); resolution_ = reso; return *this; }
-    ThisType & setPose(const RigidTransform<DType>& pose) { assert(DIM == pose.dim()); pose_ = pose; return *this; }
+    ThisType & setPose(const RigidTransform<DType, DIM>& pose) { assert(DIM == pose.dim()); pose_ = pose; return *this; }
     ThisType & setPosition(const Vector<DType>& pos) { assert(DIM == pos.size()); pose_.translation() = pos; return *this; }
-    ThisType & setOrientation(const Rotation<DType>& rot) { assert(DIM == rot.dim()); pose_.rotation() = rot; return *this; }
+    ThisType & setOrientation(const Rotation<DType, DIM>& rot) { assert(DIM == rot.dim()); pose_.rotation() = rot; return *this; }
     ThisType & setDistortion(const DistortionPtr<DType>& p) { p_distortion = p; return *this; }
 
     void operator=(const Camera& rhs)
@@ -176,8 +176,8 @@ public:
         return directions;
     }
 
-    const RigidTransform<DType>& pose() const { return pose_; }
-    RigidTransform<DType>& pose() { return pose_; }
+    const RigidTransform<DType, DIM>& pose() const { return pose_; }
+    RigidTransform<DType, DIM>& pose() { return pose_; }
 
 
     Matrix<DType> project(const Matrix<DType>& points) const
@@ -244,7 +244,7 @@ private:
 
         return *this;
     }
-    RigidTransform<DType> pose_ = RigidTransform<DType>::identity(DIM);
+    RigidTransform<DType, DIM> pose_ = RigidTransform<DType, DIM>::identity();
     Vector<DType> f_ = Vector<DType>::ones(DIM) * 500.;
     Vector<DType> c_ = Vector<DType>::ones(DIM) * 200.;
     Vector<size_t> resolution_ = Vector<size_t>::ones(DIM) * 400;
