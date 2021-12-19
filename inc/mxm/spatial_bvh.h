@@ -53,6 +53,7 @@ public:
         Ray ray;
         FloatType t;
         size_t prim_idx;
+        Vector<FloatType> coeff;
     };
 
     // virtual void build(size_t primitive_per_leaf=4, bool verbose=true) override;

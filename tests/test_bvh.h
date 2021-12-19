@@ -159,11 +159,23 @@ inline void testMultiHit()
 
     if(1){
         Ray ray({-3, 0.1, 0}, {1,0,0});
-        auto hit_cnt = tree.multiHit(ray);
-        if(hit_cnt != 2)
+        auto records = tree.hit(ray, bvh::eMultiHit);
+        if(records.size() != 2)
         {
-            std::cout << "hit_cnt: " << hit_cnt << std::endl;
+            std::cout << "hit_cnt: " << records.size() << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        for(const auto & record: records)
+        {
+            if( ! isZero(ray(record.t) - tree.primitive(record.prim_idx).matmul(record.coeff), nullptr, 1e-4))
+            {
+                std::cout
+                    << "ray(record.t): " << mxm::to_string (ray(record.t))
+                    << ", primitive: " << mxm::to_string (tree.primitive(record.prim_idx).matmul(record.coeff))
+                    << std::endl;
+                throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+            }
         }
     }
 

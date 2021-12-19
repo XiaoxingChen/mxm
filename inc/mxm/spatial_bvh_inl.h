@@ -172,6 +172,8 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
                 record.t = hit_t;
                 record.prim_idx = prim_idx;
                 record.ray = ray_in;
+                record.coeff = result;
+                record.coeff(0) = 1.f - mxm::sum(result) + hit_t;
 
 
                 if(hit_type == eAnyHit)
