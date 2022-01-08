@@ -25,6 +25,7 @@
 #include "test_joint.h"
 #include "test_dsp_fft.h"
 #include "test_geometry_torus.h"
+#include "test_transform_affine.h"
 
 int main(int argc, char const *argv[])
 {
@@ -59,6 +60,7 @@ int main(int argc, char const *argv[])
   testJoint();
   testDspFFT();
   testGeometryTorus();
+  testAffineTransform();
   }
   catch(const std::exception& e)
   {
