@@ -4,6 +4,7 @@
 #include "linalg.h"
 #include "common.h"
 #include "rigid_transform.h"
+#include "transform_affine.h"
 
 namespace mxm{
 
@@ -47,9 +48,18 @@ public:
     FloatType t_max_;
 };
 
-inline Ray apply(const RigidTrans& tf, const Ray& r)
+template<size_t DIM=3>
+Ray apply(const RigidTransform<float, DIM>& tf, const Ray& r)
 {
     return Ray(tf.apply(r.origin()), tf.rotation().apply(r.direction()));
+}
+
+template<size_t DIM=3>
+Ray apply(const AffineTransform<float, DIM>& tf, const Ray& r)
+{
+    Vector<float> new_direction = tf.linear().matmul(r.direction());
+    float scale = mxm::norm(new_direction);
+    return Ray(tf.apply(r.origin()), new_direction * (1.f / scale), r.tMin() * scale, r.tMax() * scale);
 }
 
 // using RayPtr = std::shared_ptr<Ray>;

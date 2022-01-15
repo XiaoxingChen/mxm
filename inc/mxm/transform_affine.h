@@ -136,6 +136,8 @@ public:
     const Matrix<DType>& shear() const {return shear_;}
     Matrix<DType>& shear() {return shear_;}
 
+    Matrix<DType> linear() const {return rotation_.apply( mxm::diagonalMatrix(scale_).matmul(shear_));}
+
 
 private:
     Vector<DType> translation_;
