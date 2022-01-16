@@ -13,7 +13,7 @@ template<typename DType, size_t DIM=3>
 class Rotation
 {
 public:
-    using ThisType = Rotation;
+    using ThisType = Rotation<DType, DIM>;
 
     Rotation(const Matrix<DType>& R): matrix_(R)
     {

@@ -65,6 +65,10 @@ public:
         :vertex_buffer_(vertex_buffer), vertex_index_buffer_(vertex_index_buffer)
         {}
 
+    PrimitiveMeshTree()
+        :vertex_buffer_(nullptr), vertex_index_buffer_(nullptr)
+        {}
+
     virtual Mat primitive(size_t idx) const override { return getPrimitive(*vertex_buffer_, *vertex_index_buffer_, idx); }
 
     size_t multiHit(const Ray& ray) const;

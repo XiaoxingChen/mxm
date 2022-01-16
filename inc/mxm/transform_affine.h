@@ -59,7 +59,7 @@ public:
 
     AffineTransform():
         translation_(Vector<DType>::zeros(DIM)),
-        Rotation<DType, DIM>::identity(),
+        rotation_(Rotation<DType, DIM>::identity()),
         scale_(Vector<DType>::ones(DIM)),
         shear_(Matrix<DType>::identity(DIM))
     {}
