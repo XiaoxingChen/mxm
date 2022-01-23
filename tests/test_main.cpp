@@ -26,6 +26,7 @@
 #include "test_dsp_fft.h"
 #include "test_geometry_torus.h"
 #include "test_transform_affine.h"
+#include "test_metric_tree.h"
 
 int main(int argc, char const *argv[])
 {
@@ -61,6 +62,7 @@ int main(int argc, char const *argv[])
   testDspFFT();
   testGeometryTorus();
   testAffineTransform();
+  testMetricTree();
   }
   catch(const std::exception& e)
   {
