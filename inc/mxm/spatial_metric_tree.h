@@ -13,134 +13,6 @@
 
 namespace mxm
 {
-#if 0
-// template<typename ArithType, typename PointType>
-// using DistanceFuncType = std::function< ArithType(const PointType&, const PointType&)>;
-
-// template<typename PointType>
-// using DistanceFuncType = std::function<typename Traits<PointType>::ArithType (const PointType&, const PointType&)>;
-template<typename PointType>
-typename Traits<PointType>::ArithType
-distance(const PointType&, const PointType&);
-
-// template<typename PointType>
-// using MidPointFuncType = std::function< PointType(const PointType&, const PointType&)>;
-template<typename PointType>
-PointType midPoint(const PointType&, const PointType&);
-
-template<typename PointType>
-PointType interpolate(const PointType&, const PointType&, typename Traits<PointType>::ArithType t);
-
-template<typename PointSetType>
-typename Traits<PointSetType>::PointType
-getPoint(const PointSetType& point_set, size_t i);
-
-template<typename PointSetType>
-size_t getSize(const PointSetType& point_set);
-
-template<typename PointSetType>
-size_t farthestPoint(
-    const PointSetType& point_set,
-    size_t target_idx,
-    std::vector<size_t>::const_iterator idx_iter_begin,
-    std::vector<size_t>::const_iterator idx_iter_end)
-{
-    auto target_pt = getPoint(point_set, target_idx);
-    using ArithType = typename Traits<decltype(target_pt)>::ArithType;
-    ArithType max_dist = distance(target_pt, target_pt);
-    size_t ret_idx = target_idx;
-
-    for(auto iter = idx_iter_begin; iter != idx_iter_end; iter++)
-    {
-        auto tmp_pt = getPoint(point_set, *iter);
-        ArithType tmp_dist = distance(tmp_pt, target_idx);
-        if(tmp_dist > max_dist)
-        {
-            ret_idx = *iter;
-            max_dist = tmp_dist;
-        }
-    }
-    return ret_idx;
-}
-
-template<typename PointSetType> std::array<size_t, 2>
-farthestPair(
-    const PointSetType& point_set,
-    std::vector<size_t>::const_iterator idx_iter_begin,
-    std::vector<size_t>::const_iterator idx_iter_end)
-{
-    size_t p0 = farthestPoint(point_set, *idx_iter_begin, idx_iter_begin, idx_iter_end);
-    size_t p1 = farthestPoint(point_set, p0, idx_iter_begin, idx_iter_end);
-    return {p0, p1};
-}
-
-template<typename PointType>
-bool biasRate(const PointType& target, const PointType& p0, const PointType& p1)
-{
-    // the closer to p1, the larger
-    auto dist_p0 = distance(target, p0);
-    auto dist_p1 = distance(target, p1);
-    return dist_p0 - dist_p1;
-}
-
-template<typename PointSetType>
-class BallTree
-{
-public:
-    using ThisType = BallTree<PointSetType>;
-    using PointType = typename Traits<PointSetType>::PointType;
-    using ArithType = typename Traits<PointType>::ArithType;
-    constexpr size_t pointPerLeaf() const {return 2;}
-    struct Node
-    {
-        Node():is_leaf(false){}
-        PointType center;
-        ArithType radius;
-        std::vector<size_t> children_index_buffer;
-        std::vector<size_t> point_index_buffer;
-        bool is_leaf;
-        size_t point_num;
-    };
-    void build(bool verbose=true);
-private:
-    void updateBoundary(size_t root_node_idx);
-    std::vector<ThisType::Node> node_buffer_;
-    std::shared_ptr<PointSetType> point_set_;
-};
-
-size_t treeNodeRequirement(size_t);
-
-template<typename PointSetType>
-void BallTree<PointSetType>::updateBoundary(size_t root_node_idx)
-{
-    ThisType::Node& target_node = node_buffer_.at(root_node_idx);
-    if(target_node.is_leaf)
-    {
-        if(1 == target_node.point_num)
-        {
-            target_node.center = getPoint(point_set_, target_node.point_index_buffer.at(0));
-            target_node.radius = 0.;
-        }else if(2 == target_node.point_num)
-        {
-            auto p0 = getPoint(point_set_, target_node.point_index_buffer.at(0));
-            auto p1 = getPoint(point_set_, target_node.point_index_buffer.at(1));
-            target_node.center = interpolate(p0, p1, 0.5);
-            target_node.radius = distance(p0, p1);
-        }
-    }else //internal node
-    {
-        for(size_t i = 0; i < target_node.children_index_buffer.size(); i++)
-        {
-            auto child_idx = target_node.children_index_buffer.at(i);
-            updateBoundary(child_idx);
-        }
-        auto child0 = node_buffer_.at(target_node.children_index_buffer.at(0));
-        auto child1 = node_buffer_.at(target_node.children_index_buffer.at(1));
-        target_node.radius = (distance(child0.center, child1.center) + child0.radius + child1.radius) * 0.5;
-        // target_node.center = interpolate(child0.center, child1.center, 0.5); //todo
-    }
-}
-#endif
 
 size_t treeNodeRequirement(size_t leaf_num)
 {
@@ -167,7 +39,6 @@ public:
         std::vector<size_t> children_index_buffer;
         std::vector<size_t> point_index_buffer;
         bool is_leaf;
-        size_t point_num;
     };
 
     using ThisType = MetricTreeBase<PointSetType, PointType, ArithType>;
@@ -175,7 +46,7 @@ public:
     virtual PointType point(size_t idx) const = 0;
     virtual ArithType distance(const PointType& p0, const PointType& p1) const = 0;
     virtual size_t size() const = 0;
-    void build(bool verbose=true);
+    void build(int verbose=0);
     constexpr size_t pointPerLeaf() const {return 2;}
 
     std::multimap<ArithType, size_t> radiusSearch(const PointType& p0, ArithType radius) const;
@@ -314,7 +185,10 @@ protected:
 };
 
 template<typename PointSetType, typename PointType, typename ArithType>
-void MetricTreeBase<PointSetType, PointType, ArithType>::build(bool verbose)
+std::string to_string(const std::vector<typename MetricTreeBase<PointSetType, PointType, ArithType>::Node>& node_buffer);
+
+template<typename PointSetType, typename PointType, typename ArithType>
+void MetricTreeBase<PointSetType, PointType, ArithType>::build(int verbose)
 {
     std::vector<size_t> point_index_buffer(size());
     for(size_t i = 0; i < point_index_buffer.size(); i++) point_index_buffer.at(i) = i;
@@ -339,8 +213,8 @@ void MetricTreeBase<PointSetType, PointType, ArithType>::build(bool verbose)
         stk.pop();
 
         auto& target_node = node_buffer_.at(target.node_idx);
-        target_node.point_num = target.range[1] - target.range[0];
-        if(target_node.point_num <= pointPerLeaf())
+        auto point_num = target.range[1] - target.range[0];
+        if(point_num <= pointPerLeaf())
         {
             target_node.is_leaf = true;
             for(size_t i = target.range[0]; i < target.range[1]; i++)
@@ -375,10 +249,19 @@ void MetricTreeBase<PointSetType, PointType, ArithType>::build(bool verbose)
             node_buffer_.push_back( ThisType::Node() );
         }
     }
-    auto t_end = std::chrono::system_clock::now();
-    std::cout << "build tree t_cost(s): " << std::chrono::duration<double>(t_end - t_start).count() << std::endl;
-
     updateBoundary(0);
+    auto t_end = std::chrono::system_clock::now();
+    if(verbose > 0)
+    {
+        std::cout << "build tree t_cost(s): " << std::chrono::duration<double>(t_end - t_start).count() << std::endl;
+    }
+    if(verbose > 1)
+    {
+        std::cout << to_string<PointSetType, PointType, ArithType>(node_buffer_) << std::endl;
+    }
+
+
+
 }
 
 template<typename PointSetType, typename PointType, typename ArithType>
@@ -488,6 +371,39 @@ MetricTreeBase<PointSetType, PointType, ArithType>::radiusSearch(const PointType
             }
         }
     }
+    return ret;
+}
+
+template<typename PointSetType, typename PointType, typename ArithType>
+std::string to_string(const std::vector<typename MetricTreeBase<PointSetType, PointType, ArithType>::Node>& node_buffer)
+{
+    std::string ret;
+    for(size_t i = 0; i < node_buffer.size(); i++)
+    {
+        ret += "{idx: ";
+        ret += (std::to_string(i) + ", center_idx: " + std::to_string(node_buffer.at(i).bounding.center_idx));
+        ret += (", radius: " + std::to_string(node_buffer.at(i).bounding.radius));
+
+        ret += ", children_index_buffer: [";
+        for(size_t j=0; j < node_buffer.at(i).children_index_buffer.size(); j++)
+        {
+            size_t child_idx = node_buffer.at(i).children_index_buffer.at(j);
+            ret += std::to_string(child_idx);
+            if(j != node_buffer.at(i).children_index_buffer.size()-1) ret += ",";
+        } ret += "]";
+
+        ret += ", point_index_buffer: [";
+        for(size_t j=0; j < node_buffer.at(i).point_index_buffer.size(); j++)
+        {
+            size_t child_idx = node_buffer.at(i).point_index_buffer.at(j);
+            ret += std::to_string(child_idx);
+            if(j != node_buffer.at(i).point_index_buffer.size()-1) ret += ",";
+        } ret += "]";
+        ret += "}";
+        if(i != node_buffer.size() - 1) ret += ",";
+
+    }
+
     return ret;
 }
 
