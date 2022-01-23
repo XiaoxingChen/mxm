@@ -46,6 +46,7 @@ public:
     virtual PointType point(size_t idx) const = 0;
     virtual ArithType distance(const PointType& p0, const PointType& p1) const = 0;
     virtual size_t size() const = 0;
+    std::multimap<ArithType, size_t> build1(size_t root_node_idx, int verbose=0);
     void build(int verbose=0);
     constexpr size_t pointPerLeaf() const {return 2;}
 
@@ -83,8 +84,7 @@ public:
 protected:
     std::map<std::array<size_t, 2>, ArithType> distCache_;
     std::vector<ThisType::Node> node_buffer_;
-
-
+    std::vector<size_t> index_storage_buffer_;
 
 protected:
     std::map<size_t, ArithType> updateBoundary(size_t root_node_idx);
@@ -187,9 +187,41 @@ protected:
 template<typename PointSetType, typename PointType, typename ArithType>
 std::string to_string(const std::vector<typename MetricTreeBase<PointSetType, PointType, ArithType>::Node>& node_buffer);
 
+
+template<typename PointSetType, typename PointType, typename ArithType>
+std::multimap<ArithType, size_t>
+MetricTreeBase<PointSetType, PointType, ArithType>::build1(size_t root_node_idx, int verbose)
+{
+    if(0 == root_node_idx)
+    {
+        index_storage_buffer_.resize(size());
+        for(size_t i = 0; i < index_storage_buffer_.size(); i++) index_storage_buffer_.at(i) = i;
+
+        size_t require = treeNodeRequirement(index_storage_buffer_.size() / pointPerLeaf() + 1);
+        node_buffer_.clear();
+        node_buffer_.reserve(require);
+        auto t_start = std::chrono::system_clock::now();
+    }
+
+    node_buffer_.push_back( ThisType::Node() );
+
+    auto& target_node = node_buffer_.back();
+    return {};
+
+}
+
 template<typename PointSetType, typename PointType, typename ArithType>
 void MetricTreeBase<PointSetType, PointType, ArithType>::build(int verbose)
 {
+    struct Context
+    {
+        size_t node_idx = 0;
+        std::array<size_t, 2> range{0,0};
+        size_t child_idx = 0;
+        size_t mid_idx = 0;
+        std::vector<std::map<size_t, ArithType>> child_eccentricities;
+    };
+
     std::vector<size_t> point_index_buffer(size());
     for(size_t i = 0; i < point_index_buffer.size(); i++) point_index_buffer.at(i) = i;
 
@@ -199,8 +231,8 @@ void MetricTreeBase<PointSetType, PointType, ArithType>::build(int verbose)
         node_buffer_.reserve(require);
     }
 
-    // DFS Preorder
-    std::stack<RangeNode> stk;
+    // DFS
+    std::stack<Context> stk;
 
     stk.push({node_buffer_.size(), {0, point_index_buffer.size()}});
     node_buffer_.push_back( ThisType::Node() );
@@ -209,30 +241,44 @@ void MetricTreeBase<PointSetType, PointType, ArithType>::build(int verbose)
 
     while (!stk.empty())
     {
-        auto target = stk.top();
-        stk.pop();
+        auto& context = stk.top();
 
-        auto& target_node = node_buffer_.at(target.node_idx);
-        auto point_num = target.range[1] - target.range[0];
+        auto& target_node = node_buffer_.at(context.node_idx);
+        auto point_num = context.range[1] - context.range[0];
         if(point_num <= pointPerLeaf())
         {
             target_node.is_leaf = true;
-            for(size_t i = target.range[0]; i < target.range[1]; i++)
+            for(size_t i = context.range[0]; i < context.range[1]; i++)
             {
                 target_node.point_index_buffer.push_back(point_index_buffer.at(i));
             }
-        }else // is internal node
+
+            auto local_eccentricity = rangeEccentricity(target_node.point_index_buffer.begin(), target_node.point_index_buffer.end());
+            auto it = std::min_element(local_eccentricity.begin(), local_eccentricity.end(),
+                    [](const auto& p0, const auto& p1){return p0.second < p1.second;});
+            target_node.bounding.center_idx = it->first;
+            target_node.bounding.radius = it->second;
+
+            stk.pop();
+            if(!stk.empty()) // return result to stake top
+                stk.top().child_eccentricities.push_back(std::move(local_eccentricity));
+
+            continue; // make stack popping work
+        }
+        // is internal node
+
+        if(0 == context.child_idx)
         {
             auto polar_pair = farthestPair(
-                point_index_buffer.begin() + target.range[0],
-                point_index_buffer.begin() + target.range[1]);
+                point_index_buffer.begin() + context.range[0],
+                point_index_buffer.begin() + context.range[1]);
 
-            size_t mid = (target.range[1] + target.range[0]) / 2;
+            context.mid_idx = (context.range[1] + context.range[0]) / 2;
 
             std::nth_element(
-                point_index_buffer.begin() + target.range[0],
-                point_index_buffer.begin() + mid,
-                point_index_buffer.begin() + target.range[1],
+                point_index_buffer.begin() + context.range[0],
+                point_index_buffer.begin() + context.mid_idx,
+                point_index_buffer.begin() + context.range[1],
                 [&](const size_t& point_idx1, const size_t& point_idx2)
                 {
                     return biasRate(point_idx1, polar_pair[0], polar_pair[1]) < biasRate(point_idx2, polar_pair[0], polar_pair[1]);
@@ -240,16 +286,35 @@ void MetricTreeBase<PointSetType, PointType, ArithType>::build(int verbose)
             );
 
             // create children
-            stk.push({node_buffer_.size(), {target.range[0], mid}});
+            stk.push({node_buffer_.size(), {context.range[0], context.mid_idx}});
             target_node.children_index_buffer.push_back(node_buffer_.size());
             node_buffer_.push_back( ThisType::Node() );
 
-            stk.push({node_buffer_.size(), {mid, target.range[1]}});
+            context.child_idx++;
+            continue; // make stack pushing work
+        }else if (1 == context.child_idx)
+        {
+            stk.push({node_buffer_.size(), {context.mid_idx, context.range[1]}});
             target_node.children_index_buffer.push_back(node_buffer_.size());
             node_buffer_.push_back( ThisType::Node() );
+
+            context.child_idx++;
+            continue; // make stack pushing work
+        }else // post process
+        {
+            auto local_eccentricity = mergeEccentricity(
+                context.child_eccentricities.at(0),
+                context.child_eccentricities.at(1));
+            auto it = std::min_element(local_eccentricity.begin(), local_eccentricity.end(),
+                [](const auto& p0, const auto& p1){return p0.second < p1.second;});
+            target_node.bounding.center_idx = it->first;
+            target_node.bounding.radius = it->second;
+
+            stk.pop();
+            if(!stk.empty()) // return result to stake top
+                stk.top().child_eccentricities.push_back(std::move(local_eccentricity));
         }
     }
-    updateBoundary(0);
     auto t_end = std::chrono::system_clock::now();
     if(verbose > 0)
     {
