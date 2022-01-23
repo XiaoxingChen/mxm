@@ -147,10 +147,16 @@ inline std::array<FloatType, 2> distance(const AxisAlignedBoundingBox& bbox, con
         ret[1] = std::max(ret[1], (vertex - pt).norm());
     }
 
+    if(bbox.contains(pt))
+    {
+        ret[0] = 0;
+        return ret;
+    }
+
     Vec min_dist(bbox.dim());
     for(size_t axis = 0; axis < bbox.dim(); axis++)
     {
-        if(pt(axis) < bbox.min()(axis) && pt(axis) < bbox.max()(axis))
+        if(bbox.min()(axis) < pt(axis) && pt(axis) < bbox.max()(axis))
         {
             min_dist(axis) = 0.;
         }else

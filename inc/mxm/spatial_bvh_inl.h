@@ -272,12 +272,13 @@ MXM_INLINE std::multimap<FloatType, size_t> PointCloudTree::nearestNeighborSearc
             }
         }
 
-    }
+
     while(ret.size() > k)
     {
         ret.erase(std::prev(ret.end()));
     }
 
+    }
     return ret;
 }
 
