@@ -81,23 +81,13 @@ public:
     // either {x/z, y/z, 1} or {x/z, y/z}
     virtual Matrix<DType> undistort(const Matrix<DType>& homo_pts) const override
     {
-        Matrix<DType> ret(homo_pts.shape());
-        size_t iter = 5;
-        for(size_t i = 0; i < homo_pts.shape(1); i++)
+        Matrix<DType> ret(homo_pts);
+        const size_t iter_max = 5;
+        Matrix<DType> tmp;
+        for(size_t i = 0; i < iter_max; i++)
         {
-            assert(2 == homo_pts.shape(0) || norm(homo_pts(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
-            for(size_t j = 0; j < iter; j++)
-            {
-                const auto& x = homo_pts(0, i);
-                const auto& y = homo_pts(1, i);
-                auto r2 = x*x + y*y;
-                auto kr = radial(r2);
-                ret(0, i) = (x - tangential(0, r2, x, y)) / kr;
-                ret(1, i) = (y - tangential(1, r2, x, y)) / kr;
-                if(3 == ret.shape(0)) ret(2, i) = 1;
-                // std::cout << mxm::to_string(ret.T()) << std::endl;
-            }
-
+            tmp = distort(ret);
+            ret = (homo_pts - tmp) + ret;
         }
 
         return ret;
@@ -172,7 +162,7 @@ public:
         auto norm_plane_points =  vstack((pixels - c_) / f_, z_dir * Matrix<DType>::ones({1, pixels.shape(1)}));
         if(p_distortion_)
         {
-            norm_plane_points = p_distortion_->distort(norm_plane_points);
+            norm_plane_points = p_distortion_->undistort(norm_plane_points);
         }
         Matrix<DType> directions = pose_.rotation().apply(norm_plane_points);
         return directions;

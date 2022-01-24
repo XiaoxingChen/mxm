@@ -60,11 +60,14 @@ inline void testCamera()
 
         px_pt = cam.pixelDirection(px_src) + cam.pose().translation();
         px_coord = cam.project(px_pt);
+        // px_coord = p_distor->undistort(px_coord);
         if(!isZero(px_src - px_coord, &error, 10))
         {
             std::cout << "Warning! Reprojection error: " << error << std::endl;
             // std::cout << mxm::to_string(px_src - px_coord) << std::endl;
-            // throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+            std::cout << mxm::to_string(px_src) << std::endl;
+            std::cout << mxm::to_string(px_coord) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
 
