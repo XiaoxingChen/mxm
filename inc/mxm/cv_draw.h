@@ -96,6 +96,24 @@ plot(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PType::black
 
 }
 
+template<typename PType> void
+drawLines(Matrix<PType>& p, const Matrix<float>& vertex, const Matrix<size_t>& indices, const PType& color=PType::black(), float width=2)
+{
+    for(size_t i = 0; i < indices.shape(1); i++)
+    {
+        auto idx0 = indices(0, i);
+        auto idx1 = indices(1, i);
+        auto pts = Matrix<float>({2,2}, {vertex(0, idx0), vertex(1, idx0), vertex(0, idx1), vertex(1, idx1)}, COL);
+        auto pxs = pixelsOnLine(pts, width);
+        for(size_t j = 0; j < pxs.shape(1); j++)
+        {
+            if(pxs(0,j) >= p.shape(0)) continue;
+            if(pxs(1,j) >= p.shape(1)) continue;
+            p(pxs(0,j), pxs(1,j)) = color;
+        }
+    }
+}
+
 } // namespace mxm
 
 
