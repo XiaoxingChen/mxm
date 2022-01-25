@@ -1,7 +1,7 @@
 #if !defined(_CV_CORNER_H_)
 #define _CV_CORNER_H_
 
-#include "cv_pixel.h"
+// #include "cv_pixel.h"
 #include "cv_basic.h"
 #include "linalg_utils.h"
 #include <tuple>

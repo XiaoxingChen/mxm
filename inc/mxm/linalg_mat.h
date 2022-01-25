@@ -21,7 +21,6 @@ size_t index1D(size_t i, size_t j, bool major, const Shape& shape);
 template<typename DType> class Matrix;
 template<typename DType> class MatrixRef;
 class Block;
-std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 
 class AutoShape;
 AutoShape fixRow(size_t n);
@@ -117,10 +116,10 @@ public:
     AutoShape(std::initializer_list<size_t> shape): shape_{*shape.begin(), *(shape.begin() + 1)}, state_(eFullyDefined) { assert(2 == shape.size()); }
     AutoShape(const EnumDynamic& state, size_t row, size_t col): shape_{row, col}, state_(state) {}
 #endif
-    std::array<size_t, 2> deduct(size_t total_num) const;
+    Shape deduct(size_t total_num) const;
 
 private:
-    std::array<size_t, 2> shape_;
+    Shape shape_;
     // std::array<bool, 2> defined_;
     EnumDynamic state_;
 };

@@ -97,9 +97,9 @@ public:
         return ret;
     }
 
-    std::array<std::array<size_t, 2>, 2> deduct(const Shape& shape) const
+    std::array<Shape,2> deduct(const Shape& shape) const
     {
-        std::array<std::array<size_t, 2>, 2> offset_shape;
+        std::array<Shape,2> offset_shape;
         offset_shape[0] = {row_.begin.eval(shape[0]), col_.begin.eval(shape[1])};
         offset_shape[1] = {
             row_.end.eval(shape[0]) - row_.begin.eval(shape[0]),
@@ -111,7 +111,7 @@ protected:
     Range col_;
 };
 
-inline std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat)
+inline std::array<Shape,2> deduct(const Block& b, const Shape& mat)
 {
     return b.deduct(mat);
 }

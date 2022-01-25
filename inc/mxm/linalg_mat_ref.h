@@ -21,7 +21,6 @@ namespace mxm
 template<typename DType> class Matrix;
 template<typename DType> class MatrixRef;
 class Block;
-std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 
 template<typename DType>
 struct Traits<MatrixRef<DType>>

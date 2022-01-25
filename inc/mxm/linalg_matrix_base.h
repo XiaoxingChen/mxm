@@ -15,6 +15,7 @@
 namespace mxm
 {
 using Shape = std::array<size_t, 2>;
+// using Shape = std::vector<size_t>;
 static const bool ROW = 0;
 static const bool COL = 1;
 
@@ -23,7 +24,6 @@ struct Traits{ using ArithType = void; };
 template <typename DType> class Matrix;
 template<typename DType> class MatrixRef;
 class Block;
-std::array<std::array<size_t, 2>, 2> deduct(const Block& b, const Shape& mat);
 
 template<typename DType, typename>
 typename Traits<DType>::ArithType norm(const DType& m);
