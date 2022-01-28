@@ -21,7 +21,7 @@ public:
     RigidTransform(const Rotation<DType, DIM>& r): translation_(Vector<DType>::zeros(r.dim())), rotation_(r)
     {}
 
-    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation<DType, DIM>::identity(p.size()))
+    RigidTransform(const Translation& p): translation_(p), rotation_(Rotation<DType, DIM>::identity())
     {}
 
     using ThisType = RigidTransform;

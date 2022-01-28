@@ -31,7 +31,7 @@ Matrix<size_t> triangulateQuad<2>(const Matrix<size_t>& indices)
         ret(1, TRIANGLE_PER_QUAD*i) = indices(1, i);
         ret(2, TRIANGLE_PER_QUAD*i) = indices(2, i);
 
-        ret(0, TRIANGLE_PER_QUAD*i+1) = indices(1, i);
+        ret(0, TRIANGLE_PER_QUAD*i+1) = indices(0, i);
         ret(1, TRIANGLE_PER_QUAD*i+1) = indices(3, i);
         ret(2, TRIANGLE_PER_QUAD*i+1) = indices(2, i);
     }
@@ -110,6 +110,80 @@ Matrix<size_t> generateNTorusGraph(const std::vector<size_t>& resolutions)
     if(dim == 2) return triangulateQuad<2>(quad_index_buffer);
     else if(dim == 3) return triangulateQuad<3>(quad_index_buffer);
     else if(dim == 4) return triangulateQuad<4>(quad_index_buffer);
+    return Matrix<size_t>();
+}
+
+Matrix<size_t> generateNTorusToNCubeIndex(const std::vector<size_t>& resolutions)
+{
+    size_t dim = resolutions.size() + 1;
+    std::vector<size_t> index_data;
+    if(2 == dim)
+    {
+        size_t VERTEX_PER_LINE = 2;
+        index_data.reserve(resolutions.at(0) * VERTEX_PER_LINE);
+        for(size_t i = 0; i < resolutions.at(0); i++)
+        {
+            size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+            index_data.push_back(i);
+            index_data.push_back(i_1);
+        }
+        return Matrix<size_t>({VERTEX_PER_LINE, resolutions.at(0)}, std::move(index_data), COL);
+    }else if(3 == dim)
+    {
+        size_t VERTEX_PER_QUAD = 4;
+        size_t quad_num = resolutions.at(0) * resolutions.at(1) * 2;
+        index_data.reserve(quad_num * VERTEX_PER_QUAD);
+        for(size_t j = 0; j < resolutions.at(1); j++)
+        {
+            for(size_t i = 0; i < resolutions.at(0); i++)
+            {
+                size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+                size_t j_1 = (j+1 == resolutions.at(1)) ? 0 : j+1;
+                index_data.push_back(i + j * resolutions.at(0));
+                index_data.push_back(i_1 + j * resolutions.at(0));
+                index_data.push_back(i_1 + j_1 * resolutions.at(0));
+                index_data.push_back(i + j_1 * resolutions.at(0));
+            }
+        }
+        return Matrix<size_t>({VERTEX_PER_QUAD, quad_num}, std::move(index_data), COL);
+    }
+    return Matrix<size_t>();
+}
+
+Matrix<size_t> generateNTorusLineIndex(const std::vector<size_t>& resolutions)
+{
+    size_t dim = resolutions.size() + 1;
+    std::vector<size_t> index_data;
+    const size_t VERTEX_PER_LINE = 2;
+    if(2 == dim)
+    {
+        index_data.reserve(resolutions.at(0) * VERTEX_PER_LINE);
+        for(size_t i = 0; i < resolutions.at(0); i++)
+        {
+            size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+            index_data.push_back(i);
+            index_data.push_back(i_1);
+        }
+        return Matrix<size_t>({VERTEX_PER_LINE, resolutions.at(0)}, std::move(index_data), COL);
+    }else if(3 == dim)
+    {
+        size_t line_num = resolutions.at(0) * resolutions.at(1) * 2;
+        index_data.reserve(line_num * VERTEX_PER_LINE);
+        for(size_t j = 0; j < resolutions.at(1); j++)
+        {
+            for(size_t i = 0; i < resolutions.at(0); i++)
+            {
+                size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+                size_t j_1 = (j+1 == resolutions.at(1)) ? 0 : j+1;
+                index_data.push_back(i + j * resolutions.at(0));
+                index_data.push_back(i_1 + j * resolutions.at(0));
+
+                index_data.push_back(i + j * resolutions.at(0));
+                index_data.push_back(i + j_1 * resolutions.at(0));
+            }
+        }
+        return Matrix<size_t>({VERTEX_PER_LINE, line_num}, std::move(index_data), COL);
+    }
     return Matrix<size_t>();
 }
 } // namespace mxm

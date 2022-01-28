@@ -51,6 +51,8 @@ void scatter(Matrix<PType>& p, const Matrix<float>& pts, const PType& color=PTyp
     // auto color = PType({0,0,128});
     for(size_t i = 0; i < pts.shape(1); i++)
     {
+        if(pts(0, i) < 0 || pts(0, i) > p.shape(0) || pts(1, i) < 0 || pts(1, 0) > p.shape(1)) continue;
+
         size_t start_x = std::max<float>(pts(0, i)-width*0.5, 0) + 0.5f;
         size_t start_y = std::max<float>(pts(1, i)-width*0.5, 0) + 0.5f;
 
@@ -104,6 +106,12 @@ drawLines(Matrix<PType>& p, const Matrix<float>& vertex, const Matrix<size_t>& i
         auto idx0 = indices(0, i);
         auto idx1 = indices(1, i);
         auto pts = Matrix<float>({2,2}, {vertex(0, idx0), vertex(1, idx0), vertex(0, idx1), vertex(1, idx1)}, COL);
+        pts(0, 0) = std::max(std::min(float(p.shape(0)), pts(0, 0)), 0.f);
+        pts(0, 1) = std::max(std::min(float(p.shape(0)), pts(0, 1)), 0.f);
+
+        pts(1, 0) = std::max(std::min(float(p.shape(1)), pts(1, 0)), 0.f);
+        pts(1, 1) = std::max(std::min(float(p.shape(1)), pts(1, 1)), 0.f);
+
         auto pxs = pixelsOnLine(pts, width);
         for(size_t j = 0; j < pxs.shape(1); j++)
         {
