@@ -146,6 +146,35 @@ Matrix<size_t> generateNTorusToNCubeIndex(const std::vector<size_t>& resolutions
             }
         }
         return Matrix<size_t>({VERTEX_PER_QUAD, quad_num}, std::move(index_data), COL);
+    }else if(4 == dim)
+    {
+        size_t VERTEX_PER_CUBE = 8;
+        size_t cube_num = resolutions.at(0) * resolutions.at(1) * resolutions.at(2) * 2;
+        index_data.reserve(cube_num * VERTEX_PER_CUBE);
+        size_t j_stride = resolutions.at(0);
+        size_t k_stride = resolutions.at(0) * resolutions.at(1);
+        for(size_t k = 0; k < resolutions.at(2); k++)
+        {
+            for(size_t j = 0; j < resolutions.at(1); j++)
+            {
+                for(size_t i = 0; i < resolutions.at(0); i++)
+                {
+                    size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+                    size_t j_1 = (j+1 == resolutions.at(1)) ? 0 : j+1;
+                    size_t k_1 = (k+1 == resolutions.at(2)) ? 0 : k+1;
+
+                    index_data.push_back(i + j * j_stride + k * k_stride);
+                    index_data.push_back(i_1 + j * j_stride + k * k_stride);
+                    index_data.push_back(i_1 + j_1 * j_stride + k * k_stride);
+                    index_data.push_back(i + j_1 * j_stride + k * k_stride);
+                    index_data.push_back(i + j * j_stride + k_1 * k_stride);
+                    index_data.push_back(i_1 + j * j_stride + k_1 * k_stride);
+                    index_data.push_back(i_1 + j_1 * j_stride + k_1 * k_stride);
+                    index_data.push_back(i + j_1 * j_stride + k_1 * k_stride);
+                }
+            }
+        }
+        return Matrix<size_t>({VERTEX_PER_CUBE, cube_num}, std::move(index_data), COL);
     }
     return Matrix<size_t>();
 }
@@ -180,6 +209,34 @@ Matrix<size_t> generateNTorusLineIndex(const std::vector<size_t>& resolutions)
 
                 index_data.push_back(i + j * resolutions.at(0));
                 index_data.push_back(i + j_1 * resolutions.at(0));
+            }
+        }
+        return Matrix<size_t>({VERTEX_PER_LINE, line_num}, std::move(index_data), COL);
+    }else if(4 == dim)
+    {
+        size_t line_num = resolutions.at(0) * resolutions.at(1) * resolutions.at(2) * 3;
+        index_data.reserve(line_num * VERTEX_PER_LINE);
+        size_t j_stride = resolutions.at(0);
+        size_t k_stride = resolutions.at(0) * resolutions.at(1);
+        for(size_t k = 0; k < resolutions.at(2); k++)
+        {
+            for(size_t j = 0; j < resolutions.at(1); j++)
+            {
+                for(size_t i = 0; i < resolutions.at(0); i++)
+                {
+                    size_t i_1 = (i+1 == resolutions.at(0)) ? 0 : i+1;
+                    size_t j_1 = (j+1 == resolutions.at(1)) ? 0 : j+1;
+                    size_t k_1 = (k+1 == resolutions.at(2)) ? 0 : k+1;
+
+                    index_data.push_back(i + j * j_stride + k * k_stride);
+                    index_data.push_back(i_1 + j * j_stride + k * k_stride);
+
+                    index_data.push_back(i + j * j_stride + k * k_stride);
+                    index_data.push_back(i + j_1 * j_stride + k * k_stride);
+
+                    index_data.push_back(i + j * j_stride + k * k_stride);
+                    index_data.push_back(i + j * j_stride + k_1 * k_stride);
+                }
             }
         }
         return Matrix<size_t>({VERTEX_PER_LINE, line_num}, std::move(index_data), COL);
