@@ -205,6 +205,16 @@ public:
     DType fov(size_t axis) const { return 2 * atan2( DType(resolution_(axis)) , 2 * f_(axis)); }
     DType diagFov() const { return 2 * atan2(Vector<DType>(resolution_).norm(), 2 * f_(0)); }
 
+    ThisType & setFov(const Vector<DType>& fov_vec)
+    {
+        assert(fov_vec.size() == f_.size());
+        for(size_t axis = 0; axis < fov_vec.size(); axis++)
+        {
+            f_(axis) = DType(resolution_(axis)) / tan(0.5 * fov_vec(axis)) * 0.5;
+            c_(axis) = f_(axis) * 0.5;
+        }
+    }
+
     const Matrix<DType>& invMatrix() const { return cam_mat_inv_; }
     const Matrix<DType>& matrix() const { return cam_mat_; }
 

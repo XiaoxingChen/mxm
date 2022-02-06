@@ -33,10 +33,28 @@ inline void cameraTest2()
     }
 }
 
+inline void testSetFov()
+{
+    Camera<float> cam(RigidTrans::identity(), Vec({320,240}), Vec({640, 480}));
+    Vector<float> target_fov{M_PI / 4, M_PI / 3};
+    cam.setFov(target_fov);
+    for(size_t axis = 0; axis < target_fov.size(); axis++)
+    {
+        if(abs(cam.fov(axis) - target_fov(axis)) > eps<float>())
+        {
+            std::cout << cam.fov(axis) * 180. / M_PI << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+
+
+}
+
 inline void testCamera()
 {
     cameraTest1();
     cameraTest2();
+    testSetFov();
     {
         Camera<double> cam;
         cam.setFocalLength({457.296, 458.654}).setResolution({480, 752}).setPrincipalOffset({248.375, 367.215});
