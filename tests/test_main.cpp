@@ -64,6 +64,7 @@ int main(int argc, char const *argv[])
   testGeometryTorus();
   testAffineTransform();
   testMetricTree();
+  testDualNumber();
   }
   catch(const std::exception& e)
   {

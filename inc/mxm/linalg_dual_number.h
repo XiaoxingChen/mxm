@@ -1,6 +1,10 @@
 #if !defined(__LINALG_DUAL_NUMBER_H__)
 #define __LINALG_DUAL_NUMBER_H__
 
+// References:
+// [1] https://www.youtube.com/watch?v=ceaNqdHdqtg
+// [2] https://en.wikipedia.org/wiki/Dual_number
+
 #include <array>
 #include <string>
 #include <iostream>
@@ -34,9 +38,10 @@ public:
     using ThisType = DualNumber<DType>;
     DualNumber(std::initializer_list<DType> v)
     {
-        for(size_t i = 0; i < std::min(std::distance(v.begin(), v.end()), data_.size()) ; i++)
+        size_t list_len = std::distance(v.begin(), v.end());
+        for(size_t i = 0; i < data_.size() ; i++)
         {
-            data_.at(i) = *(v.begin() + i);
+            data_.at(i) = i < list_len ? *(v.begin() + i) : DType(0);
         }
     }
     DualNumber(DType val){ for(auto & d : data_) d = 0; data_.at(0) = val;}
