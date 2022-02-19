@@ -27,6 +27,7 @@
 #include "test_geometry_torus.h"
 #include "test_transform_affine.h"
 #include "test_metric_tree.h"
+#include "test_dual_number.h"
 
 int main(int argc, char const *argv[])
 {
