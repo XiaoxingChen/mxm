@@ -213,6 +213,7 @@ public:
             f_(axis) = DType(resolution_(axis)) / tan(0.5 * fov_vec(axis)) * 0.5;
             c_(axis) = f_(axis) * 0.5;
         }
+        return *this;
     }
 
     const Matrix<DType>& invMatrix() const { return cam_mat_inv_; }
