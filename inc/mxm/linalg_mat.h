@@ -273,6 +273,15 @@ normalized(const Matrix<EntryType>& mat)
 }
 #endif
 
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::ArithType> matrixAtPart(const DeriveType& mat, size_t k)
+{
+    Matrix<typename Traits<DeriveType>::ArithType> ret(mat.shape());
+    ret.traverse([&](auto i, auto j){
+        ret(i,j) = mat(i,j)(k);
+    });
+    return ret;
+}
 
 using Mat = Matrix<float>;
 } // namespace mxm

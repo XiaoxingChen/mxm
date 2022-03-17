@@ -900,7 +900,17 @@ void testComplexBase()
 
 
 }
-
+void testComplexAtPart()
+{
+    Matrix<Quaternion<float>> mat({2,1}, {{0,0,0,1}, {0,0,0,-1}});
+    auto matK = matrixAtPart(mat, 3);
+    Matrix<float> expect({2,1}, {1, -1});
+    if(!isZero(matK - expect, nullptr, eps<float>()))
+    {
+        std::cout << "matK:" << mxm::to_string(matK) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
 // extreme condition test
 // reference: https://en.cppreference.com/w/cpp/numeric/complex/log
 void testComplexLogExtremeCondition()
@@ -1041,6 +1051,7 @@ void testLinearAlgebra()
 #endif
     testRvalueReference();
     testComplexBase();
+    testComplexAtPart();
     // testTridiagonalizeSkewSymmetric();
     // testQRIteration();
     // testUnsymmetrixEigenvaluePipeline01();
