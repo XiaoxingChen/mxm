@@ -21,6 +21,18 @@ public:
         assert(matrix_.shape(0) == DIM);
     }
 
+    template<typename RhsDType=DType>
+    Rotation(const Rotation<RhsDType, DIM>& rhs)
+    {
+        matrix_ = rhs.asMatrix();
+    }
+
+    template<typename RhsDType=DType>
+    void operator = (const Rotation<RhsDType, DIM>& rhs)
+    {
+        matrix_ = rhs.asMatrix();
+    }
+
     // Rotation(size_t dim): matrix_(Matrix<DType>::identity(dim))
     // {
     // }

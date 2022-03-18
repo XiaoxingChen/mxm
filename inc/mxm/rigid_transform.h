@@ -24,6 +24,21 @@ public:
     RigidTransform(const Translation& p): translation_(p), rotation_(Rotation<DType, DIM>::identity())
     {}
 
+    template<typename RhsDType=DType>
+    RigidTransform(const RigidTransform<RhsDType, DIM>& rhs)
+    {
+        translation_ = rhs.translation();
+        rotation_ = rhs.rotation();
+    }
+
+    template<typename RhsDType=DType>
+    void operator = (const RigidTransform<RhsDType, DIM>& rhs)
+    {
+        translation_ = rhs.translation();
+        rotation_ = rhs.rotation();
+    }
+
+
     using ThisType = RigidTransform;
 
     ThisType operator*(const ThisType& rhs) const { return ThisType(apply(rhs.translation_) , rotation_ * rhs.rotation_); }

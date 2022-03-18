@@ -21,7 +21,32 @@ void dualNumberTest01()
 
 }
 
+// void testDualNumberAtPart()
+// {
+//     Matrix<DualNumber<float>> mat({2,1}, {{0,1}, {0,-1}});
+//     auto matK = matrixAtPart(mat, 3);
+//     Matrix<float> expect({2,1}, {1, -1});
+//     if(!isZero(matK - expect, nullptr, eps<float>()))
+//     {
+//         std::cout << "matK:" << mxm::to_string(matK) << std::endl;
+//         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+//     }
+// }
+
+void testDualNumberTypeConversion()
+{
+    Matrix<DualNumber<float>> mat({3,3});
+    mat = Matrix<float>::identity(3);
+    if(!isZero( matrixAtPart(mat, 0)  - Matrix<float>::identity(3)))
+    {
+        std::cout << "mat: " << mxm::to_string(mat) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 void testDualNumber()
 {
     dualNumberTest01();
+    testDualNumberTypeConversion();
 }

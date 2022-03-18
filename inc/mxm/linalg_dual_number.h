@@ -31,6 +31,24 @@ DualNumber<DType> inv(const DualNumber<DType>& val)
     return val.conj() * (DType(1.) / denominator);
 }
 
+template<typename DType>
+struct Traits<DualNumber<DType>>{
+    using ArithType = DType;
+    using EntryType = DType;
+    static DualNumber<DType> identity() { return DualNumber<DType>(1); }
+    static DualNumber<DType> zero() { return DualNumber<DType>(0); }
+};
+
+template<typename DType>
+std::string to_string(const DualNumber<DType>& v, size_t prec)
+{
+    std::string ret;
+    v.traverse([&](size_t i){
+        ret += ((v(i) >= 0 || std::isnan(v(i))) && i > 0 ? "+" : "");
+        ret += (mxm::to_string(v(i), prec) + "eps"); });
+    return ret;
+}
+
 template <typename DType>
 class DualNumber
 {
@@ -84,9 +102,11 @@ public:
 
     std::string str() const;
 
+    void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < size(); i++) f(i); }
+
 private:
     static constexpr size_t size() { return 2; }
-    void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < size(); i++) f(i); }
+
 
     std::array<DType, 2> data_;
 };

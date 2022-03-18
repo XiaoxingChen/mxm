@@ -26,6 +26,12 @@ std::string to_string(const Hypercomplex<DType, N>& v, size_t prec);
 template<typename DType, unsigned int N>
 std::string to_string(const Hypercomplex<DType, N>& v);
 
+// Dual number to string
+template<typename DType> class DualNumber;
+
+template<typename DType>
+std::string to_string(const DualNumber<DType>& v, size_t prec);
+
 // Pixel to string
 template<typename DType, size_t N>
 class PixelType;
