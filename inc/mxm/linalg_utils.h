@@ -278,5 +278,14 @@ sum(const MatrixBase<DeriveType>& src, size_t axis)
     return sum(src.T(), 0).T();
 }
 
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> sin(DType val) { return std::sin(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> cos(DType val) { return std::cos(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> asin(DType val) { return std::asin(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> acos(DType val) { return std::acos(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> abs(DType val) { return std::abs(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> sqrt(DType val) { return std::sqrt(val); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> pow(DType val, DType exp) { return std::pow(val, exp); }
+template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> exp(DType val) { return std::exp(val); }
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H

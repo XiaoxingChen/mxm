@@ -12,6 +12,7 @@
 
 #include "linalg_utils.h"
 #include "linalg_complex.h"
+#include "math_forward_declaration.h"
 
 #include "string.h"
 

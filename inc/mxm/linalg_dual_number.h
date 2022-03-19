@@ -98,11 +98,15 @@ public:
 
     ThisType operator - () const { return ThisType(*this) *= -1; }
 
-    ThisType conj() const { return ThisType(data_.at(0), data_.at(1) * DType(-1));}
+    ThisType conj() const { return ThisType{data_.at(0), data_.at(1) * DType(-1)};}
 
     std::string str() const;
 
     void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < size(); i++) f(i); }
+
+
+    template <typename T> operator
+    T () const { return static_cast<T>(data_.at(0)); }
 
 private:
     static constexpr size_t size() { return 2; }
@@ -119,14 +123,61 @@ template<typename DType> DualNumber<DType> operator / (DType lhs, const DualNumb
 template<typename DType> DualNumber<DType>
 sin(const DualNumber<DType>& val)
 {
-    return DualNumber<DType>{std::sin(val(0)), std::cos(val) * val(1)};
+    return {std::sin(val(0)), std::cos(val(0)) * val(1)};
 }
 
 template<typename DType> DualNumber<DType>
 cos(const DualNumber<DType>& val)
 {
-    return DualNumber<DType>{std::cos(val(0)), std::sin(val) * val(1) * DType(-1)};
+    return DualNumber<DType>{std::cos(val(0)), std::sin(val(0)) * val(1) * DType(-1)};
 }
+
+template<typename DType> DType
+abs(const DualNumber<DType>& val)
+{
+    return std::abs(val(0));
+}
+
+template<typename DType> DualNumber<DType>
+sqrt(const DualNumber<DType>& val)
+{
+    return {std::sqrt(val(0)), DType(-0.5) * val(1) / std::sqrt(val(0))};
+}
+
+template<typename DType> DualNumber<DType>
+asin(const DualNumber<DType>& val)
+{
+    return std::asin(val(0)) + DType(1.) / mxm::sqrt(1 - val * val) * DualNumber<DType>({0, val(1)});
+}
+
+template<typename DType> DualNumber<DType>
+acos(const DualNumber<DType>& val)
+{
+    return std::acos(val(0)) + DType(-1.) / mxm::sqrt(1 - val * val) * DualNumber<DType>({0, val(1)});
+}
+
+template<typename DType> DualNumber<DType>
+pow(const DualNumber<DType>& val, DType exp)
+{
+    return {
+        std::pow<DType>(val(0), exp),
+        (exp - DType(1))* std::pow<DType>(val(0), exp - DType(1)) * val(1)};
+}
+
+template<typename DType> DualNumber<DType>
+exp(const DualNumber<DType>& val)
+{
+    DType exp_a = std::exp<DType>(val(0));
+    return {exp_a,  exp_a * val(1)};
+}
+
+template<typename DType> DualNumber<DType>
+log(const DualNumber<DType>& val)
+{
+    return {val(0),  val(1) / val(0)};
+}
+
+
 
 } // namespace mxm
 

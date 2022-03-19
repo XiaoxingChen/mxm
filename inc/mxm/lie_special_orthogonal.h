@@ -17,7 +17,7 @@ namespace mxm
 namespace so
 {
 template<typename DType>
-bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=std::numeric_limits<DType>::epsilon())
+bool isValid(const Matrix<DType>& mat, DType* error=nullptr, DType tol=eps<typename Traits<DType>::ArithType>())
 {
     if(! isSquare(mat)) return false;
     return isZero(mat + mat.T(), error, tol);
@@ -50,10 +50,10 @@ Vector<DType> findAngles(const Matrix<DType>& skew)
     Matrix<DType> orthogonal;
     auto block_diag = realSchurDecomposition(skew, &orthogonal);
 
-    const DType tol = std::numeric_limits<DType>::epsilon() * 10;
+    const DType tol = eps<typename Traits<DType>::ArithType>() * 10;
     for(size_t i = 0; i < n;)
     {
-        if(i < n-1 && abs(block_diag(i+1,i) - block_diag(i,i+1)) > tol && abs(block_diag(i+1,i) + block_diag(i,i+1)) < tol)
+        if(i < n-1 && mxm::abs(block_diag(i+1,i) - block_diag(i,i+1)) > tol && mxm::abs(block_diag(i+1,i) + block_diag(i,i+1)) < tol)
         {
             ret_data.push_back(0.5 * (block_diag(i+1,i) - block_diag(i,i+1)));
             i += 2;
@@ -104,7 +104,7 @@ Matrix<typename Traits<DeriveType>::EntryType>
 unsignedWedge(const MatrixBase<DeriveType>& v)
 {
     using DType = typename Traits<DeriveType>::EntryType;
-    size_t n = static_cast<size_t>(0.5 * (1 + sqrt(1 + 4 * v.shape(0) * 2)) + 0.5);
+    size_t n = static_cast<size_t>(0.5 * (1 + std::sqrt(1 + 4 * v.shape(0) * 2)) + 0.5);
     Matrix<DType> skew({n,n});
     size_t k = 0;
     for(size_t i = 1; i < skew.shape(0); i++)
@@ -165,7 +165,7 @@ Matrix<DType> skewFlattenedGeneralRodrigues(const Matrix<DType>& coeff, const Ve
     for(size_t i = 0; i < theta.size(); i++)
     {
         auto skew = unsignedWedge(coeff(Row(i)).T());
-        ret += sin(theta(i)) * skew + (1-cos(theta(i))) * skew.matmul(skew);
+        ret += mxm::sin(theta(i)) * skew + (DType(1) - mxm::cos(theta(i))) * skew.matmul(skew);
     }
     return ret;
 }
@@ -176,12 +176,12 @@ exp(const MatrixBase<DeriveType>& skew)
 {
     using DType = typename Traits<DeriveType>::EntryType;
     DType theta = findAngle<N>(skew);
-    if(abs(theta) < std::numeric_limits<DType>::epsilon())
+    if(mxm::abs(theta) < eps<typename Traits<DType>::ArithType>())
         return Matrix<DType>::identity(N);
 
     DType itheta = DType(1) / theta;
 
-    return Matrix<DType>::identity(N) + sin(theta) * itheta * skew + (1 - cos(theta)) * itheta * itheta * skew.matmul(skew);
+    return Matrix<DType>::identity(N) + mxm::sin(theta) * itheta * skew + (DType(1.) - mxm::cos(theta)) * itheta * itheta * skew.matmul(skew);
 }
 
 template <typename DType>
@@ -219,13 +219,13 @@ jacob(const MatrixBase<DeriveType>& skew)
     using DType = typename Traits<DeriveType>::EntryType;
     static const size_t N(3);
     auto angle = findAngle<N>(skew);
-    if(abs(angle) < eps<DType>()) return Matrix<DType>::identity(N);
+    if(mxm::abs(angle) < eps<typename Traits<DType>::ArithType>()) return Matrix<DType>::identity(N);
 
     auto i_angle = DType(1.) / angle;
     auto i_angle_2 = i_angle * i_angle;
     Matrix<DType> jac = Matrix<DType>::identity(N)
-        + skew * (1 - cos(angle)) * i_angle_2
-        + skew.matmul(skew) * (1 - sin(angle) * i_angle) * i_angle_2;
+        + skew * (1 - mxm::cos(angle)) * i_angle_2
+        + skew.matmul(skew) * (1 - mxm::sin(angle) * i_angle) * i_angle_2;
     return jac;
 }
 
@@ -236,7 +236,7 @@ jacobInv(const MatrixBase<DeriveType>& skew)
     using DType = typename Traits<DeriveType>::EntryType;
     static const size_t N(3);
     auto angle = findAngle<N>(skew);
-    if(abs(angle) < eps<DType>()) return Matrix<DType>::identity(N);
+    if(mxm::abs(angle) < eps<typename Traits<DType>::ArithType>()) return Matrix<DType>::identity(N);
 
     auto cot_half = DType(1.) / tan(0.5 * angle);
     auto i_angle = DType(1.) / angle;
@@ -276,7 +276,7 @@ findAngle(const MatrixBase<DeriveType>& mat)
 {
     using DType = typename Traits<DeriveType>::EntryType;
     DType cos_theta = 0.5 * (mat.trace() - N) + 1;
-    return acos(cos_theta);
+    return mxm::acos(cos_theta);
 }
 
 template<typename DType>
@@ -293,7 +293,7 @@ Vector<DType> findAngles(const Matrix<DType>& rot)
 
     for(size_t i = 0; i < n;)
     {
-        if(i < n-1 && abs(block_diag(i,i) - block_diag(i+1, i+1)) < tol && abs(block_diag(i+1,i) + block_diag(i,i+1)) < tol)
+        if(i < n-1 && mxm::abs(block_diag(i,i) - block_diag(i+1, i+1)) < tol && mxm::abs(block_diag(i+1,i) + block_diag(i,i+1)) < tol)
         {
             ret_data.push_back(findAngle<2>(block_diag(Block({i,i+2},{i,i+2}))));
             i += 2;
@@ -312,7 +312,7 @@ Matrix<DType> diannaMatrix(const Vector<DType>& theta)
 {
     Matrix<DType> ret({theta.size(), theta.size()});
     ret.traverse([&](auto i, auto j){
-        ret(i,j) = sin(DType(i + 1) * theta(j));
+        ret(i,j) = mxm::sin(DType(i + 1) * theta(j));
     });
     return ret;
 }
@@ -366,7 +366,7 @@ log(const MatrixBase<DeriveType>& rot_mat)
 {
     using DType = typename Traits<DeriveType>::EntryType;
     DType theta = findAngle<N>(rot_mat);
-    if(abs(theta) < eps<DType>()) return Matrix<DType>::zeros({3,3});
+    if(mxm::abs(theta) < eps<typename Traits<DType>::ArithType>()) return Matrix<DType>::zeros({3,3});
 
     auto plane = planeOfSingleRotation(rot_mat);
     auto axis = theta * orthogonalComplement(plane).normalized();
