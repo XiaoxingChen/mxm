@@ -140,13 +140,31 @@ public:
     ThisType & setOrientation(const Rotation<DType, DIM>& rot) { assert(DIM == rot.dim()); pose_.rotation() = rot; return *this; }
     ThisType & setDistortion(const DistortionPtr<DType>& p) { p_distortion_ = p; return *this; }
 
-    void operator=(const Camera& rhs)
+    Vector<DType> principalOffset() const { return c_; }
+    Vector<DType> focalLength() const { return f_; }
+    Vector<size_t> resolution() const { return resolution_; }
+    DistortionPtr<DType> distortion() const { return p_distortion_; }
+
+    template<typename RhsDType>
+    void operator=(const Camera<RhsDType, DIM>& rhs)
     {
-        pose_ = rhs.pose_;
-        f_ = rhs.f_;
-        c_ = rhs.c_;
-        resolution_ = rhs.resolution_;
-        p_distortion_ = rhs.p_distortion_;
+        pose_ = rhs.pose();
+        f_ = rhs.focalLength();
+        c_ = rhs.principalOffset();
+        resolution_ = rhs.resolution();
+        // p_distortion_ = rhs.distortion(); //todo
+        updateCameraMatrix();
+    }
+
+    // copy constructor
+    template<typename RhsDType>
+    Camera(const Camera<RhsDType, DIM>& rhs)
+    {
+        pose_ = rhs.pose();
+        f_ = rhs.focalLength();
+        c_ = rhs.principalOffset();
+        resolution_ = rhs.resolution();
+        // p_distortion_ = rhs.distortion(); //todo
         updateCameraMatrix();
     }
 
@@ -181,6 +199,7 @@ public:
         {
             norm_plane_points = p_distortion_->distort(norm_plane_points);
         }
+        // std::cout << mxm::to_string(norm_plane_points) << std::endl;
         return norm_plane_points * f_ + c_;
     }
 
@@ -230,7 +249,7 @@ private:
             cam_mat_(i,i) = f_(i);
             cam_mat_(i, pose_.dim() - 1) = c_(i);
 
-            cam_mat_inv_(i,i) = 1./ f_(i);
+            cam_mat_inv_(i,i) = DType(1.)/ f_(i);
             cam_mat_inv_(i, pose_.dim() - 1) = -c_(i) / f_(i);
         }
     }

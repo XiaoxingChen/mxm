@@ -5,6 +5,9 @@
 #include "rigid_transform.h"
 #include "optimize.h"
 #include "lie_special_orthogonal.h"
+#include "model_camera.h"
+#include "lie_special_orthogonal.h"
+#include "linalg_dual_number.h"
 
 namespace mxm
 {
@@ -257,9 +260,94 @@ epipolarLeastSquare(const Matrix<DType>& pts1, const Matrix<DType>& pts2, const 
     return ret;
     // return EpipolarOptimize<DType>::rotationFromIncrement(problem.state());
 }
+#if 1
+template<typename DType>
+class PerspectiveNPointOptimizer: public opt::NoneLinearProblem<DType>
+{
+public:
+    PerspectiveNPointOptimizer(const Matrix<DType>& pts3d, const Matrix<DType>& pts2d, const Camera<DType>& cam)
+    :pts3d_(pts3d), pts2d_(pts2d), pt_num_(pts3d.shape(1)), cam_(cam)
+    {
+        assert(pts2d.shape(1) == pts3d.shape(1));
+        assert(pts3d.shape(0) == 3);
+        assert(pts2d.shape(0) == 2);
 
+        this->residual_ = Vector<DType>(pt_num_ * 2);
+        this->jacobian_ = Matrix<DType>({pt_num_ * 2, 6});
+    }
 
+    template<typename DTypeLocal=DType>
+    Matrix<DTypeLocal> calcResidual(const Matrix<DTypeLocal>& t_state, const Matrix<DTypeLocal>& r_state) const
+    {
+        Camera<DTypeLocal, 3> cam(cam_);
+        cam.setPosition(t_state);
+        cam.setOrientation(Rotation<DTypeLocal, 3>::fromMatrix(so::exp<3>(so::wedge(r_state))));
+        Matrix<DTypeLocal> pts2d = cam.project(pts3d_);
+        Matrix<DTypeLocal> reprojection_error = pts2d - pts2d_;
 
+        Vector<DTypeLocal> residual(pt_num_ * 2);
+        reprojection_error.traverse([&](auto i, auto j)
+        {
+            residual(j * 2 + i) = reprojection_error(i,j);
+        });
+
+        return residual;
+    }
+
+    // state_: tx ty tx rx ry rz
+    // update: vector t, rotate matrix r
+    virtual void update(const Vector<DType>& increment) override
+    {
+
+        // update state vector
+        Matrix<DType> r_update({3,1});
+        for(size_t i = 0; i < 3; i++)
+        {
+            t_state_(i) += increment(i);
+            r_update(i, 0) = increment(i+3);
+        }
+        r_state_ = so::vee(  SO::log<3>(
+            so::exp<3>(so::wedge(r_update)) .matmul(
+            so::exp<3>(so::wedge(r_state_)) )
+            ));
+        // update residual
+        this->residual_ = calcResidual(t_state_, r_state_);
+
+        // update jacobian
+        for(size_t i = 0; i < 3; i++)
+        {
+            Matrix<DualNumber<DType>> t_state_eps(t_state_);
+            t_state_eps(i,0)(1) = 1;
+            Matrix<DualNumber<DType>> residual = calcResidual<DualNumber<DType>>(t_state_eps, r_state_);
+            this->jacobian_(Col(i)) = matrixAtPart(residual, 1);
+        }
+        for(size_t i = 0; i < 3; i++)
+        {
+            Matrix<DualNumber<DType>> r_state_eps(r_state_);
+            r_state_eps(i,0)(1) = 1;
+            Matrix<DualNumber<DType>> residual = calcResidual<DualNumber<DType>>(t_state_, r_state_eps);
+            this->jacobian_(Col(i+3)) = matrixAtPart(residual, 1);
+        }
+    }
+
+    void initialGuess(const Matrix<DType>& t_init, const Matrix<DType>& r_init)
+    {
+        t_state_ = t_init;
+        r_state_ = r_init;
+        update(Vector<DType>::zeros(this->jac().shape(1)));
+    }
+    const Vector<DType>& tState() const { return t_state_; }
+    const Matrix<DType>& rState() const { return r_state_; }
+
+private:
+    Matrix<DualNumber<DType>> pts3d_;
+    Matrix<DualNumber<DType>> pts2d_;
+    Camera<DualNumber<DType>> cam_;
+    size_t pt_num_;
+    Vector<DType> t_state_; // 3x1
+    Matrix<DType> r_state_; // 3x1
+};
+#endif
 } // namespace mxm
 
 

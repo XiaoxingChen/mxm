@@ -45,8 +45,19 @@ void testDualNumberTypeConversion()
 
 }
 
+void testDualNumberTypeCast()
+{
+    float a = DualNumber<float>(3.);
+    if(abs(a - 3.) > 0)
+    {
+        std::cout << "a: " << a << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 void testDualNumber()
 {
     dualNumberTest01();
     testDualNumberTypeConversion();
+    testDualNumberTypeCast();
 }

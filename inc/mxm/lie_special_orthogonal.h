@@ -37,7 +37,7 @@ findAngle(const MatrixBase<DeriveType>& skew)
     DType x = skew(2,1);
     DType y = skew(0,2);
     DType z = skew(1,0);
-    return sqrt(x*x + y*y + z*z);
+    return mxm::sqrt(x*x + y*y + z*z);
 }
 
 template<typename DType>
@@ -175,9 +175,11 @@ std::enable_if_t<3 == N, Matrix<typename Traits<DeriveType>::EntryType>>
 exp(const MatrixBase<DeriveType>& skew)
 {
     using DType = typename Traits<DeriveType>::EntryType;
+    using ArithType = typename Traits<DType>::ArithType;
     DType theta = findAngle<N>(skew);
     if(mxm::abs(theta) < eps<typename Traits<DType>::ArithType>())
-        return Matrix<DType>::identity(N);
+    // if(mxm::isZero(theta, static_cast<ArithType*>(nullptr), eps<ArithType>()))
+        return Matrix<DType>::identity(N) + skew;
 
     DType itheta = DType(1) / theta;
 

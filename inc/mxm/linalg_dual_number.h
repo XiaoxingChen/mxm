@@ -39,6 +39,20 @@ struct Traits<DualNumber<DType>>{
     static DualNumber<DType> zero() { return DualNumber<DType>(0); }
 };
 
+#if 0
+template<typename DType>
+bool isZero(
+    const DualNumber<DType>& val,
+    typename Traits<DType>::ArithType* p_error,
+    typename Traits<DType>::ArithType tol)
+{
+    using ArithType = typename Traits<DType>::ArithType;
+    ArithType error = std::sqrt(val(0)*val(0) + val(1) * val(1));
+    if(p_error) *p_error = error;
+    return error < tol;
+}
+#endif
+
 template<typename DType>
 std::string to_string(const DualNumber<DType>& v, size_t prec)
 {
@@ -141,7 +155,10 @@ abs(const DualNumber<DType>& val)
 template<typename DType> DualNumber<DType>
 sqrt(const DualNumber<DType>& val)
 {
-    return {std::sqrt(val(0)), DType(-0.5) * val(1) / std::sqrt(val(0))};
+    DType val_0_sqrt = std::sqrt(val(0));
+    if(val_0_sqrt < eps<DType>())
+        return {0, DType(0.5) * val(1) * INFINITY};
+    return {val_0_sqrt, DType(0.5) * val(1) / val_0_sqrt};
 }
 
 template<typename DType> DualNumber<DType>
@@ -161,7 +178,7 @@ pow(const DualNumber<DType>& val, DType exp)
 {
     return {
         std::pow<DType>(val(0), exp),
-        (exp - DType(1))* std::pow<DType>(val(0), exp - DType(1)) * val(1)};
+        exp * std::pow<DType>(val(0), exp - DType(1)) * val(1)};
 }
 
 template<typename DType> DualNumber<DType>

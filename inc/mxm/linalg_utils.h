@@ -287,5 +287,16 @@ template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, 
 template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> pow(DType val, DType exp) { return std::pow(val, exp); }
 template<typename DType> std::enable_if_t<std::is_floating_point<DType>::value, DType> exp(DType val) { return std::exp(val); }
 
+template<typename DType>
+std::enable_if_t<std::is_floating_point<DType>::value, bool>
+isZero(DType val, DType* p_error, DType tol)
+{
+    DType error = std::abs(val);
+    if(p_error) *p_error = error;
+    return error < tol;
+}
+
+
+
 } // namespace mxm
 #endif // _LINALG_UTILS_H

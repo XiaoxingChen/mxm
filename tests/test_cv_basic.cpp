@@ -10,6 +10,7 @@
 #include "mxm/cv_3d.h"
 #include "mxm/model_camera.h"
 #include "mxm/lie_special_orthogonal.h"
+#include "mxm/geometry_cube.h"
 
 
 using namespace mxm;
@@ -532,6 +533,40 @@ void testEpipolarGeometry()
 #endif
 }
 
+
+void testPnP()
+{
+#if 1
+    std::vector<size_t> cali_board_reso{8,8};
+    Matrix<float> pts3d({3, cali_board_reso.at(0) * cali_board_reso.at(1)});
+    pts3d.setBlock(0,0, generateNCubeVertices({5e-1, 5e-1}, cali_board_reso) );
+    Camera<float, 3> cam;
+    cam.setResolution({500, 500}).setFov({M_PI /3,M_PI /3}).setPosition({0, 0, -2});
+
+    Matrix<float> pts2d = cam.project(pts3d);
+    // std::cout << mxm::to_string(pts3d) << std::endl;
+    // std::cout << mxm::to_string(pts2d) << std::endl;
+
+    PerspectiveNPointOptimizer<float> problem(pts3d, pts2d, cam);
+    problem.initialGuess(Vector<float>{0.2,0.2, -2.1}, Vector<float>{0.1, -0.02, 0.05});
+    problem.solve(6, 0, "gn");
+
+    if(! isZero(problem.tState() - cam.pose().translation(), nullptr, eps<float>() * 5))
+    {
+        std::cout << mxm::to_string(problem.tState()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(! isZero(problem.rState() - so::vee(SO::log<3>(cam.pose().rotation().asMatrix())), nullptr, eps<float>() * 5))
+    {
+        std::cout << mxm::to_string(problem.rState()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+#endif
+}
+
+
 void testCvBasic()
 {
     testPixel();
@@ -543,6 +578,7 @@ void testCvBasic()
     testHomography();
     testICP();
     testEpipolarGeometry();
+    testPnP();
 }
 #else
 void testCvBasic(){}
