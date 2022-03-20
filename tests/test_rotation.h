@@ -14,8 +14,8 @@ using namespace mxm;
 
 inline void rotationTestCase1()
 {
-    auto r1 = Rotation<float>::fromAxisAngle(Vec({0,0,1}), 0.4);
-    auto r2 = Rotation<float>::fromAxisAngle(Vec({0,0,1}), 0.2);
+    auto r1 = Rotation<float>::fromAxisAngle({0,0,1}, 0.4);
+    auto r2 = Rotation<float>::fromAxisAngle({0,0,1}, 0.2);
     Vec v({1,0,0});
     auto result = (r1 * r2).apply(v);
     Vec expect({0.82533561, 0.56464247, 0.});
@@ -97,7 +97,7 @@ inline void rotationTestDeterminant()
 {
     for(size_t i = 0; i < 10; i++)
     {
-        auto r(Rotation<float>::fromAxisAngle(Vec({1.,1,1}), 0.1 * i));
+        auto r(Rotation<float>::fromAxisAngle({1.,1,1}, 0.1 * i));
         if(fabs(mxm::det(r.asMatrix()) - 1) > 4 * eps())
         {
             std::cout << mxm::det(r.asMatrix()) - 1 << std::endl;

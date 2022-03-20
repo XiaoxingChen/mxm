@@ -70,30 +70,30 @@ using namespace mxm;
 ```cpp
 Rotation r1 = Rotation::fromAngle(0.1);
 Rotation r2 = Rotation::fromAngle(0.5);
-Vec v1 = (r1 * r2).apply(Vec({1,2}));
+Vec v1 = (r1 * r2).apply({1,2});
 ```
 
 - 3D Rotation
 
 ```cpp
-Rotation r1 = Rotation::fromAxisAngle(Vec({0,0,1}), 0.5);
-Rotation r2 = Rotation::fromAxisAngle(Vec({0,1,0}), 0.3);
-Vec v1 = (r1 * r2).apply(Vec({1,2,3}));
+Rotation r1 = Rotation::fromAxisAngle({0,0,1}, 0.5);
+Rotation r2 = Rotation::fromAxisAngle({0,1,0}, 0.3);
+Vec v1 = (r1 * r2).apply({1,2,3});
 ```
 
 - 4D Rotation
 
 ```cpp
 // Rotation::fromPlaneAngle() is available for any dimensional rotation.
-Rotation r1 = Rotation::fromPlaneAngle(Vec({1,0,0,0}), Vec({0,1,0,0}), 0.5);
-Vec v1 = r1.apply(Vec({1,2,3,4}));
+Rotation r1 = Rotation::fromPlaneAngle({1,0,0,0}, {0,1,0,0}, 0.5);
+Vec v1 = r1.apply({1,2,3,4});
 ```
 
 - 3D Rigid Body Transform
 
 ```cpp
 RigidTrans tf = RigidTrans::identity(3);
-Vec v1 = tf.apply(Vec({1,0,0}));
+Vec v1 = tf.apply({1,0,0});
 ```
 
 ## 3. Space Indexing
@@ -134,7 +134,24 @@ size_t k = 5;
 std::multimap<FloatType, size_t> knn_result = tree.nearestNeighborSearch(target_pt, k);
 ```
 
+## 4. None-linear Optimization with Auto Derivative
 
+```cpp
+    std::vector<size_t> cali_board_reso{8,8};
+    Matrix<float> pts3d({3, cali_board_reso.at(0) * cali_board_reso.at(1)});
+    pts3d.setBlock(0,0, generateNCubeVertices({5e-1, 5e-1}, cali_board_reso) );
+    Camera<float, 3> cam;
+    cam.setResolution({500, 500}).setFov({M_PI /3,M_PI /3}).setPosition({0, 0, -2});
+
+    Matrix<float> pts2d = cam.project(pts3d);
+
+    PerspectiveNPointOptimizer<float> problem(pts3d, pts2d, cam);
+    problem.initialGuess(Vector<float>{0.2,0.2, -2.1}, Vector<float>{0.1, -0.02, 0.05});
+    problem.solve(6, 0, "gn");
+
+    std::cout << mxm::to_string(problem.tState()) << std::endl;
+    std::cout << mxm::to_string(problem.rState()) << std::endl;
+```
 
 # Projects using mxm
 1. [ray_tracing_4d](https://github.com/XiaoxingChen/ray_tracing_4d)
