@@ -14,14 +14,34 @@ template<typename DType>
 class Distortion;
 template<typename DType>
 using DistortionPtr = std::shared_ptr<Distortion<DType>>;
+
+template<typename DType>
+class RadialTangentialDistortion;
+enum DistortionModel
+{
+    ERadialTangential = 0
+};
 template<typename DType=float>
 class Distortion
 {
 public:
+
     virtual Matrix<DType> distort(const Matrix<DType>& pts_3d) const = 0;
     virtual Matrix<DType> undistort(const Matrix<DType>& pts_3d) const = 0;
+    virtual DistortionModel type() const = 0;
+
     static DistortionPtr<DType> radialTangential(const std::vector<DType>& params);
 };
+
+template<typename DType, typename DTypeClone = DType>
+DistortionPtr<DTypeClone> clone(DistortionPtr<DType> base_ptr)
+{
+    if(nullptr == base_ptr) return nullptr;
+    if(DistortionModel::ERadialTangential == base_ptr->type())
+        return std::make_shared<RadialTangentialDistortion<DTypeClone>>(
+            * static_cast<RadialTangentialDistortion<DType>*>(base_ptr.get()) );
+    return nullptr;
+}
 
 
 // Reference:
@@ -48,11 +68,33 @@ public:
             k_(5) = *(v.begin() + 7);
         }
     }
-    DType radial(DType r2) const { return (1 + ((k_(2) * r2 + k_(1))*r2 + k_(0)) * r2) / (1 + ((k_(5) * r2 + k_(4))*r2 + k_(3)) * r2); }
+    template<typename RhsDType=DType>
+    RadialTangentialDistortion(const RadialTangentialDistortion<RhsDType>& rhs)
+        :k_(rhs.k()), p_(rhs.p()) {}
+
+    template<typename RhsDType=DType>
+    void operator = (const RadialTangentialDistortion<RhsDType>& rhs)
+    {
+        k_ = rhs.k();
+        p_ = rhs.p();
+    }
+
+    const Vector<DType>& k() const { return k_; }
+    Vector<DType>& k() { return k_; }
+
+    const Vector<DType>& p() const { return p_; }
+    Vector<DType>& p() { return p_; }
+
+    virtual DistortionModel type() const override
+    {
+        return DistortionModel::ERadialTangential;
+    }
+
+    DType radial(DType r2) const { return (DType(1) + ((k_(2) * r2 + k_(1))*r2 + k_(0)) * r2) / (DType(1) + ((k_(5) * r2 + k_(4))*r2 + k_(3)) * r2); }
     DType tangential(size_t axis, DType r2, DType x, DType y) const
     {
-        if(0 == axis) return 2*p_(0)*x*y + p_(1)*(r2 + 2*x*x);
-        if(1 == axis) return 2*p_(1)*x*y + p_(0)*(r2 + 2*y*y);
+        if(0 == axis) return DType(2)*p_(0)*x*y + p_(1)*(r2 + DType(2)*x*x);
+        if(1 == axis) return DType(2)*p_(1)*x*y + p_(0)*(r2 + DType(2)*y*y);
         return 0;
     }
 
@@ -63,7 +105,7 @@ public:
         Matrix<DType> ret(homo_pts.shape());
         for(size_t i = 0; i < homo_pts.shape(1); i++)
         {
-            assert(2 == homo_pts.shape(0) || norm(homo_pts(2, i) - DType(1)) < std::numeric_limits<DType>::epsilon());
+            assert(2 == homo_pts.shape(0) || norm(homo_pts(2, i) - DType(1)) < eps<typename Traits<DType>::ArithType>());
 
             const auto& x = homo_pts(0, i);
             const auto& y = homo_pts(1, i);
@@ -140,9 +182,9 @@ public:
     ThisType & setOrientation(const Rotation<DType, DIM>& rot) { assert(DIM == rot.dim()); pose_.rotation() = rot; return *this; }
     ThisType & setDistortion(const DistortionPtr<DType>& p) { p_distortion_ = p; return *this; }
 
-    Vector<DType> principalOffset() const { return c_; }
-    Vector<DType> focalLength() const { return f_; }
-    Vector<size_t> resolution() const { return resolution_; }
+    const Vector<DType>& principalOffset() const { return c_; }
+    const Vector<DType>& focalLength() const { return f_; }
+    const Vector<size_t>& resolution() const { return resolution_; }
     DistortionPtr<DType> distortion() const { return p_distortion_; }
 
     template<typename RhsDType>
@@ -152,7 +194,7 @@ public:
         f_ = rhs.focalLength();
         c_ = rhs.principalOffset();
         resolution_ = rhs.resolution();
-        // p_distortion_ = rhs.distortion(); //todo
+        p_distortion_ = clone<RhsDType, DType>(rhs.distortion());
         updateCameraMatrix();
     }
 
@@ -164,7 +206,7 @@ public:
         f_ = rhs.focalLength();
         c_ = rhs.principalOffset();
         resolution_ = rhs.resolution();
-        // p_distortion_ = rhs.distortion(); //todo
+        p_distortion_ = clone<RhsDType, DType>(rhs.distortion());
         updateCameraMatrix();
     }
 

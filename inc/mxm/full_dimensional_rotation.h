@@ -27,7 +27,12 @@ public:
         matrix_ = rhs.asMatrix();
     }
 
-    template<typename RhsDType=DType>
+    void operator = (const ThisType& rhs)
+    {
+        matrix_ = rhs.asMatrix();
+    }
+
+    template<typename RhsDType>
     void operator = (const Rotation<RhsDType, DIM>& rhs)
     {
         matrix_ = rhs.asMatrix();

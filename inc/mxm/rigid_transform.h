@@ -24,6 +24,8 @@ public:
     RigidTransform(const Translation& p): translation_(p), rotation_(Rotation<DType, DIM>::identity())
     {}
 
+    RigidTransform() {}
+
     template<typename RhsDType=DType>
     RigidTransform(const RigidTransform<RhsDType, DIM>& rhs)
     {

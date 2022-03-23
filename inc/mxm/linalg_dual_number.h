@@ -11,7 +11,6 @@
 #include <cmath>
 #include <limits>
 #include "common.h"
-// #include "linalg_norm.h"
 #include <initializer_list>
 
 namespace mxm
@@ -152,6 +151,12 @@ abs(const DualNumber<DType>& val)
     return std::abs(val(0));
 }
 
+template<typename DType> DType
+norm(const DualNumber<DType>& val)
+{
+    return std::abs(val(0));
+}
+
 template<typename DType> DualNumber<DType>
 sqrt(const DualNumber<DType>& val)
 {
@@ -164,13 +169,13 @@ sqrt(const DualNumber<DType>& val)
 template<typename DType> DualNumber<DType>
 asin(const DualNumber<DType>& val)
 {
-    return std::asin(val(0)) + DType(1.) / mxm::sqrt(1 - val * val) * DualNumber<DType>({0, val(1)});
+    return {std::asin(val(0)), val(1) / mxm::sqrt(1 - val(0) * val(0)) };
 }
 
 template<typename DType> DualNumber<DType>
 acos(const DualNumber<DType>& val)
 {
-    return std::acos(val(0)) + DType(-1.) / mxm::sqrt(1 - val * val) * DualNumber<DType>({0, val(1)});
+    return {std::asin(val(0)), DType(-1.) * val(1) / mxm::sqrt(1 - val(0) * val(0)) };
 }
 
 template<typename DType> DualNumber<DType>

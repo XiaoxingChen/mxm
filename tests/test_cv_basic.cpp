@@ -11,6 +11,7 @@
 #include "mxm/model_camera.h"
 #include "mxm/lie_special_orthogonal.h"
 #include "mxm/geometry_cube.h"
+#include "mxm/cv_calibration.h"
 
 
 using namespace mxm;
@@ -566,6 +567,88 @@ void testPnP()
 #endif
 }
 
+void testPinholeCalibration()
+{
+#if 1
+    using DType = double;
+    std::vector<size_t> cali_board_reso{8,8};
+    size_t frame_num = 4;
+    Vector<RigidTransform<DType, 3>> poses(frame_num);
+    poses(0).translation() = Vector<DType>{0.0,0.0,-2};
+    poses(1).translation() = Vector<DType>{0.0,0.2,-2};
+    poses(2).translation() = Vector<DType>{0.2,0.0,-2};
+    poses(3).translation() = Vector<DType>{0.1,0.3,-2};
+
+    poses(0).rotation() = Rotation<DType, 3>::fromAxisAngle({0,0,1}, 0.0);
+    poses(1).rotation() = Rotation<DType, 3>::fromAxisAngle({-1,0,0}, 0.1);
+    poses(2).rotation() = Rotation<DType, 3>::fromAxisAngle({0,1,0}, 0.1);
+    poses(3).rotation() = Rotation<DType, 3>::fromAxisAngle({0,1,0}, 0.1);
+
+    Matrix<DType> pts3d({3, cali_board_reso.at(0) * cali_board_reso.at(1)});
+    pts3d.setBlock(0,0, generateNCubeVertices({5e-1, 5e-1}, cali_board_reso) );
+    Camera<DType, 3> cam;
+    auto p_distor = Distortion<DType>::radialTangential({-0.28340811, 0.07395907, 0.00019359, 1.76187114e-05});
+    cam.setDistortion(p_distor);
+    cam.setFocalLength({457.296, 458.654}).setResolution({480, 752}).setPrincipalOffset({248.375, 367.215});
+
+    Vector<Matrix<DType>> pts2d(frame_num);
+    for(size_t i = 0; i < frame_num; i++)
+    {
+        cam.setPose(poses(i));
+        pts2d(i) = cam.project(pts3d);
+    }
+    // std::cout << mxm::to_string(pts3d) << std::endl;
+    // std::cout << mxm::to_string(pts2d) << std::endl;
+    Vector<RigidTransform<DType, 3>> pose_guess(poses);
+    for(size_t i = 0; i < frame_num; i++)
+    {
+        pose_guess(i) = RigidTransform<DType, 3>::identity();
+        pose_guess(i).translation()(2) = -2;
+    }
+
+    Camera<DType, 3> cam_guess(cam);
+    cam_guess.setFocalLength(Vector<DType>{500, 500});
+    cam_guess.setPrincipalOffset(Vector<DType>{250, 0.5 * 752});
+    cam_guess.setDistortion(Distortion<DType>::radialTangential({0,0,0,0}));
+
+    PinholeCameraIntrinsicEstimator<DType> problem(pts3d, pts2d);
+    problem.initialGuess(pose_guess, cam_guess);
+    problem.solve(5, 0, "gn");
+
+    if(!isZero(cam.focalLength() - problem.camera().focalLength(), nullptr, 1e-4))
+    {
+        std::cout << "f: " << mxm::to_string(problem.camera().focalLength().T()) << std::endl;
+        std::cout << "expected: " << mxm::to_string(cam.focalLength().T()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(!isZero(cam.principalOffset() - problem.camera().principalOffset(), nullptr, 1e-4))
+    {
+        std::cout << "c: " << mxm::to_string(problem.camera().principalOffset().T()) << std::endl;
+        std::cout << "expected: " << mxm::to_string(cam.principalOffset().T()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    auto distort_result = *static_cast< RadialTangentialDistortion<DType>*>(problem.camera().distortion().get());
+    auto distort_expect = *static_cast< RadialTangentialDistortion<DType>*>(cam.distortion().get());
+
+    if(!isZero(distort_result.k() - distort_expect.k(), nullptr, 1e-5))
+    {
+        std::cout << "k: " << mxm::to_string(distort_result.k().T()) << std::endl;
+        std::cout << "expected: " << mxm::to_string(distort_expect.k().T()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(!isZero(distort_result.p() - distort_expect.p(), nullptr, 1e-8))
+    {
+        std::cout << "k: " << mxm::to_string(distort_result.p().T()) << std::endl;
+        std::cout << "expected: " << mxm::to_string(distort_expect.p().T()) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+#endif
+}
+
 
 void testCvBasic()
 {
@@ -579,6 +662,7 @@ void testCvBasic()
     testICP();
     testEpipolarGeometry();
     testPnP();
+    testPinholeCalibration();
 }
 #else
 void testCvBasic(){}
