@@ -30,10 +30,10 @@ template<template <class, class> class Container, class T, class Alloc>
 std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
 {
     std::string ret;
-    for(size_t i = 0; i < container.size(); i++)
+    for(auto it = container.begin(); it != container.end(); it++)
     {
-        ret += to_string(container.at(i), prec);
-        ret += (i == container.size() - 1 ? "" : ret.back() == '\n' ? "\n" : " ");
+        ret += to_string(*it, prec);
+        ret += (it == container.end() - 1 ? "" : ret.back() == '\n' ? "\n" : " ");
     }
     return ret;
 }
