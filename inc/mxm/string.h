@@ -38,6 +38,18 @@ std::string to_string(const Container<T, Alloc>& container, size_t prec=6)
     return ret;
 }
 
+template<template <class, class, class> class Container, class T, class Comp, class Alloc>
+std::string to_string(const Container<T, Comp, Alloc>& container, size_t prec)
+{
+    std::string ret;
+    for(auto it = container.begin(); it != container.end(); it++)
+    {
+        ret += to_string(*it, prec);
+        ret += (it == std::prev(container.end()) ? "" : ret.back() == '\n' ? "\n" : " ");
+    }
+    return ret;
+}
+
 template<class T, size_t N>
 std::string to_string(const std::array<T, N>& container, size_t prec)
 {

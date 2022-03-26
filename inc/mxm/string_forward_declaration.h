@@ -51,6 +51,10 @@ class BriefDescriptor;
 template<uint8_t K>
 std::string to_string(const BriefDescriptor<K>& v, size_t prec=6);
 
+// std::set to string
+template<template <class, class, class> class Container, class T, class Comp, class Alloc>
+std::string to_string(const Container<T, Comp, Alloc>& container, size_t prec=6);
+
 } // namespace mxm
 
 #endif // _STRING_FORWARD_DECLARATION_H_
