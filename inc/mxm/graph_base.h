@@ -101,7 +101,10 @@ public:
     const std::vector<size_t>& neighbors(size_t v_index) const { return neighbors_.at(v_index); }
     std::vector<size_t>& neighbors(size_t v_index) { return neighbors_.at(v_index); }
 
-    void initSuccessorList(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    const std::vector<size_t>& successors(size_t v_index) const { return neighbors(v_index); }
+    std::vector<size_t>& successors(size_t v_index) { return neighbors(v_index); }
+
+    void initNeighborList(size_t vertex_num, const Matrix<size_t>& edge_buffer)
     {
         neighbors_.resize(vertex_num);
         for(size_t i = 0; i < edge_buffer.shape(1); i++)
@@ -111,8 +114,30 @@ public:
         }
     }
 
+    void initEdgeIndices(const Matrix<size_t>& edge_buffer)
+    {
+        edge_num_ = edge_buffer.shape(1);
+        for(size_t i = 0; i < edge_buffer.shape(1); i++)
+        {
+            size_t from = std::min(edge_buffer(0, i), edge_buffer(1, i));
+            size_t to = std::max(edge_buffer(0, i), edge_buffer(1, i));
+            edge_index_[{from, to}] = i;
+        }
+    }
+
+    // binary edge interface
+    size_t edgeIndex(size_t v1, size_t v2) const
+    {
+        size_t from = std::min(v1, v2);
+        size_t to = std::max(v1, v2);
+        if(0 == edge_index_.count({from, to})) return edge_num_ + 1;
+        return edge_index_.at({from, to});
+    }
+
 protected:
+    size_t edge_num_ = 0;
     std::vector<std::vector<size_t>> neighbors_;
+    std::map<std::array<size_t, 2>, size_t > edge_index_;
 };
 
 template<typename WeightType>
@@ -229,10 +254,29 @@ public:
         initSuccessorList(vertexNum(), edges);
     }
 
-    DType distance(size_t from, size_t to) const
+    DType weight(size_t from, size_t to) const
     {
         size_t edge_index = edgeIndex(from, to);
-        return this->weight(edge_index);
+        return WeightedEdge<DType>::weight(edge_index);
+    }
+protected:
+};
+
+class UndirectedGraph: public GraphBase, public UndirectedBinaryEdge
+{
+public:
+    UndirectedGraph(): GraphBase()
+    {
+    }
+
+    UndirectedGraph(size_t vertex_num): GraphBase(vertex_num)
+    {
+    }
+
+    void initEdges(const Matrix<size_t>& edges)
+    {
+        initEdgeIndices(edges);
+        initNeighborList(vertexNum(), edges);
     }
 protected:
 };

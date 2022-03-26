@@ -8,7 +8,7 @@ namespace mxm
 {
 
 template<typename GraphType>
-std::vector<size_t> dijkstra(
+std::vector<size_t> dijkstraBestPredecessor(
     const GraphType& g,
     size_t start)
 {
@@ -29,9 +29,9 @@ std::vector<size_t> dijkstra(
         for(auto & succ_idx: g.successors(target_idx))
         {
             if(visited.count(succ_idx) > 0) continue;
-            DType local_distance = g.distance(target_idx, succ_idx);
+            DType local_distance = g.weight(target_idx, succ_idx);
 
-            if(local_distance < g.distance(best_pred.at(succ_idx), succ_idx))
+            if(local_distance < g.weight(best_pred.at(succ_idx), succ_idx))
             {
                 best_pred.at(succ_idx) = target_idx;
             }
@@ -46,15 +46,16 @@ std::vector<size_t> dijkstra(
 }
 
 template<typename GraphType>
-typename GraphType::DistanceType
+std::vector<size_t>
 pathFromBestPredecessor(
     const GraphType& g,
     const std::vector<size_t>& best_pred,
     size_t destination,
-    std::vector<size_t>* p_path=nullptr)
+    typename GraphType::DistanceType& distance)
 {
-    if(p_path) p_path->clear();
-    typename GraphType::DistanceType distance = 0;
+    std::vector<size_t> path;
+    path.clear();
+    distance = 0;
 
     size_t p = destination;
     while(best_pred.at(p) != p)
@@ -62,21 +63,35 @@ pathFromBestPredecessor(
         size_t pred = best_pred.at(p);
         if(! g.validVertex(pred))
         {
-            if(p_path) p_path->clear();
-            return INFINITY;
+            path.clear();
+            distance = INFINITY;
+            return path;
         }
-        distance += g.distance(pred, p);
+        distance += g.weight(pred, p);
         p = pred;
-        if(p_path) p_path->push_back(p);
+        path.push_back(p);
     }
 
-    if(p_path)
     {
-        std::reverse(p_path->begin(), p_path->end());
-        p_path->push_back(destination);
+        std::reverse(path.begin(), path.end());
+        path.push_back(destination);
     }
 
-    return distance;
+    return path;
+}
+
+template<typename GraphType>
+std::vector<size_t> dijkstra(
+    const GraphType& g,
+    size_t start,
+    size_t dest,
+    typename GraphType::DistanceType* p_distance)
+{
+    auto best_predecessor = dijkstraBestPredecessor(g, start);
+    typename GraphType::DistanceType distance;
+    auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
+    if(p_distance) *p_distance = distance;
+    return path;
 }
 
 } // namespace mxm
