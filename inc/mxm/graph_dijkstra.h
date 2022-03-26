@@ -7,32 +7,36 @@
 namespace mxm
 {
 
-inline std::vector<size_t> dijkstra(const SparseDirectedWeightedGraph& g, size_t start)
+template<typename GraphType>
+std::vector<size_t> dijkstra(
+    const GraphType& g,
+    size_t start)
 {
-    std::multimap<FloatType, size_t> que;
+    using DType = typename GraphType::DistanceType;
+    std::multimap<DType, size_t> que;
     que.insert({0, start});
 
     std::set<size_t> visited;
     visited.insert(start);
 
-    std::vector<size_t> best_pred(g.nodeNum(), g.nodeNum());
+    std::vector<size_t> best_pred(g.vertexNum(), g.vertexNum());
 
     while(! que.empty())
     {
         size_t target_idx = que.begin()->second;
         que.erase(que.begin());
 
-        for(auto & dist_idx_pair: g.successors(target_idx))
+        for(auto & succ_idx: g.successors(target_idx))
         {
-            size_t succ_idx = dist_idx_pair.second;
             if(visited.count(succ_idx) > 0) continue;
+            DType local_distance = g.distance(target_idx, succ_idx);
 
-            if(g.distance(target_idx, succ_idx) < g.distance(best_pred.at(succ_idx), succ_idx))
+            if(local_distance < g.distance(best_pred.at(succ_idx), succ_idx))
             {
                 best_pred.at(succ_idx) = target_idx;
             }
 
-            que.insert(dist_idx_pair);
+            que.insert({local_distance, succ_idx});
         }
         visited.insert(target_idx);
     }
@@ -41,30 +45,37 @@ inline std::vector<size_t> dijkstra(const SparseDirectedWeightedGraph& g, size_t
     return best_pred;
 }
 
-FloatType pathFromBestPredecessor(
-    const SparseDirectedWeightedGraph& g,
+template<typename GraphType>
+typename GraphType::DistanceType
+pathFromBestPredecessor(
+    const GraphType& g,
     const std::vector<size_t>& best_pred,
     size_t destination,
-    std::vector<size_t>& path)
+    std::vector<size_t>* p_path=nullptr)
 {
-    path.clear();
-    FloatType distance = 0;
+    if(p_path) p_path->clear();
+    typename GraphType::DistanceType distance = 0;
 
     size_t p = destination;
     while(best_pred.at(p) != p)
     {
         size_t pred = best_pred.at(p);
-        if(! g.valid(pred))
+        if(! g.validVertex(pred))
         {
-            path.clear();
+            if(p_path) p_path->clear();
             return INFINITY;
         }
         distance += g.distance(pred, p);
         p = pred;
-        path.push_back(p);
+        if(p_path) p_path->push_back(p);
     }
-    std::reverse(path.begin(), path.end());
-    path.push_back(destination);
+
+    if(p_path)
+    {
+        std::reverse(p_path->begin(), p_path->end());
+        p_path->push_back(destination);
+    }
+
     return distance;
 }
 
