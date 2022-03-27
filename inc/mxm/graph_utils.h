@@ -8,7 +8,8 @@ namespace mxm
 {
 
 template<typename GraphType>
-void connectedComponentsDFS(
+std::enable_if_t<!GraphType::directed(), void>
+connectedComponentsDFS(
     const GraphType& g,
     size_t vertex_idx,
     std::set<size_t>& unvisited,
@@ -23,12 +24,10 @@ void connectedComponentsDFS(
     }
 }
 
-//
-// GraphType requirements:
-// size_t GraphType::vertexNum()
-// std::vector<size_t> GraphType::adjacency()
+
 template<typename GraphType>
-std::vector<std::set<size_t>> connectedComponents(const GraphType& g)
+std::enable_if_t<!GraphType::directed(), std::vector<std::set<size_t>>>
+connectedComponents(const GraphType& g)
 {
     std::set<size_t> unvisited;
     std::vector<std::set<size_t>> ret;
@@ -43,6 +42,68 @@ std::vector<std::set<size_t>> connectedComponents(const GraphType& g)
     return ret;
 }
 
+template<typename GraphType>
+void weaklyConnectedComponentsDFS(
+    const GraphType& g,
+    size_t target,
+    std::set<size_t>& unvisited,
+    std::vector<std::set<size_t>>& component_list,
+    std::set<size_t>& touched_components)
+{
+    if(unvisited.count(target) == 0)
+    {
+        // target visited
+        for(size_t i = 0; i < component_list.size(); i++)
+        {
+            if(component_list.at(i).count(target) > 0)
+            {
+                touched_components.insert(i);
+                break;
+            }
+        }
+        return ;
+    }
+    unvisited.erase(target);
+    component_list.back().insert(target);
+
+    for(const auto & adj: g.adjacency(target))
+    {
+        weaklyConnectedComponentsDFS(g, adj, unvisited, component_list, touched_components);
+    }
+}
+
+template<typename GraphType>
+std::vector<std::set<size_t>>
+weaklyConnectedComponents(const GraphType& g)
+{
+    std::set<size_t> unvisited;
+    std::vector<std::set<size_t>> component_list;
+    for(size_t i = 0; i < g.vertexNum(); i++) unvisited.insert(i);
+
+    while(! unvisited.empty())
+    {
+        component_list.push_back(std::set<size_t>());
+        auto target = *unvisited.begin();
+        std::set<size_t> touched_components; // ascending order
+        weaklyConnectedComponentsDFS(g, target, unvisited, component_list, touched_components);
+
+        if(touched_components.size() == 0) continue;
+        // merge touched components
+        auto min_comp_idx = *std::min_element(touched_components.begin(), touched_components.end());
+        touched_components.erase(min_comp_idx);
+        for(const auto & comp_idx: touched_components)
+        {
+            const auto & comp_to_be_merged = component_list.at(comp_idx);
+            component_list.at(min_comp_idx).insert(comp_to_be_merged.cbegin(), comp_to_be_merged.cend());
+        }
+        for(auto it = touched_components.rbegin(); it != touched_components.rend(); it++)
+        {
+            component_list.erase(component_list.begin() + (*it));
+        }
+    }
+    return component_list;
+}
+
 // For undirected graph
 template <typename GraphType>
 bool isConnected(const GraphType& g)
@@ -51,11 +112,25 @@ bool isConnected(const GraphType& g)
 }
 
 template <typename GraphType>
-bool isCyclic(const GraphType& g, bool do_connectivity_test=true)
+bool isWeaklyConnected(const GraphType& g)
 {
-    if(do_connectivity_test && !isConnected(g))
-        return false;
-    return g.vertexNum() + 1 < g.edgeNum();
+    return weaklyConnectedComponents(g).size() == 1;
+}
+
+template <typename GraphType>
+std::enable_if_t<!GraphType::directed(), bool>
+isCyclic(const GraphType& g)
+{
+    size_t component_num = connectedComponents(g).size();
+    return g.vertexNum() < g.edgeNum() + component_num;
+}
+
+template <typename GraphType>
+std::enable_if_t<GraphType::directed(), bool>
+isCyclic(const GraphType& g)
+{
+    size_t component_num = weaklyConnectedComponents(g).size();
+    return g.vertexNum() < g.edgeNum() + component_num;
 }
 
 } // namespace mxm

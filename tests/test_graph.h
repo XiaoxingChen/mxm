@@ -138,6 +138,59 @@ inline void testConnectedComponents01()
 
 }
 
+inline void testWeaklyConnectedComponents01()
+{
+    UndirectedGraph g(7);
+    Matrix<size_t> edges(fixRow(2), {
+        4,0, 4,1, 5,2, 5,3, 6,4, 6,5}, COL);
+
+    g.initEdges(edges);
+    auto result = connectedComponents(g);
+    if(result.size() != 1)
+    {
+        std::cout << "result size: " << result.size() << std::endl;
+        std::cout << mxm::to_string(result) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
+inline void testWeaklyConnectedComponents02()
+{
+    UndirectedGraph g(14);
+    Matrix<size_t> edges(fixRow(2), {
+        4,0, 4,1, 5,2, 5,3, 6,4, 6,5,
+        11,7, 11,8, 12,9, 12,10, 13,11, 13,12}, COL);
+
+    g.initEdges(edges);
+    auto result = connectedComponents(g);
+    if(result.size() != 2)
+    {
+        std::cout << "result size: " << result.size() << std::endl;
+        std::cout << mxm::to_string(result) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
+inline void testCyclic()
+{
+    UndirectedGraph g(14);
+    Matrix<size_t> edges(fixRow(2), {
+        4,0, 4,1, 5,2, 5,3, 6,4, 6,5,
+        11,7, 11,8, 12,9, 12,10, 13,11, 13,12}, COL);
+
+    g.initEdges(edges);
+    auto result = isCyclic(g);
+    if(result == true)
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
+inline void testCyclic01()
+{
+
+}
+
 inline void testGraph()
 {
     testDijkstra1();
@@ -145,6 +198,8 @@ inline void testGraph()
     testTopologicalSort();
     testTopologicalSort02();
     testConnectedComponents01();
+    testWeaklyConnectedComponents01();
+    testWeaklyConnectedComponents02();
 }
 #else
 inline void testGraph(){}
