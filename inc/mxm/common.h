@@ -31,7 +31,10 @@ inline constexpr FloatType tMin() {return 1e-4;}
 inline constexpr FloatType tMax() {return 10000.;}
 
 // template<typename DType>
-
+template<class ...Ts>
+struct void_t{
+    using type = void;
+};
 
 
 }//namespace mxm

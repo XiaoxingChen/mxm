@@ -41,6 +41,24 @@ inline void testDijkstra1()
 
 }
 
+inline void testDijkstra2()
+{
+    WeightedDirectedGraph<float> g(4);
+    Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 2,3, 3,0, 0,3, 0,0}, COL);
+    Vector<float> weight_buffer{1,1,1,1,1,1};
+    g.initEdges(edge_buffer);
+    g.initWeight(weight_buffer);
+    float distance = 0;
+
+    std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
+    if(path != std::vector<size_t>{0,3})
+    {
+        // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
+        std::cout << "path: " << mxm::to_string(path) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 template<typename GraphType>
 bool validateTopologicalOrder(const GraphType& g, const std::vector<size_t>& order )
 {
@@ -48,7 +66,7 @@ bool validateTopologicalOrder(const GraphType& g, const std::vector<size_t>& ord
     for(size_t i = 0; i < order.size(); i++)
     {
         auto target = order.at(i);
-        for(const auto& succ: g.successors(target))
+        for(const auto& succ: g.adjacency(target))
         {
             if(built.count(succ) > 0)
             {
@@ -123,6 +141,7 @@ inline void testConnectedComponents01()
 inline void testGraph()
 {
     testDijkstra1();
+    testDijkstra2();
     testTopologicalSort();
     testTopologicalSort02();
     testConnectedComponents01();

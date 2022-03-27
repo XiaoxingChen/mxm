@@ -19,12 +19,12 @@ void topSortDFS(
     //return if visited
     if(unvisited.count(node) == 0) return;
 
-    // Current node should be erased from unvisited set before traversaling its successors.
+    // Current node should be erased from unvisited set before traversaling its adjacency.
     // Otherwise the code will crash in infinite recursion.
     unvisited.erase(node);
 
     // std::cout << node << std::endl;
-    for(const auto & succ : g.successors(node))
+    for(const auto & succ : g.adjacency(node))
     {
         topSortDFS(g, succ, unvisited, order);
     }
@@ -38,7 +38,7 @@ void topSortDFS(
 //
 // GraphType requirements:
 // size_t GraphType::vertexNum()
-// std::vector<size_t> GraphType::successors(size_t vertex_idx)
+// std::vector<size_t> GraphType::adjacency(size_t vertex_idx)
 //
 template<typename GraphType>
 std::vector<size_t> topSort(const GraphType& g)

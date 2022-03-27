@@ -2,7 +2,9 @@
 #define _GRAPH_BASE_H_
 
 #include "linalg_mat.h"
+#include "common.h"
 #include <map>
+#include<type_traits>
 
 namespace mxm
 {
@@ -28,35 +30,35 @@ protected:
     Matrix<size_t> edge_buffer_;
 };
 
-class DirectedBinaryEdge
+template<bool Directed, typename GraphType>
+class BinaryEdge
 {
 public:
-    using ThisType = DirectedBinaryEdge;
+    using ThisType = BinaryEdge<Directed, GraphType>;
 
-    const std::vector<size_t>& successors(size_t v_index) const { return successors_.at(v_index); }
-    std::vector<size_t>& successors(size_t v_index) { return successors_.at(v_index); }
+    const std::vector<size_t>& adjacency(size_t v_index) const { return adjacency_lists.at(v_index); }
+    // std::vector<size_t>& adjacency(size_t v_index) { return adjacency_lists.at(v_index); }
 
-    void initSuccessorList(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    void initEdges(const Matrix<size_t>& edges)
     {
-        successors_.resize(vertex_num);
-        for(size_t i = 0; i < edge_buffer.shape(1); i++)
-        {
-            successors_.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
-        }
-    }
-
-    void initEdgeIndices(const Matrix<size_t>& edge_buffer)
-    {
-        edge_num_ = edge_buffer.shape(1);
-        for(size_t i = 0; i < edge_buffer.shape(1); i++)
-        {
-            edge_index_[{edge_buffer(0, i), edge_buffer(1, i)}] = i;
-        }
+        size_t vertex_num = static_cast<GraphType*>(this)->vertexNum();
+        initEdgeIndices(edges);
+        initAdjacencyLists(vertex_num, edges);
     }
 
     // binary edge interface
+    template<bool D=Directed, std::enable_if_t<D, int> T=0>
     size_t edgeIndex(size_t from, size_t to) const
     {
+        if(0 == edge_index_.count({from, to})) return edge_num_ + 1;
+        return edge_index_.at({from, to});
+    }
+
+    template<bool D=Directed, std::enable_if_t<!D, int> T=0>
+    size_t edgeIndex(size_t v1, size_t v2) const
+    {
+        size_t from = std::min(v1, v2);
+        size_t to = std::max(v1, v2);
         if(0 == edge_index_.count({from, to})) return edge_num_ + 1;
         return edge_index_.at({from, to});
     }
@@ -85,32 +87,101 @@ public:
         return ret;
     }
 
+    size_t edgeNum() const { return edge_num_; }
+
 protected:
     size_t edge_num_ = 0;
-    std::vector<std::vector<size_t>> successors_;
+    std::vector<std::vector<size_t>> adjacency_lists;
     std::map<std::array<size_t, 2>, size_t > edge_index_;
+
+private:
+
+    template<bool D=Directed, std::enable_if_t<D, int> T=0>
+    void initAdjacencyLists(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    {
+        adjacency_lists.resize(vertex_num);
+        for(size_t i = 0; i < edge_buffer.shape(1); i++)
+        {
+            adjacency_lists.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
+        }
+    }
+
+    template<bool D=Directed, std::enable_if_t<!D, int> T=0>
+    void initAdjacencyLists(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    {
+        adjacency_lists.resize(vertex_num);
+        for(size_t i = 0; i < edge_buffer.shape(1); i++)
+        {
+            adjacency_lists.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
+            adjacency_lists.at(edge_buffer(1, i)).push_back(edge_buffer(0, i));
+        }
+    }
+
+    template<bool D=Directed, std::enable_if_t<D, int> T=0>
+    void initEdgeIndices(const Matrix<size_t>& edge_buffer)
+    {
+        edge_num_ = edge_buffer.shape(1);
+        for(size_t i = 0; i < edge_buffer.shape(1); i++)
+        {
+            edge_index_[{edge_buffer(0, i), edge_buffer(1, i)}] = i;
+        }
+    }
+
+    template<bool D=Directed, std::enable_if_t<!D, int> T=0>
+    void initEdgeIndices(const Matrix<size_t>& edge_buffer)
+    {
+        edge_num_ = edge_buffer.shape(1);
+        for(size_t i = 0; i < edge_buffer.shape(1); i++)
+        {
+            size_t from = std::min(edge_buffer(0, i), edge_buffer(1, i));
+            size_t to = std::max(edge_buffer(0, i), edge_buffer(1, i));
+            edge_index_[{from, to}] = i;
+        }
+    }
+
 
 };
 
-
-class UndirectedBinaryEdge
-{
+#if 0
+template<typename GraphType>
+class BinaryEdge
+false, {
 public:
-    using ThisType = UndirectedBinaryEdge;
+    using ThisType = BinaryEdge;false,
 
-    const std::vector<size_t>& neighbors(size_t v_index) const { return neighbors_.at(v_index); }
-    std::vector<size_t>& neighbors(size_t v_index) { return neighbors_.at(v_index); }
+    const std::vector<size_t>& adjacency(size_t v_index) const { return adjacency_lists.at(v_index); }
 
-    const std::vector<size_t>& successors(size_t v_index) const { return neighbors(v_index); }
-    std::vector<size_t>& successors(size_t v_index) { return neighbors(v_index); }
-
-    void initNeighborList(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    void initEdges(const Matrix<size_t>& edge_buffer)
     {
-        neighbors_.resize(vertex_num);
+        size_t vertex_num = static_cast<GraphType*>(this)->vertexNum();
+        initAdjacencyLists(vertex_num, edge_buffer);
+        initEdgeIndices(edge_buffer);
+    }
+
+    size_t edgeNum() const { return edge_num_; }
+
+    // binary edge interface
+    size_t edgeIndex(size_t v1, size_t v2) const
+    {
+        size_t from = std::min(v1, v2);
+        size_t to = std::max(v1, v2);
+        if(0 == edge_index_.count({from, to})) return edge_num_ + 1;
+        return edge_index_.at({from, to});
+    }
+
+protected:
+    size_t edge_num_ = 0;
+    std::vector<std::vector<size_t>> adjacency_lists;
+    std::map<std::array<size_t, 2>, size_t > edge_index_;
+
+private:
+    void initAdjacencyLists(size_t vertex_num, const Matrix<size_t>& edge_buffer)
+    {
+        adjacency_lists.resize(vertex_num);
         for(size_t i = 0; i < edge_buffer.shape(1); i++)
         {
-            neighbors_.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
-            neighbors_.at(edge_buffer(1, i)).push_back(edge_buffer(0, i));
+            adjacency_lists.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
+            adjacency_lists.at(edge_buffer(1, i)).push_back(edge_buffer(0, i));
         }
     }
 
@@ -124,21 +195,8 @@ public:
             edge_index_[{from, to}] = i;
         }
     }
-
-    // binary edge interface
-    size_t edgeIndex(size_t v1, size_t v2) const
-    {
-        size_t from = std::min(v1, v2);
-        size_t to = std::max(v1, v2);
-        if(0 == edge_index_.count({from, to})) return edge_num_ + 1;
-        return edge_index_.at({from, to});
-    }
-
-protected:
-    size_t edge_num_ = 0;
-    std::vector<std::vector<size_t>> neighbors_;
-    std::map<std::array<size_t, 2>, size_t > edge_index_;
 };
+#endif
 
 template<typename WeightType>
 class WeightedEdge
@@ -165,55 +223,10 @@ protected:
 };
 
 #if 0
-class SparseDirectedWeightedGraph
-{
-public:
-    using DType = FloatType;
-    SparseDirectedWeightedGraph(size_t node_num)
-    :successors_(node_num)
-    {
-
-    }
-
-    void addEdge(size_t from, size_t to, DType distance)
-    {
-        if(from >= nodeNum()) resize(from + 1);
-        successors_.at(from).insert({distance, to});
-    }
-
-    const std::multimap<DType, size_t>& successors(size_t node_idx) const
-    {
-        return successors_.at(node_idx);
-    }
-
-    void resize(size_t s)
-    {
-        successors_.resize(s);
-    }
-
-    bool valid(size_t idx) const { return idx < nodeNum(); }
-
-    DType distance(size_t from, size_t to) const
-    {
-        if(from == to) return 0;
-        if( ! valid(from) ) return INFINITY;
-        for(auto & pair: successors_.at(from))
-        {
-            if(pair.second == to) return pair.first;
-        }
-        return INFINITY;
-    }
-
-    size_t nodeNum() const { return successors_.size(); }
-
-private:
-    std::vector<std::multimap<DType, size_t>> successors_;
-
-};
 #else
 
 
-class DirectedGraph: public GraphBase, public DirectedBinaryEdge
+class DirectedGraph: public GraphBase, public BinaryEdge<true, DirectedGraph>
 {
 public:
     DirectedGraph(): GraphBase()
@@ -224,19 +237,18 @@ public:
     {
     }
 
-    void initEdges(const Matrix<size_t>& edges)
-    {
-        initEdgeIndices(edges);
-        initSuccessorList(vertexNum(), edges);
-    }
 private:
 };
 
 template<typename DType>
-class WeightedDirectedGraph: public GraphBase, public DirectedBinaryEdge, public WeightedEdge<DType>
+class WeightedDirectedGraph:
+    public GraphBase,
+    public BinaryEdge<true, WeightedDirectedGraph<DType>>,
+    public WeightedEdge<DType>
 {
 public:
     using DistanceType = DType;
+    using EdgeDirectionType = BinaryEdge<true, WeightedDirectedGraph<DType>>;
 
     WeightedDirectedGraph(): GraphBase()
     {
@@ -248,21 +260,17 @@ public:
         this->setInvalidWeight(INFINITY);
     }
 
-    void initEdges(const Matrix<size_t>& edges)
-    {
-        initEdgeIndices(edges);
-        initSuccessorList(vertexNum(), edges);
-    }
-
     DType weight(size_t from, size_t to) const
     {
-        size_t edge_index = edgeIndex(from, to);
+        size_t edge_index = this->edgeIndex(from, to);
         return WeightedEdge<DType>::weight(edge_index);
     }
 protected:
 };
 
-class UndirectedGraph: public GraphBase, public UndirectedBinaryEdge
+class UndirectedGraph:
+    public GraphBase,
+    public BinaryEdge<false, UndirectedGraph>
 {
 public:
     UndirectedGraph(): GraphBase()
@@ -273,50 +281,48 @@ public:
     {
     }
 
-    void initEdges(const Matrix<size_t>& edges)
-    {
-        initEdgeIndices(edges);
-        initNeighborList(vertexNum(), edges);
-    }
 protected:
 };
 
 #endif
 
 
-#if 0
-// fast indexing
-template<typename WeightType>
-class BinaryEdgeGraph
+// template<typename ExtendedType>
+// class IndexExtension
+// {
+// public:
+//     size_t rawFromExt(const ExtendedType& ext);
+//     ExtendedType extFromRaw(size_t raw);
+// };
+
+class GridGraph
 {
 public:
-    const size_t& vertexNum() const { return vertex_num_; }
-    size_t& vertexNum() { return vertex_num_; }
-
-    GeneralGraph& setEdgeBuffer(const Matrix<size_t>& edges)
-    {
-
-    }
-
-    GeneralGraph& setWeightBuffer(const Vector<WeightType>& weights)
-    {
-
-    }
-
-    const WeightType& weight(const Vector<size_t>& edge)
-    {
-
-    }
-
-
-
 private:
-    size_t vertex_num_;
-    std::vector<std::vector<size_t>> successors_;
-
-    Vector<WeightType> weight_buffer_;
 };
-#endif
+
+template<class T, class = void>
+struct is_weighted_binary_edge: std::false_type{};
+
+template<class T>
+struct is_weighted_binary_edge<
+    T, typename mxm::void_t< decltype(std::declval<T>().weight(0,0)) >::type
+    >: std::true_type{};
+
+template<class T, class = void>
+struct is_directed_binary_edge: std::false_type{};
+
+// todo, how to check is_directed_binary_edge?
+// has successors(), no adjacency().
+
+template<class T, class = void>
+struct is_undirected_binary_edge: std::false_type{};
+
+template<class T>
+struct is_undirected_binary_edge<
+    T, typename mxm::void_t< decltype(std::declval<T>().adjacency(0)) >::type
+    >: std::true_type{};
+
 } // namespace mxm
 
 

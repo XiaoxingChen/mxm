@@ -17,16 +17,16 @@ void connectedComponentsDFS(
     if(unvisited.count(vertex_idx) == 0) return ;
     s.insert(vertex_idx);
     unvisited.erase(vertex_idx);
-    for(const auto & neighbor_idx: g.neighbors(vertex_idx))
+    for(const auto & adj_idx: g.adjacency(vertex_idx))
     {
-        connectedComponentsDFS(g, neighbor_idx, unvisited, s);
+        connectedComponentsDFS(g, adj_idx, unvisited, s);
     }
 }
 
 //
 // GraphType requirements:
 // size_t GraphType::vertexNum()
-// std::vector<size_t> GraphType::neighbors()
+// std::vector<size_t> GraphType::adjacency()
 template<typename GraphType>
 std::vector<std::set<size_t>> connectedComponents(const GraphType& g)
 {
@@ -41,6 +41,21 @@ std::vector<std::set<size_t>> connectedComponents(const GraphType& g)
         connectedComponentsDFS(g, target, unvisited, ret.back());
     }
     return ret;
+}
+
+// For undirected graph
+template <typename GraphType>
+bool isConnected(const GraphType& g)
+{
+    return connectedComponents(g).size() == 1;
+}
+
+template <typename GraphType>
+bool isCyclic(const GraphType& g, bool do_connectivity_test=true)
+{
+    if(do_connectivity_test && !isConnected(g))
+        return false;
+    return g.vertexNum() + 1 < g.edgeNum();
 }
 
 } // namespace mxm
