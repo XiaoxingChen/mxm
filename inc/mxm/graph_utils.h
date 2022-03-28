@@ -104,6 +104,53 @@ weaklyConnectedComponents(const GraphType& g)
     return component_list;
 }
 
+template <typename GraphType>
+std::enable_if_t<GraphType::directed(), std::vector<size_t>>
+incomingDegrees(const GraphType& g)
+{
+    std::vector<size_t> ret(g.vertexNum(), 0);
+    for(size_t vertex_idx = 0; vertex_idx < g.vertexNum(); vertex_idx++)
+    {
+        for(const auto& adj_idx: g.adjacency(vertex_idx))
+        {
+            ret.at(adj_idx)++;
+        }
+    }
+    return ret;
+}
+
+template <typename GraphType>
+std::enable_if_t<GraphType::directed(), std::vector<size_t>>
+kahnAlgorithm(const GraphType& g)
+{
+    std::vector<size_t> incoming_degrees = incomingDegrees(g);
+
+    std::queue<size_t> que;
+    for(size_t i = 0; i < g.vertexNum(); i++)
+    {
+        if(0 == incoming_degrees.at(i)) que.push(i);
+    }
+
+    std::vector<size_t> top_order;
+    while(!que.empty())
+    {
+        size_t vertex = que.front();
+        que.pop();
+        top_order.push_back(vertex);
+        for(auto & succ: g.adjacency(vertex))
+        {
+            incoming_degrees.at(succ)--;
+            if(0 == incoming_degrees.at(succ))
+                top_order.push_back(succ);
+        }
+    }
+    for(size_t i = 0; i < g.vertexNum(); i++)
+    {
+        if(incoming_degrees.at(i) > 0) return {};
+    }
+    return top_order;
+}
+
 // For undirected graph
 template <typename GraphType>
 bool isConnected(const GraphType& g)
@@ -118,19 +165,21 @@ bool isWeaklyConnected(const GraphType& g)
 }
 
 template <typename GraphType>
-std::enable_if_t<!GraphType::directed(), bool>
-isCyclic(const GraphType& g)
+bool isCyclic(const GraphType& g, size_t component_num)
 {
-    size_t component_num = connectedComponents(g).size();
     return g.vertexNum() < g.edgeNum() + component_num;
 }
 
 template <typename GraphType>
 std::enable_if_t<GraphType::directed(), bool>
-isCyclic(const GraphType& g)
+isTree(const GraphType& g, size_t component_num)
 {
-    size_t component_num = weaklyConnectedComponents(g).size();
-    return g.vertexNum() < g.edgeNum() + component_num;
+    if(1 != component_num) return false;
+    if(isCyclic(g, component_num)) return false;
+    auto incoming_degrees = incomingDegrees(g);
+    size_t max_incoming_degree = *std::max_element(incoming_degrees.begin(), incoming_degrees.end());
+    if(max_incoming_degree > 1) return false;
+    return true;
 }
 
 } // namespace mxm

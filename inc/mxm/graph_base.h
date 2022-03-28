@@ -4,7 +4,7 @@
 #include "linalg_mat.h"
 #include "common.h"
 #include <map>
-#include<type_traits>
+#include <type_traits>
 
 namespace mxm
 {

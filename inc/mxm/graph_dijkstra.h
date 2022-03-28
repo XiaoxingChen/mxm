@@ -62,7 +62,7 @@ dijkstraBestPredecessor(
     que.push(start);
     std::set<size_t> visited;
 
-    std::vector<size_t> best_pred(g.vertexNum(), g.vertexNum()+1);
+    std::vector<size_t> best_pred(g.vertexNum(), start);
 
     while(!que.empty())
     {

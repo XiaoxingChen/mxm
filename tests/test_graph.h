@@ -95,6 +95,13 @@ inline void testTopologicalSort()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
+    auto kahn_order = kahnAlgorithm(g);
+    result == validateTopologicalOrder(g, kahn_order);
+    if(result == false)
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
 }
 
 inline void testTopologicalSort02()
@@ -111,6 +118,12 @@ inline void testTopologicalSort02()
     if(result == true)
     {
         std::cout << "this graph is expected to be unordered" << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    auto kahn_order = kahnAlgorithm(g);
+    if(kahn_order.size() > 0)
+    {
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
@@ -179,7 +192,7 @@ inline void testCyclic()
         11,7, 11,8, 12,9, 12,10, 13,11, 13,12}, COL);
 
     g.initEdges(edges);
-    auto result = isCyclic(g);
+    auto result = isCyclic(g, connectedComponents(g).size());
     if(result == true)
     {
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
