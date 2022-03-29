@@ -20,7 +20,7 @@ inline void testDijkstra1()
     Matrix<size_t> edge_buffer(fixRow(2), {1,2, 1,3, 1,6, 2,4, 2,3, 3,6, 3,4, 6,5, 4,5}, COL);
     Vector<float> weight_buffer{7,9,14,15,10,2,11,9,6};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    g.initProperty(weight_buffer);
     float distance = 0;
 
     // auto best_pred =
@@ -47,7 +47,7 @@ inline void testDijkstra2()
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 2,3, 3,0, 0,3, 0,0}, COL);
     Vector<float> weight_buffer{1,1,1,1,1,1};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    g.initProperty(weight_buffer);
     float distance = 0;
 
     std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
@@ -204,6 +204,22 @@ inline void testCyclic01()
 
 }
 
+inline void testFlowNetwork01()
+{
+    FlowNetwork<float> g(3);
+    Matrix<size_t> edges(fixRow(2), {0,1, 1,2, 2,3}, COL);
+    Vector<CapacityFlow<float>> properties{{3,1}, {5,1}, {4,1}};
+    g.initEdges(edges);
+    g.initProperty(properties);
+    g.setSource(0).setSink(3);
+    if(g.property(0,1).flow != 1)
+    {
+        std::cout << g.property(0,1).flow << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 inline void testGraph()
 {
     testDijkstra1();
@@ -213,6 +229,7 @@ inline void testGraph()
     testConnectedComponents01();
     testWeaklyConnectedComponents01();
     testWeaklyConnectedComponents02();
+    testFlowNetwork01();
 }
 #else
 inline void testGraph(){}

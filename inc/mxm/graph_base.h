@@ -144,33 +144,50 @@ private:
 
 };
 
-template<typename WeightType>
-class WeightedEdge
+template<typename PropertyType, typename GraphType>
+class EdgeProperty
 {
 public:
-    void setInvalidWeight(WeightType invalid_weight)
+    void setInvalidProperty(PropertyType invalid_property)
     {
-        invalid_weight_ = invalid_weight;
+        invalid_property_ = invalid_property;
     }
 
-    void initWeight(const Vector<WeightType>& w_buffer)
+    void initProperty(const Vector<PropertyType>& property_buffer)
     {
-        weight_buffer_ = w_buffer;
+        property_buffer_ = property_buffer;
     }
 
-    WeightType weight(size_t edge_index) const
+    PropertyType property(size_t edge_index) const
     {
-        if(edge_index >= weight_buffer_.size()) return invalid_weight_;
-        return weight_buffer_(edge_index);
+        if(edge_index >= property_buffer_.size()) return invalid_property_;
+        return property_buffer_(edge_index);
     }
+
+    // Vector<PropertyType> properties(const Matrix<size_t>& vertices)
+    // {
+    //     GraphType* p_graph = static_cast<GraphType*>(this);
+    // }
+
 protected:
-    Vector<WeightType> weight_buffer_;
-    WeightType invalid_weight_;
+    Vector<PropertyType> property_buffer_;
+    PropertyType invalid_property_;
 };
 
-#if 0
-#else
+template<typename PropertyType, typename GraphType>
+class BinaryEdgeProperty: public EdgeProperty<PropertyType, GraphType>
+{
+public:
+    PropertyType property(size_t v1, size_t v2) const
+    {
+        const GraphType* p_graph = static_cast<const GraphType*>(this);
+        size_t edge_index = p_graph->edgeIndices(Vector<size_t>{v1, v2})(0);
 
+        return EdgeProperty<PropertyType, GraphType>::property(edge_index);
+    }
+protected:
+
+};
 
 class DirectedGraph: public GraphBase, public BinaryEdge<true, DirectedGraph>
 {
@@ -186,30 +203,31 @@ public:
 private:
 };
 
-template<typename DType>
+template<typename DType, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
 class WeightedDirectedGraph:
     public GraphBase,
     public BinaryEdge<true, WeightedDirectedGraph<DType>>,
-    public WeightedEdge<DType>
+    public BinaryEdgeProperty<DType, WeightedDirectedGraph<DType>>
 {
 public:
+    using ThisType = WeightedDirectedGraph<DType>;
     using DistanceType = DType;
-    using EdgeDirectionType = BinaryEdge<true, WeightedDirectedGraph<DType>>;
+    using EdgeDirectionType = BinaryEdge<true, ThisType>;
+    using PropertyEdgeType = BinaryEdgeProperty<DType, ThisType>;
 
     WeightedDirectedGraph(): GraphBase()
     {
-        this->setInvalidWeight(INFINITY);
+        this->setInvalidProperty(DType(INFINITY));
     }
 
     WeightedDirectedGraph(size_t vertex_num): GraphBase(vertex_num)
     {
-        this->setInvalidWeight(INFINITY);
+        this->setInvalidProperty(DType(INFINITY));
     }
 
     DType weight(size_t from, size_t to) const
     {
-        size_t edge_index = this->edgeIndex(from, to);
-        return WeightedEdge<DType>::weight(edge_index);
+        return PropertyEdgeType::property(from, to);
     }
 protected:
 };
@@ -230,7 +248,46 @@ public:
 protected:
 };
 
-#endif
+template<typename DType>
+struct CapacityFlow
+{
+    CapacityFlow() {}
+    CapacityFlow(DType _cap, DType _flow=DType(0)):cap(_cap), flow(_flow) {}
+    DType flow = DType(0);
+    DType cap = DType(0);
+    bool invalid = false;
+    static CapacityFlow invalidInstance() { CapacityFlow obj(0,0); obj.invalid = true; return obj; }
+};
+
+template<typename DType, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
+class FlowNetwork:
+    public GraphBase,
+    public BinaryEdge<true, FlowNetwork<DType>>,
+    public BinaryEdgeProperty<CapacityFlow<DType>, FlowNetwork<DType>>
+{
+public:
+    using ThisType = FlowNetwork<DType>;
+    using EdgeDirectionType = BinaryEdge<true, ThisType>;
+    using PropertyEdgeType = BinaryEdgeProperty<DType, ThisType>;
+
+    FlowNetwork(): GraphBase()
+    {
+        this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
+    }
+
+    FlowNetwork(size_t vertex_num): GraphBase(vertex_num)
+    {
+        this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
+    }
+    ThisType& setSource(size_t source) { source_ = source; }
+    ThisType& setSink(size_t sink) { sink_ = sink; }
+
+    size_t source(size_t source) const { return source_; }
+    size_t sink(size_t sink) const { return sink_; }
+protected:
+    size_t source_;
+    size_t sink_;
+};
 
 
 // template<typename ExtendedType>
