@@ -279,8 +279,8 @@ public:
     {
         this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
     }
-    ThisType& setSource(size_t source) { source_ = source; }
-    ThisType& setSink(size_t sink) { sink_ = sink; }
+    ThisType& setSource(size_t source) { source_ = source; return *this;}
+    ThisType& setSink(size_t sink) { sink_ = sink; return *this;}
 
     size_t source(size_t source) const { return source_; }
     size_t sink(size_t sink) const { return sink_; }
