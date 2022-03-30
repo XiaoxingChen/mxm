@@ -99,7 +99,7 @@ decomposeByRotation(const MatrixBase<DeriveType>& mat_in, TraverseSeq idx_seq, b
         rot = sub_rot.matmul(rot);
         mat = sub_rot.matmul(mat);
         if(symmetric)
-            mat = mat.matmul(sub_rot.T());
+            mat = mat.matmul(conj(sub_rot.T()));
 
         // if(std::is_same<DType, Complex<FloatType>>::value)
         // {
@@ -192,8 +192,9 @@ DType wilkinsonShiftStrategy(const Matrix<DType> mat_a)
 {
     size_t n = mat_a.shape(1);
     DType sigma = (mat_a(n-2,n-2) - mat_a(n-1, n-1)) * DType(0.5);
-    if(abs(sigma) < std::numeric_limits<DType>::epsilon() && abs(mat_a(n-1, n-1)) < std::numeric_limits<DType>::epsilon())
-        return DType(0);
+    if(norm(sigma) < eps<typename Traits<DType>::ArithType>()
+       && norm(mat_a(n-1, n-1)) < eps<typename Traits<DType>::ArithType>())
+            return DType(0);
     DType sign = sigma > 0 ? 1. : -1.;
     DType mu = mat_a(n-1, n-1) - (sign * mat_a(n-1, n-2) * mat_a(n-1, n-2)) / (abs(sigma) + sqrt(sigma * sigma) + mat_a(n-1, n-1) * mat_a(n-1, n-1));
     return mu;
@@ -283,7 +284,7 @@ Matrix<DType> shiftedQRIteration(
     Matrix<DType>* p_orthogonal,
     qr::TraverseSeq idx_seq=qr::eUpperTrianglize,
     size_t max_it=40,
-    DType tol=eps<DType>())
+    typename Traits<DType>::ArithType tol=eps<typename Traits<DType>::ArithType>())
 {
     std::array<Matrix<DType>, 2> q_r;
     Matrix<DType> ret(mat);
@@ -305,7 +306,7 @@ Matrix<DType> shiftedQRIteration(
 
 template Matrix<float> shiftedQRIteration( const Matrix<float>& mat, Matrix<float>* p_orthogonal, qr::TraverseSeq idx_seq, size_t max_it, float tol);
 template Matrix<double> shiftedQRIteration( const Matrix<double>& mat, Matrix<double>* p_orthogonal, qr::TraverseSeq idx_seq, size_t max_it, double tol);
-// template Matrix<Complex<float>> shiftedQRIteration( const Matrix<Complex<float>>& mat, Matrix<Complex<float>>* p_orthogonal, qr::TraverseSeq idx_seq, size_t max_it, Complex<float> tol);
+// template Matrix<Complex<float>> shiftedQRIteration( const Matrix<Complex<float>>& mat, Matrix<Complex<float>>* p_orthogonal, qr::TraverseSeq idx_seq, size_t max_it, float tol);
 // template Matrix<Complex<double>> shiftedQRIteration( const Matrix<Complex<double>>& mat, Matrix<Complex<double>>* p_orthogonal, qr::TraverseSeq idx_seq, size_t max_it, Complex<double> tol);
 
 // References:
@@ -396,7 +397,8 @@ template std::vector<Complex<double>> eigvals(const Matrix<double>& mat);
 template <typename DType>
 std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
 {
-    if(!mat.square()) throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    using ArithType = typename Traits<DType>::ArithType;
+    assert(mat.square());// throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
     size_t n = mat.shape(0);
     DType tol = 1e-13;
@@ -405,9 +407,21 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
     std::array<Matrix<DType>, 2> val_vec{Matrix<DType>({n,1}), Matrix<DType>({n,n})};
 
     auto q_r = qr::decomposeByRotation(mat, qr::eUpperHessenbergize, true);
-    auto eig_vecs = q_r[0];
+#if 0
+    if(std::is_same<DType, Complex<double>>::value)
+    {
+        std::cout << mxm::to_string(q_r[1], 5) << std::endl;
+    }
+#endif
+    // auto eig_vecs = q_r[0];
+    // Matrix<DType> diag = shiftedQRIteration(q_r[1], &eig_vecs, qr::eSubdiagonal, max_it);
 
-    Matrix<DType> diag = shiftedQRIteration(q_r[1], &eig_vecs, qr::eSubdiagonal, max_it);
+    Matrix<ArithType> hessengerg = matrixAtPart(q_r[1], 0); //real matrix
+
+    Matrix<ArithType> eig_vecs_stage2 = Matrix<ArithType>::identity(n);
+
+    Matrix<ArithType> diag = shiftedQRIteration(hessengerg, &eig_vecs_stage2, qr::eSubdiagonal, max_it);
+    auto eig_vecs = q_r[0].matmul(eig_vecs_stage2);
 
     std::vector<size_t> idx_buffer;
     for(size_t i = 0; i < n; i++) idx_buffer.push_back(i);
@@ -428,6 +442,8 @@ std::array<Matrix<DType>, 2> symmetricEig(const Matrix<DType>& mat)
 
 template std::array<Matrix<float>, 2> symmetricEig(const Matrix<float>& mat);
 template std::array<Matrix<double>, 2> symmetricEig(const Matrix<double>& mat);
+template std::array<Matrix<Complex<float>>, 2> symmetricEig(const Matrix<Complex<float>>& mat);
+template std::array<Matrix<Complex<double>>, 2> symmetricEig(const Matrix<Complex<double>>& mat);
 
 // A = QTQ', where
 // Q is a real, orthogonal matrix,

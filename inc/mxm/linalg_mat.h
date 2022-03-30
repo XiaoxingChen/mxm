@@ -273,12 +273,37 @@ normalized(const Matrix<EntryType>& mat)
 }
 #endif
 
-template<typename DeriveType>
+template<class ...Ts>
+struct void_t{
+    using type = void;
+};
+
+template<class T, class = void>
+struct has_parenthesis_operator: std::false_type{};
+
+template<class T>
+struct has_parenthesis_operator<
+    T, typename mxm::void_t< decltype(std::declval<T>().operator()(0)) >::type
+    >: std::true_type{};
+
+template<typename DeriveType,
+std::enable_if_t<has_parenthesis_operator<typename Traits<DeriveType>::EntryType>::value, int >T=0>
 Matrix<typename Traits<DeriveType>::ArithType> matrixAtPart(const DeriveType& mat, size_t k)
 {
     Matrix<typename Traits<DeriveType>::ArithType> ret(mat.shape());
     ret.traverse([&](auto i, auto j){
         ret(i,j) = mat(i,j)(k);
+    });
+    return ret;
+}
+
+template<typename DeriveType,
+std::enable_if_t<std::is_floating_point<typename Traits<DeriveType>::EntryType>::value, int >T=0>
+Matrix<typename Traits<DeriveType>::EntryType> matrixAtPart(const DeriveType& mat, size_t k)
+{
+    Matrix<typename Traits<DeriveType>::ArithType> ret(mat.shape());
+    ret.traverse([&](auto i, auto j){
+        ret(i,j) = mat(i,j);
     });
     return ret;
 }

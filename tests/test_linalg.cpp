@@ -985,7 +985,9 @@ void testSvdPipelineError()
         auto diff = mat_ata - restore;
         DType error(0);
         isZero(diff, &error, 0.);
-        if(error > 1e-6)
+        double tol = std::is_same<DType, float>::value ? 2e-6 :
+            std::is_same<DType, double>::value ? 2e-14: 0.;
+        if(error > tol)
         {
             std::cout << "eps: " << std::numeric_limits<DType>::epsilon() << std::endl;
             std::cout << mxm::to_string(diff, 15) << std::endl;
@@ -993,6 +995,32 @@ void testSvdPipelineError()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
+    }
+
+    if(0){
+        Matrix<Complex<DType>> mat_a({5,5}, {
+            {0.83370547, 0.42428223}, {0.13529714, 0.41690796}, {0.04482265,0.10479416}, {0.9160445 , 0.13748177}, {0.73985756, 0.87589392},
+            {0.52653829, 0.04706286}, {0.12826168, 0.11234982}, {0.66793262,0.46405475}, {0.26458016, 0.30325647}, {0.43352264, 0.4526207} ,
+            {0.94636104, 0.17840708}, {0.02501129, 0.46682152}, {0.59295295,0.60034754}, {0.28156454, 0.35886331}, {0.53022439, 0.59091015},
+            {0.37018765, 0.77140185}, {0.35539142, 0.27526053}, {0.79931838,0.10599939}, {0.57705667, 0.45787132}, {0.75884231, 0.50633517},
+            {0.63278795, 0.59412612}, {0.33123404, 0.63476347}, {0.81156382,0.88095761}, {0.89720607, 0.13361227}, {0.65274818, 0.86401979}
+        }, ROW);
+
+        auto mat_ata = conj(mat_a.T()).matmul(mat_a);
+        auto val_vec = symmetricEig(mat_ata);
+        auto restore = val_vec[1].matmul(diagonalMatrix(val_vec[0])).matmul(val_vec[1].T());
+        auto diff = mat_ata - restore;
+        DType error(0);
+        isZero(diff, &error, DType(0.));
+        double tol = std::is_same<DType, float>::value ? 2e-6 :
+            std::is_same<DType, double>::value ? 2e-14: 0.;
+        if(error > tol)
+        {
+            std::cout << "eps: " << std::numeric_limits<DType>::epsilon() << std::endl;
+            std::cout << mxm::to_string(diff, 5) << std::endl;
+            std::cout << "symmetric eigen error: " << error << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 }
 
