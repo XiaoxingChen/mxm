@@ -204,6 +204,154 @@ inline void testCyclic01()
 
 }
 
+
+struct MDPEdgePropertyType{
+    float probability = 1.f;
+    float reward = 0.f;
+    bool invalid = false;
+    static MDPEdgePropertyType invalidInstance()
+    {
+        MDPEdgePropertyType ret;
+        ret.invalid = true;
+        return ret;
+    }
+};
+class MDPGraph:
+    public GraphBase,
+    public BinaryEdge<true, MDPGraph>,
+    public BinaryEdgeProperty<MDPEdgePropertyType, MDPGraph>
+{
+public:
+    using ThisType = MDPGraph;
+    using EdgeDirectionType = BinaryEdge<true, ThisType>;
+    using PropertyEdgeType = BinaryEdgeProperty<MDPEdgePropertyType, ThisType>;
+
+    // MDPGraph(): GraphBase()
+    // {
+    //     this->setInvalidProperty( MDPEdgePropertyType::invalidInstance() );
+    // }
+
+    MDPGraph(size_t vertex_num): GraphBase(vertex_num)
+    {
+        this->setInvalidProperty( MDPEdgePropertyType::invalidInstance() );
+        best_action_.resize(this->vertexNum());
+    }
+
+    MDPEdgePropertyType edgeProperty(size_t from, size_t to) const
+    {
+        return PropertyEdgeType::property(from, to);
+    }
+
+    ThisType& setStateVertices(const std::vector<size_t>& v)
+    {
+        state_vertices_ = v;
+        best_action_.resize(this->vertexNum());
+        return *this;
+    }
+
+    ThisType& setDiscount(float gamma)
+    {
+        discount_ = gamma;
+    }
+
+    void solve(size_t max_it)
+    {
+        vertex_value_ = Vector<float>::zeros(this->vertexNum());
+        Vector<float> prev_vertex_value = vertex_value_;
+        prev_vertex_value += 100;
+        float error = 0;
+        // size_t max_it = 10;
+        // std::cout << "solve!!! "<< std::endl;
+        for(size_t i = 0; i < max_it && !isZero(prev_vertex_value - vertex_value_, &error, 0.1); i++)
+        {
+            prev_vertex_value = vertex_value_;
+            update();
+            // std::cout << "error: " << error << std::endl;
+            // std::cout << "actions: " << mxm::to_string(best_action_) << std::endl;
+            // std::cout << "value: " << mxm::to_string(vertex_value_.T()) << std::endl;
+
+        }
+
+
+    }
+
+    void update()
+    {
+        Vector<float> prev_vertex_value = vertex_value_;
+        for(auto & state_idx: state_vertices_)
+        {
+            if(this->adjacency_lists.at(state_idx).empty()) continue;
+            size_t best_action = this->adjacency_lists.at(state_idx).front();
+            float max_action_reward = 0;
+            for(auto & action_idx: this->adjacency_lists.at(state_idx))
+            {
+                float expected_action_reward = 0.f;
+                for(auto & next_state_idx: this->adjacency_lists.at(action_idx))
+                {
+                    float local_reward = prev_vertex_value(next_state_idx) * discount_ + edgeProperty(action_idx, next_state_idx).reward;
+                    expected_action_reward += edgeProperty(action_idx, next_state_idx).probability * local_reward;
+                }
+                if(expected_action_reward > max_action_reward)
+                {
+                    max_action_reward = expected_action_reward;
+                    best_action = action_idx;
+                }
+            }
+            vertex_value_(state_idx) = max_action_reward;
+            best_action_.at(state_idx) = best_action;
+        }
+    }
+
+    const Vector<float>& value() const { return vertex_value_; }
+
+protected:
+    std::vector<size_t> state_vertices_;
+    std::vector<size_t> best_action_;
+    Vector<float> vertex_value_;
+    float discount_ = 1.f;
+};
+
+// example:
+// https://youtu.be/i0o-ui1N35U?t=3717
+inline void testMarkovDecisionProcess01()
+{
+
+    MDPGraph g(7);
+    // 0: cool
+    // 1: warm
+    // 2: overheated
+    // 3: cool -> slow
+    // 4: cool -> fast
+    // 5: warm -> slow
+    // 6: warm -> fast
+    Matrix<size_t> edges(fixRow(2), {
+        0,3, 0,4, 1,5, 1,6,
+        3,0, 4,0, 4,1,
+        5,0, 5,1, 6,2}, COL);
+
+    Vector<MDPEdgePropertyType> edge_info
+    {
+        {1.f, 0.f}, {1.f, 0.f}, {1.f, 0.f}, {1.f, 0.f},
+        {1.f, 1.f}, {.5f, 2.f}, {.5f, 2.f},
+        {.5f, 1.f}, {.5f, 1.f}, {1.f -10.f}
+    };
+
+    g.initEdges(edges);
+    g.initProperty(edge_info);
+    g.setStateVertices({0,1,2}).setDiscount(1);
+    g.solve(2);
+    if(abs(g.value()(0) - 3.5f) > eps<float>())
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+    if(abs(g.value()(1) - 2.5f) > eps<float>())
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
+
 inline void testFlowNetwork01()
 {
     FlowNetwork<float> g(3);
@@ -230,6 +378,7 @@ inline void testGraph()
     testWeaklyConnectedComponents01();
     testWeaklyConnectedComponents02();
     testFlowNetwork01();
+    testMarkovDecisionProcess01();
 }
 #else
 inline void testGraph(){}
