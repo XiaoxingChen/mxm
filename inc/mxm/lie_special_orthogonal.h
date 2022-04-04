@@ -265,6 +265,12 @@ Matrix<DType> normalized(const Matrix<DType>& input)
     return u_d_vh[0].matmul(u_d_vh[2]);
 }
 
+template<typename DType>
+Matrix<DType> inv(const Matrix<DType>& mat)
+{
+    return mat.T();
+}
+
 template<size_t N, typename DeriveType>
 std::enable_if_t<2 == N, typename Traits<DeriveType>::EntryType>
 findAngle(const MatrixBase<DeriveType>& mat)

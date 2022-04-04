@@ -81,6 +81,13 @@ log(const MatrixBase<DeriveType>& mat)
 }
 #endif
 
+
+template<typename DType>
+Matrix<DType> inv(const Matrix<DType>& mat)
+{
+    return conj(mat.T());
+}
+
 } // namespace SU
 
 
