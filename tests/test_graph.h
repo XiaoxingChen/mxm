@@ -252,6 +252,7 @@ public:
     ThisType& setDiscount(float gamma)
     {
         discount_ = gamma;
+        return *this;
     }
 
     void solve(size_t max_it)
