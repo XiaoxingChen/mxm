@@ -8,6 +8,7 @@
 #include "mxm/graph_dijkstra.h"
 #include "mxm/graph_top_sort.h"
 #include "mxm/graph_utils.h"
+#include "mxm/random.h"
 #endif
 
 using namespace mxm;
@@ -204,6 +205,146 @@ inline void testCyclic01()
 
 }
 
+struct MDPTransition{
+    size_t next_state_idx = 0;
+    float probability = 1.f;
+    float reward = 0.f;
+};
+class MarkovDecisionProcessSolver
+{
+public:
+    using ThisType = MarkovDecisionProcessSolver;
+
+    ThisType& setQValueTable(const Matrix<std::vector<MDPTransition>>& table)
+    {
+        qValueTable_ = table;
+        state_value_ = Vector<float>::zeros(stateNum());
+        state_best_action_ = Vector<size_t>::zeros(stateNum());
+        return *this;
+    }
+    size_t stateNum() const { return qValueTable_.shape(1); }
+    size_t actionNum() const { return qValueTable_.shape(0); }
+
+    ThisType& setDiscount(float gamma)
+    {
+        discount_ = gamma;
+        return *this;
+    }
+
+    void qLearningSolve(size_t init_state_idx, size_t exit_state_idx, size_t max_it=100)
+    {
+        size_t state_idx = init_state_idx;
+        size_t prev_state_idx = init_state_idx;
+        size_t prev_action_idx = 0;
+        size_t prev_transition_idx = 0;
+
+        std::vector<std::string> node_strs = {"(1,A)", "(2,A)", "(3,A)", "(1,B)", "(2,B)", "(3,B)", "(1,C)", "(2,C)", "(3,C)", "(1,D)", "(2,D)", "(3,D)"};
+        std::vector<std::string> action_strs = {"v", "^", ">", "<"};
+
+        for(size_t it_cnt = 0; it_cnt < max_it; it_cnt++)
+        {
+            if(state_idx == exit_state_idx) break;
+            float max_action_value = 0.f;
+            size_t best_action = 0;
+            Vector<float> prov_vec;
+
+            for(size_t action_idx = 0; action_idx < actionNum(); action_idx++)
+            {
+                float action_expect_value = 0;
+                std::vector<float> prob_vec_data;
+                for(auto & transition : qValueTable_(action_idx, state_idx))
+                {
+                    action_expect_value += transition.probability*(state_value_(transition.next_state_idx) * discount_ + transition.reward);
+                    prob_vec_data.push_back(transition.probability);
+                }
+                if(action_expect_value > max_action_value)
+                {
+                    best_action = action_idx;
+                    max_action_value = action_expect_value;
+                    prov_vec = Vector<float>(std::move(prob_vec_data));
+                }
+            }
+            if(max_action_value < eps<float>())
+            {
+                best_action = random::weightedSample<float>(Vector<float>::ones(actionNum()) / actionNum());
+            }
+
+            size_t transition_idx = random::weightedSample<float>(prov_vec);
+            float new_q_s_a_val = 0;
+
+            if( it_cnt > 0 )
+            {
+                qValueTable_(prev_action_idx, prev_state_idx).at(prev_transition_idx).reward = state_value_(state_idx) + discount_ * qValueTable_(best_action, state_idx).at(transition_idx).reward;
+                new_q_s_a_val = qValueTable_(prev_action_idx, prev_state_idx).at(prev_transition_idx).reward;
+            }
+
+
+            prev_action_idx = best_action;
+            prev_state_idx = state_idx;
+            prev_transition_idx = transition_idx;
+            state_idx = qValueTable_(best_action, state_idx).at(transition_idx).next_state_idx;
+            std::cout << "i: " << it_cnt << ", action: " << action_strs.at(best_action) << ", subsequent state: " << node_strs.at(state_idx) << ", Q" << node_strs.at(prev_state_idx) << action_strs.at(prev_action_idx) << ": " << new_q_s_a_val << std::endl;
+
+
+        }
+    }
+
+    void solve(size_t max_it)
+    {
+        state_value_ *= 0.f;
+        Vector<float> prev_state_value = state_value_;
+        prev_state_value += 100;
+        float error = 0;
+        // size_t max_it = 10;
+        // std::cout << "solve!!! "<< std::endl;
+        for(size_t i = 0; i < max_it && !isZero(prev_state_value - state_value_, &error, 0.1); i++)
+        {
+            prev_state_value = state_value_;
+            update();
+            std::cout << "error: " << error << std::endl;
+            std::cout << "actions: " << mxm::to_string(state_best_action_.T()) << std::endl;
+            std::cout << "value: " << mxm::to_string(state_value_.T()) << std::endl;
+
+        }
+
+    }
+    void update()
+    {
+        Vector<float> shadow_state_value = state_value_;
+        for(size_t state_idx = 0; state_idx < stateNum(); state_idx++)
+        {
+            float max_action_value = 0.f;
+            size_t best_action = 0;
+            for(size_t action_idx = 0; action_idx < actionNum(); action_idx++)
+            {
+                float action_expect_value = 0;
+                for(auto & transition : qValueTable_(action_idx, state_idx))
+                {
+                    action_expect_value += transition.probability*(shadow_state_value(transition.next_state_idx) * discount_ + transition.reward);
+                }
+                if(action_expect_value > max_action_value)
+                {
+                    best_action = action_idx;
+                    max_action_value = action_expect_value;
+                }
+            }
+            state_value_(state_idx) = max_action_value;
+            state_best_action_(state_idx) = best_action;
+        }
+    }
+
+    ThisType& setStateValue(const Vector<float> state_value)
+    {
+        state_value_ = state_value_;
+        return *this;
+    }
+private:
+    Matrix<std::vector<MDPTransition>> qValueTable_;
+    Vector<float> state_value_;
+    Vector<size_t> state_best_action_;
+    float discount_ = 1.f;
+};
+
 
 struct MDPEdgePropertyType{
     float probability = 1.f;
@@ -352,6 +493,40 @@ inline void testMarkovDecisionProcess01()
 
 }
 
+// example:
+// https://youtu.be/i0o-ui1N35U?t=3717
+inline void testMarkovDecisionProcess02()
+{
+    MarkovDecisionProcessSolver mdp_solver;
+    Matrix<std::vector<MDPTransition>> qValueTable({2,3},
+    {
+        {/*cool slow*/{0, 1.f, 1.f}}, {/*warm slow*/{0, 0.5, 1}, {1, 0.5, 1}},{}, //slow
+        {/*cool fast*/{0, 0.5f, 2.f},{1, 0.5f, 2.f}},{/*warm fast*/{2, 1.f, -10.f}},{} //fast
+    });
+    mdp_solver.setDiscount(1.f);
+    mdp_solver.setQValueTable(qValueTable);
+    mdp_solver.solve(3);
+}
+
+inline void testMarkovDecisionProcess03()
+{
+    MarkovDecisionProcessSolver mdp_solver;
+    Matrix<std::vector<MDPTransition>> qValueTable({4,12},
+    {
+        // 1A               2A               [2]:3A           [3]:1B          [4]:2B         [5]:3B           [6]:1C        [7]:2C          [8]:3C           [9]:1D          [10]:2D          [11]:3D
+        {{1, 1.f, .2f}},{{2, 1.f, .2f}},{{2, 1.f, .0f}},{{3, 1.f, .0f}},{{5, 1.f, .0f}},{{5, 1.f, 0.f}},{{7, 1.f, .1f}},{{8, 1.f, 0.f}},{{8, 1.f, 0.f}},{{10,1.f, .1f}},{{11, 1.f, .1f}},{{11, 1.f, 0.f}},
+        {{0, 1.f, .0f}},{{1, 1.f, .0f}},{{2, 1.f, .0f}},{{4, 1.f, .0f}},{{3, 1.f, .1f}},{{4, 1.f, .1f}},{{6, 1.f, 0.f}},{{6, 1.f, 0.f}},{{7, 1.f, 0.f}},{{9, 1.f, 0.f}},{{9,  1.f, 0.f}},{{10, 1.f, 0.f}},
+        {{0, 1.f, .0f}},{{1, 1.f, .0f}},{{5, 1.f, .2f}},{{6, 1.f, .1f}},{{7, 1.f, .2f}},{{8, 1.f, .2f}},{{9, 1.f, 0.f}},{{10,1.f, .2f}},{{5, 1.f, 0.f}},{{9, 1.f, 0.f}},{{10, 1.f, 0.f}},{{11, 1.f, 0.f}},
+        {{0, 1.f, .0f}},{{1, 1.f, .0f}},{{2, 1.f, .0f}},{{3, 1.f, .0f}},{{4, 1.f, .0f}},{{2, 1.f, 0.f}},{{3, 1.f, .1f}},{{4, 1.f, 0.f}},{{8, 1.f, 0.f}},{{6, 1.f, 0.f}},{{7,  1.f, 0.f}},{{11, 1.f, 0.f}}
+    }, ROW);
+    Vector<float> state_value = Vector<float>::zeros(12);
+    state_value(11) = 1;
+    mdp_solver.setStateValue(state_value);
+    mdp_solver.setDiscount(.9f);
+    mdp_solver.setQValueTable(qValueTable);
+    mdp_solver.qLearningSolve(0, 11, 20);
+}
+
 
 inline void testFlowNetwork01()
 {
@@ -380,6 +555,8 @@ inline void testGraph()
     testWeaklyConnectedComponents02();
     testFlowNetwork01();
     testMarkovDecisionProcess01();
+    testMarkovDecisionProcess02();
+    testMarkovDecisionProcess03();
 }
 #else
 inline void testGraph(){}

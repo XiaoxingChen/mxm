@@ -43,6 +43,29 @@ inline Matrix<DType> unitSphere(size_t dim=3, size_t num=1)
     return p;
 }
 
+template<typename DType>
+size_t weightedSample(const Vector<DType>& weights)
+{
+    if(weights.size() < 2) return 0;
+
+    Vector<DType> accumu_weights = weights;
+    size_t n = weights.size();
+    for(size_t i = 1; i < n; i++)
+    {
+        accumu_weights(i) += accumu_weights(i-1);
+    }
+    if(accumu_weights(n - 1) > DType(1) + eps<DType>())
+    {
+        return weightedSample(Vector<DType>(normalized(weights)));
+    }
+    DType rand_val = uniform<DType>();
+    for(size_t i = 0; i < n; i++)
+    {
+        if(rand_val < accumu_weights(i)) return i;
+    }
+    return n-1;
+}
+
 } // namespace ramdom
 
 } // namespace mxm
