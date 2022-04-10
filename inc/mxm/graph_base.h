@@ -19,10 +19,12 @@ public:
     ThisType& setEdgeBuffer(const Matrix<size_t>& edges)
     {
         edge_buffer_ = edges;
+        return *this;
     }
     ThisType& addEdge(const Vector<size_t>& edges)
     {
         edge_buffer_ = hstack(edge_buffer_, edges);
+        return *this;
     }
     bool validVertex(size_t idx) const { return idx < vertex_num_; }
 protected:

@@ -301,9 +301,9 @@ public:
         {
             prev_state_value = state_value_;
             update();
-            std::cout << "error: " << error << std::endl;
-            std::cout << "actions: " << mxm::to_string(state_best_action_.T()) << std::endl;
-            std::cout << "value: " << mxm::to_string(state_value_.T()) << std::endl;
+            // std::cout << "error: " << error << std::endl;
+            // std::cout << "actions: " << mxm::to_string(state_best_action_.T()) << std::endl;
+            // std::cout << "value: " << mxm::to_string(state_value_.T()) << std::endl;
 
         }
 
@@ -524,7 +524,7 @@ inline void testMarkovDecisionProcess03()
     mdp_solver.setStateValue(state_value);
     mdp_solver.setDiscount(.9f);
     mdp_solver.setQValueTable(qValueTable);
-    mdp_solver.qLearningSolve(0, 11, 20);
+    // mdp_solver.qLearningSolve(0, 11, 20);
 }
 
 
