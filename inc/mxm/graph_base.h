@@ -311,7 +311,7 @@ struct is_weighted_binary_edge: std::false_type{};
 
 template<class T>
 struct is_weighted_binary_edge<
-    T, typename mxm::void_t< decltype(std::declval<T>().weight(0,0)) >::type
+    T, typename std::void_t< decltype(std::declval<T>().weight(0,0)) >
     >: std::true_type{};
 
 

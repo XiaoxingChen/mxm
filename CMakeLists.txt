@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.14)
 project(mxm)
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 set(CMAKE_BUILD_TYPE Debug)
 
 if(CMAKE_SYSTEM_NAME MATCHES "^Android")

@@ -273,17 +273,13 @@ normalized(const Matrix<EntryType>& mat)
 }
 #endif
 
-template<class ...Ts>
-struct void_t{
-    using type = void;
-};
 
 template<class T, class = void>
 struct has_parenthesis_operator: std::false_type{};
 
 template<class T>
 struct has_parenthesis_operator<
-    T, typename mxm::void_t< decltype(std::declval<T>().operator()(0)) >::type
+    T, typename std::void_t< decltype(std::declval<T>().operator()(0)) >
     >: std::true_type{};
 
 template<typename DeriveType,
