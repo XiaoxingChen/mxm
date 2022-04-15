@@ -28,6 +28,7 @@
 #include "test_transform_affine.h"
 #include "test_metric_tree.h"
 #include "test_dual_number.h"
+#include "test_metric_string.h"
 
 int main(int argc, char const *argv[])
 {
@@ -65,6 +66,7 @@ int main(int argc, char const *argv[])
   testAffineTransform();
   testMetricTree();
   testDualNumber();
+  testMetricString();
   }
   catch(const std::exception& e)
   {
