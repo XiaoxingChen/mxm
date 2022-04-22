@@ -27,6 +27,7 @@ public:
         return *this;
     }
     bool validVertex(size_t idx) const { return idx < vertex_num_; }
+    static constexpr size_t nullVertex() { return std::numeric_limits<size_t>::max(); }
 protected:
     size_t vertex_num_ = 0;
     Matrix<size_t> edge_buffer_;

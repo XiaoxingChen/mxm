@@ -15,7 +15,7 @@ using namespace mxm;
 #if TEST_AVAILABLE_ALL
 // test graph:
 // link: https://en.wikipedia.org/wiki/File:Dijkstra_Animation.gif
-inline void testDijkstra1()
+inline void testShortedPath1()
 {
     WeightedDirectedGraph<float> g(7);
     Matrix<size_t> edge_buffer(fixRow(2), {1,2, 1,3, 1,6, 2,4, 2,3, 3,6, 3,4, 6,5, 4,5}, COL);
@@ -24,25 +24,28 @@ inline void testDijkstra1()
     g.initProperty(weight_buffer);
     float distance = 0;
 
-    // auto best_pred =
-    std::vector<size_t> path = dijkstra(g, 1, 5, &distance);
-    // auto distance = pathFromBestPredecessor(g, best_pred, 5, &path);
-
-    if(path != std::vector<size_t>{1,3,6,5})
+    for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
-        // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
-        std::cout << "path: " << mxm::to_string(path) << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    }
+        std::vector<size_t> path;
+        if(0 == method_idx) path = dijkstra(g, 1, 5, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, 1, 5, &distance);
 
-    if(distance != 20)
-    {
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        if(path != std::vector<size_t>{1,3,6,5})
+        {
+            // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
+            std::cout << "method_idx: " << method_idx << ", path: " << mxm::to_string(path) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+
+        if(distance != 20)
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 
 }
 
-inline void testDijkstra2()
+inline void testShortedPath2()
 {
     WeightedDirectedGraph<float> g(4);
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 2,3, 3,0, 0,3, 0,0}, COL);
@@ -51,18 +54,26 @@ inline void testDijkstra2()
     g.initProperty(weight_buffer);
     float distance = 0;
 
-    std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
-    if(path != std::vector<size_t>{0,3})
+    for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
-        // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
-        std::cout << "path: " << mxm::to_string(path) << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        std::vector<size_t> path;
+        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+
+        if(path != std::vector<size_t>{0,3})
+        {
+            // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
+            std::cout << "method_idx: " << method_idx << ", path: " << mxm::to_string(path) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
+
+
 }
 
 // test graph:
 // link: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
-inline void testDijkstra3()
+inline void testShortedPath3()
 {
     WeightedUnirectedGraph<float> g(9);
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 0,7, 1,2, 1,7, 2,3, 2,5, 2,8, 3,5, 3,4, 4,5, 5,6, 6,7, 6,8, 7,8}, COL);
@@ -71,16 +82,22 @@ inline void testDijkstra3()
     g.initProperty(weight_buffer);
     float distance = 0;
 
-    std::vector<size_t> path = dijkstra(g, 0, 4, &distance);
-    if(path != std::vector<size_t>{0,7,6,5,4})
+    for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
-        std::cout << "distance: " << distance << std::endl;
-        std::cout << "path: " << mxm::to_string(path) << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        std::vector<size_t> path;
+        if(0 == method_idx) path = dijkstra(g, 0, 4, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 4, &distance);
+
+        if(path != std::vector<size_t>{0,7,6,5,4})
+        {
+            std::cout << "distance: " << distance << std::endl;
+            std::cout << "path: " << mxm::to_string(path) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 }
 
-inline void testDijkstra4()
+inline void testShortedPath4()
 {
     WeightedUnirectedGraph<float> g(4);
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 1,3, 2,3}, COL);
@@ -89,12 +106,44 @@ inline void testDijkstra4()
     g.initProperty(weight_buffer);
     float distance = 0;
 
-    std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
-    if(path != std::vector<size_t>{0,1,3})
+    for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
-        std::cout << "distance: " << distance << std::endl;
-        std::cout << "path: " << mxm::to_string(path) << std::endl;
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        std::vector<size_t> path;
+        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+
+        // std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
+        if(path != std::vector<size_t>{0,1,3})
+        {
+            std::cout << "distance: " << distance << std::endl;
+            std::cout << "path: " << mxm::to_string(path) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+}
+
+inline void testShortedPath5()
+{
+    WeightedUnirectedGraph<float> g(4);
+    Matrix<size_t> edge_buffer(fixRow(2), {0,1, 2,3}, COL);
+    Vector<float> weight_buffer{1, 2};
+    g.initEdges(edge_buffer);
+    g.initProperty(weight_buffer);
+    float distance = 0;
+
+    for(size_t method_idx = 0; method_idx < 2; method_idx++)
+    {
+        std::vector<size_t> path;
+        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+
+        // std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
+        if(path != std::vector<size_t>{})
+        {
+            std::cout << "distance: " << distance << std::endl;
+            std::cout << "path: " << mxm::to_string(path) << std::endl;
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
     }
 }
 
@@ -584,10 +633,11 @@ inline void testFlowNetwork01()
 
 inline void testGraph()
 {
-    testDijkstra1();
-    testDijkstra2();
-    testDijkstra3();
-    testDijkstra4();
+    testShortedPath1();
+    testShortedPath2();
+    testShortedPath3();
+    testShortedPath4();
+    testShortedPath5();
     testTopologicalSort();
     testTopologicalSort02();
     testConnectedComponents01();
