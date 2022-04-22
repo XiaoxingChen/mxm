@@ -10,6 +10,7 @@
 #include "accessor.h"
 // #include "linalg_norm.h"
 #include <initializer_list>
+#include "math_forward_declaration.h"
 
 namespace mxm
 {
@@ -342,6 +343,21 @@ Hypercomplex<DType, N> log(const Hypercomplex<DType, N>& in)
     for(size_t i = 1; i < in.size(); i++)
     {
         ret(i) = in(i) * im_dir[i-1] * angle;
+    }
+    return ret;
+}
+
+template<typename DType, unsigned int N>
+Hypercomplex<DType, N> exp(const Hypercomplex<DType, N>& in)
+{
+    auto ret = Traits<Hypercomplex<DType, N>>::identity();
+    ret *= mxm::exp(in(0));
+    for(size_t i = 1; i < N; i++)
+    {
+        auto val = Traits<Hypercomplex<DType, N>>::identity();
+        val(0) = mxm::cos(in(i));
+        val(i) = mxm::sin(in(i));
+        ret *= val;
     }
     return ret;
 }

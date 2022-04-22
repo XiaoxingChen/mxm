@@ -786,6 +786,16 @@ void testRvalueReference()
 
 #if TEST_AVAILABLE_LINALG_COMPLEX
 void testComplexLogExtremeCondition();
+void testComplexExp()
+{
+    {
+        if((exp(Complex<float>{0, M_PI}) + 1.f).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+
+        if((exp(Complex<float>{0, M_PI_2}) - Complex<float>{0,1}).norm() > eps())
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
 void testComplexBase()
 {
     {
@@ -1079,6 +1089,7 @@ void testLinearAlgebra()
 #endif
     testRvalueReference();
     testComplexBase();
+    testComplexExp();
     testComplexAtPart();
     // testTridiagonalizeSkewSymmetric();
     // testQRIteration();
