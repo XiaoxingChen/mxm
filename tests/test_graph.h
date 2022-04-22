@@ -60,6 +60,44 @@ inline void testDijkstra2()
     }
 }
 
+// test graph:
+// link: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+inline void testDijkstra3()
+{
+    WeightedUnirectedGraph<float> g(9);
+    Matrix<size_t> edge_buffer(fixRow(2), {0,1, 0,7, 1,2, 1,7, 2,3, 2,5, 2,8, 3,5, 3,4, 4,5, 5,6, 6,7, 6,8, 7,8}, COL);
+    Vector<float> weight_buffer{4, 8, 8, 11, 7, 4, 2, 9, 14, 10, 2, 1, 6, 7};
+    g.initEdges(edge_buffer);
+    g.initProperty(weight_buffer);
+    float distance = 0;
+
+    std::vector<size_t> path = dijkstra(g, 0, 4, &distance);
+    if(path != std::vector<size_t>{0,7,6,5,4})
+    {
+        std::cout << "distance: " << distance << std::endl;
+        std::cout << "path: " << mxm::to_string(path) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
+inline void testDijkstra4()
+{
+    WeightedUnirectedGraph<float> g(4);
+    Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 1,3, 2,3}, COL);
+    Vector<float> weight_buffer{1, 2, 10, 9};
+    g.initEdges(edge_buffer);
+    g.initProperty(weight_buffer);
+    float distance = 0;
+
+    std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
+    if(path != std::vector<size_t>{0,1,3})
+    {
+        std::cout << "distance: " << distance << std::endl;
+        std::cout << "path: " << mxm::to_string(path) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 template<typename GraphType>
 bool validateTopologicalOrder(const GraphType& g, const std::vector<size_t>& order )
 {
@@ -548,6 +586,8 @@ inline void testGraph()
 {
     testDijkstra1();
     testDijkstra2();
+    testDijkstra3();
+    testDijkstra4();
     testTopologicalSort();
     testTopologicalSort02();
     testConnectedComponents01();

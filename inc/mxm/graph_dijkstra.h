@@ -8,6 +8,8 @@
 namespace mxm
 {
 
+// Summary:Move vertices from Unvisited Set to Visited Set.
+// check every vertex is a better predecessor in the Unvisited Set.
 template<typename GraphType>
 std::enable_if_t< is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
 dijkstraBestPredecessor(
@@ -15,30 +17,40 @@ dijkstraBestPredecessor(
     size_t start)
 {
     using DType = typename GraphType::DistanceType;
-    std::multimap<DType, size_t> que;
-    que.insert({0, start});
+    // std::multimap<DType, size_t> que;
+    std::set<size_t> candidates;
+    candidates.insert(start);
+    std::map<size_t, DType> dist_to_start;
+    dist_to_start[start] = DType(0);
+    // que.insert({0, start});
 
     std::set<size_t> visited;
     visited.insert(start);
 
-    std::vector<size_t> best_pred(g.vertexNum(), g.vertexNum());
+    std::vector<size_t> best_pred(g.vertexNum(), start);
 
-    while(! que.empty())
+    while(! candidates.empty())
     {
-        size_t target_idx = que.begin()->second;
-        que.erase(que.begin());
+        size_t target_idx = *candidates.begin();
+        std::for_each(candidates.cbegin(), candidates.cend(), [&](auto& idx)
+        {
+            if(dist_to_start.count(idx) == 0) return;
+            if(dist_to_start.at(idx) > dist_to_start.at(target_idx)) return;
+            target_idx = idx;
+        });
+        candidates.erase(target_idx);
 
         for(auto & succ_idx: g.adjacency(target_idx))
         {
             if(visited.count(succ_idx) > 0) continue;
-            DType local_distance = g.weight(target_idx, succ_idx);
+            DType latest_distance = g.weight(target_idx, succ_idx) + dist_to_start.at(target_idx);
 
-            if(local_distance < g.weight(best_pred.at(succ_idx), succ_idx))
+            if(0 == dist_to_start.count(succ_idx) || latest_distance < dist_to_start.at(succ_idx))
             {
                 best_pred.at(succ_idx) = target_idx;
+                dist_to_start[succ_idx] = latest_distance;
             }
-
-            que.insert({local_distance, succ_idx});
+            candidates.insert(succ_idx);
         }
 
         // move insert before for loop?
@@ -154,6 +166,7 @@ dijkstra(
     typename GraphType::DistanceType* p_distance)
 {
     auto best_predecessor = dijkstraBestPredecessor(g, start);
+    // std::cout << "best_predecessor: " << mxm::to_string(best_predecessor) << std::endl;
     typename GraphType::DistanceType distance;
     auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
     if(p_distance) *p_distance = distance;

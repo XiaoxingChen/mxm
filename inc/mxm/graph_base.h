@@ -191,38 +191,25 @@ protected:
 
 };
 
-class DirectedGraph: public GraphBase, public BinaryEdge<true, DirectedGraph>
-{
-public:
-    DirectedGraph(): GraphBase()
-    {
-    }
 
-    DirectedGraph(size_t vertex_num): GraphBase(vertex_num)
-    {
-    }
-
-private:
-};
-
-template<typename DType, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
-class WeightedDirectedGraph:
+template<typename DType, bool IsDirected, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
+class WeightedGraph:
     public GraphBase,
-    public BinaryEdge<true, WeightedDirectedGraph<DType>>,
-    public BinaryEdgeProperty<DType, WeightedDirectedGraph<DType>>
+    public BinaryEdge<IsDirected, WeightedGraph<DType, IsDirected>>,
+    public BinaryEdgeProperty<DType, WeightedGraph<DType, IsDirected>>
 {
 public:
-    using ThisType = WeightedDirectedGraph<DType>;
+    using ThisType = WeightedGraph<DType, IsDirected>;
     using DistanceType = DType;
-    using EdgeDirectionType = BinaryEdge<true, ThisType>;
+    using EdgeDirectionType = BinaryEdge<IsDirected, ThisType>;
     using PropertyEdgeType = BinaryEdgeProperty<DType, ThisType>;
 
-    WeightedDirectedGraph(): GraphBase()
+    WeightedGraph(): GraphBase()
     {
         this->setInvalidProperty(DType(INFINITY));
     }
 
-    WeightedDirectedGraph(size_t vertex_num): GraphBase(vertex_num)
+    WeightedGraph(size_t vertex_num): GraphBase(vertex_num)
     {
         this->setInvalidProperty(DType(INFINITY));
     }
@@ -234,21 +221,30 @@ public:
 protected:
 };
 
-class UndirectedGraph:
+template<typename DType>
+using WeightedDirectedGraph = WeightedGraph<DType, true>;
+template<typename DType>
+using WeightedUnirectedGraph = WeightedGraph<DType, false>;
+
+template<bool IsDirected>
+class UnweightedGraph:
     public GraphBase,
-    public BinaryEdge<false, UndirectedGraph>
+    public BinaryEdge<false, UnweightedGraph<IsDirected>>
 {
 public:
-    UndirectedGraph(): GraphBase()
+    UnweightedGraph(): GraphBase()
     {
     }
 
-    UndirectedGraph(size_t vertex_num): GraphBase(vertex_num)
+    UnweightedGraph(size_t vertex_num): GraphBase(vertex_num)
     {
     }
 
 protected:
 };
+
+using UndirectedGraph = UnweightedGraph<false>;
+using DirectedGraph = UnweightedGraph<true>;
 
 template<typename DType>
 struct CapacityFlow
