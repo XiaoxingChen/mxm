@@ -17,40 +17,36 @@ dijkstraBestPredecessor(
     size_t start)
 {
     using DType = typename GraphType::DistanceType;
-    // std::multimap<DType, size_t> que;
-    std::set<size_t> candidates;
-    candidates.insert(start);
-    std::map<size_t, DType> dist_to_start;
-    dist_to_start[start] = DType(0);
-    // que.insert({0, start});
+    std::multimap<DType, size_t> candidates;
+    candidates.insert({DType(0), start});
+    // std::set<size_t> candidates;
+    // candidates.insert(start);
+    std::vector<DType> dist_to_start(g.vertexNum(), std::numeric_limits<DType>::max());
+    // std::unordered_map<size_t, DType> dist_to_start;
+    dist_to_start.at(start) = DType(0);
+
 
     std::set<size_t> visited;
-    visited.insert(start);
 
     std::vector<size_t> best_pred(g.vertexNum(), start);
 
     while(! candidates.empty())
     {
-        size_t target_idx = *candidates.begin();
-        std::for_each(candidates.cbegin(), candidates.cend(), [&](auto& idx)
-        {
-            if(dist_to_start.count(idx) == 0) return;
-            if(dist_to_start.at(idx) > dist_to_start.at(target_idx)) return;
-            target_idx = idx;
-        });
-        candidates.erase(target_idx);
+        size_t target_idx = candidates.begin()->second;
+        candidates.erase(candidates.begin());
+        if(visited.count(target_idx) > 0) continue;
 
         for(auto & succ_idx: g.adjacency(target_idx))
         {
             if(visited.count(succ_idx) > 0) continue;
             DType latest_distance = g.weight(target_idx, succ_idx) + dist_to_start.at(target_idx);
 
-            if(0 == dist_to_start.count(succ_idx) || latest_distance < dist_to_start.at(succ_idx))
+            if(latest_distance < dist_to_start.at(succ_idx))
             {
                 best_pred.at(succ_idx) = target_idx;
                 dist_to_start[succ_idx] = latest_distance;
+                candidates.insert({latest_distance, succ_idx});
             }
-            candidates.insert(succ_idx);
         }
 
         // move insert before for loop?
@@ -61,6 +57,7 @@ dijkstraBestPredecessor(
 
     // boundary condition
     best_pred.at(start) = start;
+    // std::cout << "best_pred: " << mxm::to_string(best_pred) << std::endl;
     return best_pred;
 }
 
