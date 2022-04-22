@@ -302,13 +302,37 @@ public:
 private:
 };
 
+template<class GraphType>
+struct is_edge_binary:
+std::integral_constant<bool, std::is_base_of_v< BinaryEdge<GraphType::directed(), GraphType>, GraphType >>
+{};
+
 template<class T, class = void>
-struct is_weighted_binary_edge: std::false_type{};
+struct is_edge_weighted: std::false_type{};
 
 template<class T>
-struct is_weighted_binary_edge<
+struct is_edge_weighted<
     T, typename std::void_t< decltype(std::declval<T>().weight(0,0)) >
     >: std::true_type{};
+
+template<class GraphType>
+struct is_weighted_binary_edge:
+std::integral_constant<bool, is_edge_binary<GraphType>::value && is_edge_weighted<GraphType>::value >
+{};
+
+template<class GraphType>
+struct is_unweighted_binary_edge:
+std::integral_constant<bool, is_edge_binary<GraphType>::value && !is_edge_weighted<GraphType>::value >
+{};
+
+template <typename GraphType>
+inline constexpr bool is_edge_weighted_v = is_edge_weighted<GraphType>::value;
+
+template <typename GraphType>
+inline constexpr bool is_edge_binary_v = is_edge_binary<GraphType>::value;
+
+template <typename GraphType>
+inline constexpr bool is_unweighted_binary_edge_v = is_unweighted_binary_edge<GraphType>::value;
 
 
 } // namespace mxm

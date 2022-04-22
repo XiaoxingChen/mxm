@@ -65,7 +65,7 @@ dijkstraBestPredecessor(
 }
 
 template<typename GraphType>
-std::enable_if_t< !is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
 dijkstraBestPredecessor(
     const GraphType& g,
     size_t start)
@@ -131,7 +131,7 @@ pathFromBestPredecessor(
 }
 
 template<typename GraphType>
-std::enable_if_t< !is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
 pathFromBestPredecessor(
     const GraphType& g,
     const std::vector<size_t>& best_pred,
@@ -174,7 +174,7 @@ dijkstra(
 }
 
 template<typename GraphType>
-std::enable_if_t< !is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
 dijkstra(
     const GraphType& g,
     size_t start,
