@@ -206,12 +206,12 @@ public:
 
     WeightedGraph(): GraphBase()
     {
-        this->setInvalidProperty(DType(INFINITY));
+        this->setInvalidProperty(std::numeric_limits<DType>::max());
     }
 
     WeightedGraph(size_t vertex_num): GraphBase(vertex_num)
     {
-        this->setInvalidProperty(DType(INFINITY));
+        this->setInvalidProperty(std::numeric_limits<DType>::max());
     }
 
     DType weight(size_t from, size_t to) const

@@ -100,6 +100,7 @@ pathFromBestPredecessor(
     size_t destination,
     typename GraphType::DistanceType& distance)
 {
+    using DType = typename GraphType::DistanceType;
     std::vector<size_t> path;
     path.clear();
     distance = 0;
@@ -111,7 +112,7 @@ pathFromBestPredecessor(
         if(! g.validVertex(pred))
         {
             path.clear();
-            distance = INFINITY;
+            distance = std::numeric_limits<DType>::max();
             return path;
         }
         distance += g.weight(pred, p);
