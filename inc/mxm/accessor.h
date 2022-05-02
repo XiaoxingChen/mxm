@@ -29,8 +29,8 @@ public:
     using EntryType = DType;
     void traverse(std::function< void(size_t)> f) const { for(size_t i = 0; i < deriveThis()->size(); i++) f(i); }
 
-    DeriveType* deriveThis() {return reinterpret_cast<DeriveType*>(this);}
-    const DeriveType* deriveThis() const {return reinterpret_cast<const DeriveType*>(this);}
+    DeriveType* deriveThis() {return static_cast<DeriveType*>(this);}
+    const DeriveType* deriveThis() const {return static_cast<const DeriveType*>(this);}
     const DType& at(size_t i) const {return (*deriveThis())(i);}
     DType& at(size_t i) {return (*deriveThis())(i);}
 

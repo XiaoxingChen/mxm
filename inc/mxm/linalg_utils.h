@@ -13,7 +13,7 @@ namespace mxm
 template<typename DeriveType>
 typename Traits<DeriveType>::DerefType orthogonalComplement(const MatrixBase<DeriveType>& vs_in)
 {
-    auto & vs = reinterpret_cast<const DeriveType&>(vs_in);
+    auto & vs = static_cast<const DeriveType&>(vs_in);
     int diff = static_cast<int>(vs.shape(0)) - vs.shape(1);
     if(diff == -1)
         return orthogonalComplement(vs.T()).T();

@@ -18,8 +18,8 @@ Matrix<typename Traits<DeriveType1>::EntryType>
 solveLUTriangle(const MatrixBase<DeriveType1>& mat_in, const MatrixBase<DeriveType2>& b_in, bool l_tri)
 {
     using DType = typename Traits<DeriveType1>::EntryType;
-    auto & mat = reinterpret_cast<const DeriveType1&>(mat_in);
-    auto & b = reinterpret_cast<const DeriveType2&>(b_in);
+    auto & mat = static_cast<const DeriveType1&>(mat_in);
+    auto & b = static_cast<const DeriveType2&>(b_in);
 
     if(!mat.square())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));

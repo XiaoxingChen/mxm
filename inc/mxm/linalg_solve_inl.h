@@ -240,7 +240,7 @@ inv(const MatrixBase<DeriveType>& mat)
 {
     using EntryType = typename Traits<DeriveType>::EntryType;
     using ArithType = typename Traits<DeriveType>::ArithType;
-    auto& self = reinterpret_cast<const DeriveType&>(mat);
+    auto& self = static_cast<const DeriveType&>(mat);
     if(!mat.square()) return Matrix<EntryType>::zeros(self.shape());
     return qr::solve(self, Matrix<EntryType>::identity(self.shape(0)));
 }

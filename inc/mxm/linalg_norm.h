@@ -52,7 +52,7 @@ norm(const MatrixBase<DeriveType>& mat)
 {
     using EntryType = typename Traits<DeriveType>::EntryType;
     using ArithType = typename Traits<DeriveType>::ArithType;
-    auto& self = reinterpret_cast<const DeriveType&>(mat);
+    auto& self = static_cast<const DeriveType&>(mat);
     typename Traits<DeriveType>::ArithType sum2(0);
     self.traverse([&](size_t i, size_t j){
         auto n = norm(self(i,j)); sum2 += n*n;

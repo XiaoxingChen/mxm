@@ -167,10 +167,10 @@ Matrix<DType>::Matrix(ThisType&& rhs)
 template<typename DType>
 template<typename DeriveType>
 Matrix<DType>::Matrix(const MatrixBase<DeriveType>& rhs)
-    :shape_(reinterpret_cast<const DeriveType&>(rhs).shape()), data_(shape_[0] * shape_[1]), major_(ROW)
+    :shape_(static_cast<const DeriveType&>(rhs).shape()), data_(shape_[0] * shape_[1]), major_(ROW)
 {
     this->traverse([&](auto i, auto j){
-        (*this)(i,j) = DType(reinterpret_cast<const DeriveType&>(rhs)(i,j));
+        (*this)(i,j) = DType(static_cast<const DeriveType&>(rhs)(i,j));
     });
 }
 
@@ -242,7 +242,7 @@ typename Matrix<EntryType>::ArithType
 norm(const Matrix<EntryType>& mat)
 {
     using BaseType = MatrixBase<Matrix<EntryType>>;
-    return norm(reinterpret_cast<const BaseType&>(mat));
+    return norm(static_cast<const BaseType&>(mat));
 }
 #if 0
 template<typename EntryType, typename=void>
@@ -250,7 +250,7 @@ std::string
 to_string(const Matrix<EntryType>& mat, size_t prec=6)
 {
     using BaseType = MatrixBase<Matrix<EntryType>>;
-    return to_string(reinterpret_cast<const BaseType&>(mat), prec);
+    return to_string(static_cast<const BaseType&>(mat), prec);
 }
 #endif
 

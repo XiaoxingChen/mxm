@@ -112,7 +112,7 @@ template<typename DType>
 template<typename DeriveType>
 void MatrixRef<DType>::operator = (const MatrixBase<DeriveType>& rhs_in)
 {
-    auto & rhs = reinterpret_cast<const DeriveType&>(rhs_in);
+    auto & rhs = static_cast<const DeriveType&>(rhs_in);
     assert(rhs.shape() == shape());
 
     this->traverse([&](auto i, auto j){ (*this)(i,j) = rhs(i,j); });

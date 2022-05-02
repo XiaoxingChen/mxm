@@ -100,10 +100,10 @@ public:
                 if(!f(i,j)) return;
     }
 
-    EntryType& operator () (size_t i, size_t j) { return reinterpret_cast<DeriveType&>(*this)(i,j); }
-    const EntryType& operator () (size_t i, size_t j) const { return reinterpret_cast<const DeriveType&>(*this)(i,j); }
-    const Shape& shape() const { return reinterpret_cast<const DeriveType&>(*this).shape(); }
-    size_t shape(size_t ax) const { return reinterpret_cast<const DeriveType&>(*this).shape(ax); }
+    EntryType& operator () (size_t i, size_t j) { return static_cast<DeriveType&>(*this)(i,j); }
+    const EntryType& operator () (size_t i, size_t j) const { return static_cast<const DeriveType&>(*this)(i,j); }
+    const Shape& shape() const { return static_cast<const DeriveType&>(*this).shape(); }
+    size_t shape(size_t ax) const { return static_cast<const DeriveType&>(*this).shape(ax); }
 
     //
     // arithmetic operators
@@ -112,7 +112,7 @@ public:
     template<typename RhsType, typename Op> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
     inplaceOp(RhsType scalar, Op f)
     {
-        auto& self = reinterpret_cast<DeriveType&>(*this);
+        auto& self = static_cast<DeriveType&>(*this);
         traverse([&](size_t i, size_t j){self(i,j) = f(self(i,j), scalar);});
         return self;
     }
@@ -124,30 +124,30 @@ public:
 
     //  Compound Assignment Operator with Scalar
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
-    operator *= (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) *= scalar;}); return self;}
+    operator *= (RhsType scalar)  { auto& self = static_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) *= scalar;}); return self;}
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
-    operator += (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) += scalar;}); return self;}
+    operator += (RhsType scalar)  { auto& self = static_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) += scalar;}); return self;}
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
-    operator -= (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) -= scalar;}); return self;}
+    operator -= (RhsType scalar)  { auto& self = static_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) -= scalar;}); return self;}
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , DeriveType>&
-    operator /= (RhsType scalar)  { auto& self = reinterpret_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) /= scalar;}); return self;}
+    operator /= (RhsType scalar)  { auto& self = static_cast<DeriveType&>(*this); traverse([&](size_t i, size_t j){self(i,j) /= scalar;}); return self;}
 
 
     // Binary Operator
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
-    operator * (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) *= scalar; }
+    operator * (RhsType scalar) const { return Matrix<EntryType>(static_cast<const DeriveType&>(*this)) *= scalar; }
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
-    operator + (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) += scalar; }
+    operator + (RhsType scalar) const { return Matrix<EntryType>(static_cast<const DeriveType&>(*this)) += scalar; }
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
-    operator - (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) -= scalar; }
+    operator - (RhsType scalar) const { return Matrix<EntryType>(static_cast<const DeriveType&>(*this)) -= scalar; }
 
     template<typename RhsType> std::enable_if_t<Operatable<EntryType, RhsType>::value , Matrix<EntryType>>
-    operator / (RhsType scalar) const { return Matrix<EntryType>(reinterpret_cast<const DeriveType&>(*this)) /= scalar; }
+    operator / (RhsType scalar) const { return Matrix<EntryType>(static_cast<const DeriveType&>(*this)) /= scalar; }
 
 
     template<typename T> DeriveType & operator *= (const MatrixBase<T>& rhs)  { return compoundAssign(rhs, multiplies<EntryType, typename Traits<T>::EntryType>()); }
@@ -175,7 +175,7 @@ public:
 
     bool operator == (const DeriveType& rhs)
     {
-        auto& self = reinterpret_cast<DeriveType&>(*this);
+        auto& self = static_cast<DeriveType&>(*this);
         if(rhs.shape() != self.shape()) return false;
 
         for(size_t i = 0; i < self.shape(0); i++)
@@ -191,8 +191,8 @@ public:
     template<typename T>
     auto matmul(const MatrixBase<T>& rhs) const
     {
-        auto& self = reinterpret_cast<const DeriveType&>(*this);
-        const T& d_rhs = reinterpret_cast<const T&>(rhs);
+        auto& self = static_cast<const DeriveType&>(*this);
+        const T& d_rhs = static_cast<const T&>(rhs);
 
 
         assert(self.shape(1) == d_rhs.shape(0) && "matrix multiplication shape mismatch");
@@ -210,8 +210,8 @@ public:
     template<typename T>
     DeriveType& setBlock(size_t i0, size_t j0, const MatrixBase<T>& mat)
     {
-        mat.traverse([&](size_t i, size_t j) {(*this)(i + i0, j + j0) = reinterpret_cast<const T&>(mat)(i, j);});
-        return reinterpret_cast<DeriveType&>(*this);
+        mat.traverse([&](size_t i, size_t j) {(*this)(i + i0, j + j0) = static_cast<const T&>(mat)(i, j);});
+        return static_cast<DeriveType&>(*this);
     }
 
     //Sub Matrix by Copy
@@ -237,12 +237,12 @@ public:
 #endif
 
     bool square() const {
-        auto& self = reinterpret_cast<const DeriveType&>(*this);
+        auto& self = static_cast<const DeriveType&>(*this);
         return self.shape(0) == self.shape(1);
     }
     EntryType trace() const
     {
-        auto& self = reinterpret_cast<const DeriveType&>(*this);
+        auto& self = static_cast<const DeriveType&>(*this);
         assert(square() && "Only square matrix has trace");
         EntryType ret = Traits<EntryType>::zero();
         for(size_t i = 0;i < self.shape(0); i++) ret += self(i,i);
@@ -295,7 +295,7 @@ template<typename DeriveType>
 template<bool Copy>
 std::enable_if_t<Copy, Matrix<typename Traits<DeriveType>::EntryType>> MatrixBase<DeriveType>::T() const
 {
-    auto & self = reinterpret_cast<const DeriveType&>(*this);
+    auto & self = static_cast<const DeriveType&>(*this);
 
     Matrix<EntryType> ret({self.shape(1), self.shape(0)});
     ret.traverse([&](auto i, auto j){ ret(i,j) = self(i,j); });
@@ -307,7 +307,7 @@ template<bool Copy>
 std::enable_if_t<!Copy && Traits<DeriveType>::referable, const MatrixRef<typename Traits<DeriveType>::EntryType>>
 MatrixBase<DeriveType>::T() const
 {
-    auto & self = reinterpret_cast<const DeriveType&>(*this);
+    auto & self = static_cast<const DeriveType&>(*this);
     return MatrixRef<EntryType>(const_cast<DeriveType&>(self), {0,0}, {self.shape(1), self.shape(0)}, true);
 }
 
@@ -316,7 +316,7 @@ template<bool Copy>
 std::enable_if_t<!Copy && Traits<DeriveType>::referable, MatrixRef<typename Traits<DeriveType>::EntryType>>
 MatrixBase<DeriveType>::T()
 {
-    auto & self = reinterpret_cast<DeriveType&>(*this);
+    auto & self = static_cast<DeriveType&>(*this);
     return MatrixRef<EntryType>(self, {0,0}, {self.shape(1), self.shape(0)}, true);
 }
 
@@ -324,7 +324,7 @@ template<typename DeriveType>
 std::enable_if_t<Traits<DeriveType>::referable , const MatrixRef<typename Traits<DeriveType>::EntryType>>
 MatrixBase<DeriveType>::operator () (const Block& b) const
 {
-    auto & self = reinterpret_cast<const DeriveType&>(*this);
+    auto & self = static_cast<const DeriveType&>(*this);
     auto offset_shape = deduct(b, self.shape());
     return MatrixRef<EntryType>(const_cast<DeriveType&>(self), offset_shape[0], offset_shape[1], false);
 }
@@ -333,7 +333,7 @@ template<typename DeriveType>
 std::enable_if_t<Traits<DeriveType>::referable , MatrixRef<typename Traits<DeriveType>::EntryType>>
 MatrixBase<DeriveType>::operator () (const Block& b)
 {
-    auto & self = reinterpret_cast<DeriveType&>(*this);
+    auto & self = static_cast<DeriveType&>(*this);
     auto offset_shape = deduct(b, self.shape());
     return MatrixRef<EntryType>(self, offset_shape[0], offset_shape[1], false);
 }
@@ -346,7 +346,7 @@ std::string to_string(const DType& m, size_t prec=6);
 template<typename DeriveType, typename=void>
 std::string to_string(const MatrixBase<DeriveType>& mat_in, size_t prec=6)
 {
-    auto & mat = reinterpret_cast<const DeriveType&>(mat_in);
+    auto & mat = static_cast<const DeriveType&>(mat_in);
     std::string ret;
     mat.traverse([&](size_t i, size_t j){
         ret += (mxm::to_string(mat(i,j), prec) + (j == mat.shape(1) - 1 ? "\n" : " ")); });
@@ -392,7 +392,7 @@ norm(const MatrixBase<DeriveType>& mat)
 {
     using EntryType = typename Traits<DeriveType>::EntryType;
     using ArithType = typename Traits<DeriveType>::ArithType;
-    auto& self = reinterpret_cast<const DeriveType&>(mat);
+    auto& self = static_cast<const DeriveType&>(mat);
     typename Traits<DeriveType>::ArithType sum2(0);
     self.traverse([&](size_t i, size_t j){
         auto n = norm(self(i,j)); sum2 += n*n;
@@ -414,7 +414,7 @@ typename Traits<DeriveType>::ArithType MatrixBase<DeriveType>::norm() const
 template<typename DeriveType>
 DeriveType& MatrixBase<DeriveType>::normalize()
 {
-    auto & self = reinterpret_cast<DeriveType&>(*this);
+    auto & self = static_cast<DeriveType&>(*this);
     self *= Traits<ArithType>::inv(mxm::norm(*this));
     return self;
 }
@@ -458,7 +458,7 @@ DeriveType & MatrixBase<DeriveType>::compoundAssign(const MatrixBase<RhsDeriveTy
         if(shape() == rhs.shape())
         {
             this->traverse([&](size_t i, size_t j){(*this)(i,j) = f((*this)(i,j), rhs(i,j));});
-            return reinterpret_cast<DeriveType&>(*this);
+            return static_cast<DeriveType&>(*this);
         }
         assert(shape(0) > rhs.shape(0) ^ shape(1) > rhs.shape(1)); //only one axis to broadcast is allow
         size_t broadcast_axis = shape(0) > rhs.shape(0) ? 0 : 1;
@@ -469,7 +469,7 @@ DeriveType & MatrixBase<DeriveType>::compoundAssign(const MatrixBase<RhsDeriveTy
         else if(1 == broadcast_axis)
             this->traverse([&](size_t i, size_t j){(*this)(i,j) = f((*this)(i,j), rhs(i,0));});
 
-        return reinterpret_cast<DeriveType&>(*this);
+        return static_cast<DeriveType&>(*this);
     }
 
 // for float point type
