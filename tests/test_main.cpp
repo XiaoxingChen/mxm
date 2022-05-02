@@ -30,10 +30,14 @@
 #include "test_dual_number.h"
 #include "test_metric_string.h"
 
+#define ENABLE_GLOBAL_CATCH 1
+
 int main(int argc, char const *argv[])
 {
+#if ENABLE_GLOBAL_CATCH
   try
   {
+#endif
   testAABB();
   testRay();
   testLinearAlgebra();
@@ -67,6 +71,7 @@ int main(int argc, char const *argv[])
   testMetricTree();
   testDualNumber();
   testMetricString();
+#if ENABLE_GLOBAL_CATCH
   }
   catch(const std::exception& e)
   {
@@ -74,6 +79,7 @@ int main(int argc, char const *argv[])
     std::cout << "Test failed!" << std::endl;
     return -1;
   }
+#endif
   std::cout << "done" << std::endl;
   return 0;
 }
