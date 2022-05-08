@@ -48,28 +48,28 @@ struct Operatable
 };
 
 template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()*RhsType())>
-struct multiplies: public std::binary_function<LhsType,RhsType,ReturnType_>
+struct multiplies
 {
     using ReturnType = ReturnType_;
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs * rhs; }
 };
 
 template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()/RhsType())>
-struct divides: public std::binary_function<LhsType,RhsType,ReturnType_>
+struct divides
 {
     using ReturnType = ReturnType_;
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs / rhs; }
 };
 
 template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()+RhsType())>
-struct plus: public std::binary_function<LhsType,RhsType,ReturnType_>
+struct plus
 {
     using ReturnType = ReturnType_;
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs + rhs; }
 };
 
 template<typename LhsType, typename RhsType, typename ReturnType_=decltype(LhsType()-RhsType())>
-struct minus: public std::binary_function<LhsType,RhsType,ReturnType_>
+struct minus
 {
     using ReturnType = ReturnType_;
     ReturnType operator()(const LhsType& lhs, const RhsType& rhs) { return lhs - rhs; }
