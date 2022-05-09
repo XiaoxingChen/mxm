@@ -12,6 +12,7 @@
 #include "mxm/lie_special_orthogonal.h"
 #include "mxm/geometry_cube.h"
 #include "mxm/cv_calibration.h"
+#include "mxm/optimize_sfm_gn.h"
 
 
 using namespace mxm;
@@ -649,6 +650,59 @@ void testPinholeCalibration()
 #endif
 }
 
+using namespace opt;
+void testSfMGaussNewtonSolver()
+{
+    using DType = double;
+    Matrix<DType> jac_dense({8,3},{
+        0.19020852, 0.2869638 , 0.00707006,
+        0.42328385, 0.39158404, 0.22168018,
+        0.48017936, 0.41799489, 0.07614341,
+        0.23522268, 0.87704247, 0.26088826,
+        0.43840284, 0.48960822, 0.83985714,
+        0.68983818, 0.84461373, 0.30207515,
+        0.30077884, 0.34828895, 0.78505644,
+        0.37862014, 0.15355915, 0.69023084});
+
+    BlockDiagMatrix<DType> jac_sparse{
+        Matrix<DType>({4,3},{
+            0.89414421, 0.93576678, 0.19875144,
+            0.82257023, 0.17100435, 0.7227753 ,
+            0.57932359, 0.49835422, 0.84444862,
+            0.7380438 , 0.16406209, 0.35930814,}),
+        Matrix<DType>({4,3},{
+            0.39491264, 0.97105481, 0.17916352,
+            0.33141099, 0.96214569, 0.33999412,
+            0.3463242 , 0.92862236, 0.67499605,
+            0.01253015, 0.24250682, 0.83093588})
+    };
+    Matrix<DType> res({8,1},{1., 3., 1., 3.,4,5,1,2});
+    jac_dense *= 100.;
+    for(auto & b: jac_sparse) b *= 100.;
+    res *= 10.;
+
+    Matrix<DType> jac_full = hstack(jac_dense, asDense(jac_sparse) );
+
+    Vector<DType> b = -jac_full.T().matmul(res);
+    Matrix<DType> hessian = jac_full.T().matmul(jac_full);
+
+    auto ret = solveSfMGaussNewton(jac_dense, jac_sparse, res);
+
+    DType error;
+    if(!isZero(hessian.matmul(ret) - b, &error, 1e-10))
+    {
+        std::cout << "ret: " << mxm::to_string(ret.T()) << std::endl;
+        std::cout << "hessian: \n" << mxm::to_string(hessian) << std::endl;
+        std::cout << "hessian x ret: \n" << mxm::to_string(hessian.matmul(ret).T()) << std::endl;
+        std::cout << "b: \n" << mxm::to_string (b.T()) << std::endl;
+        std::cout << "error: " << error << std::endl;
+
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+
+}
+
 
 void testCvBasic()
 {
@@ -663,6 +717,7 @@ void testCvBasic()
     testEpipolarGeometry();
     testPnP();
     testPinholeCalibration();
+    testSfMGaussNewtonSolver();
 }
 #else
 void testCvBasic(){}
