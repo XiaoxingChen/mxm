@@ -614,7 +614,7 @@ void testPinholeCalibration()
 
     PinholeCameraIntrinsicEstimator<DType> problem(pts3d, pts2d);
     problem.initialGuess(pose_guess, cam_guess);
-    problem.solve(5, 0, "gn");
+    problem.solve(5, 0);
 
     if(!isZero(cam.focalLength() - problem.camera().focalLength(), nullptr, 1e-4))
     {
