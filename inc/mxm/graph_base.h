@@ -16,6 +16,7 @@ public:
     const size_t& vertexNum() const { return vertex_num_; }
     GraphBase() {}
     GraphBase(size_t vertex_num): vertex_num_(vertex_num)  {}
+#if 0
     ThisType& setEdgeBuffer(const Matrix<size_t>& edges)
     {
         edge_buffer_ = edges;
@@ -26,11 +27,15 @@ public:
         edge_buffer_ = hstack(edge_buffer_, edges);
         return *this;
     }
+
+    const Matrix<size_t>& edgeBuffer() const { return edge_buffer_; }
+#endif
+
     bool validVertex(size_t idx) const { return idx < vertex_num_; }
     static constexpr size_t nullVertex() { return std::numeric_limits<size_t>::max(); }
 protected:
     size_t vertex_num_ = 0;
-    Matrix<size_t> edge_buffer_;
+    // Matrix<size_t> edge_buffer_;
 };
 
 template<bool Directed, typename GraphType>
@@ -39,8 +44,8 @@ class BinaryEdge
 public:
     using ThisType = BinaryEdge<Directed, GraphType>;
 
-    const std::vector<size_t>& adjacency(size_t v_index) const { return adjacency_lists.at(v_index); }
-    // std::vector<size_t>& adjacency(size_t v_index) { return adjacency_lists.at(v_index); }
+    const std::vector<size_t>& adjacency(size_t v_index) const { return adjacency_lists_.at(v_index); }
+    // std::vector<size_t>& adjacency(size_t v_index) { return adjacency_lists_.at(v_index); }
 
     static constexpr bool directed() { return Directed; }
 
@@ -50,6 +55,9 @@ public:
         initEdgeIndices(edges);
         initAdjacencyLists(vertex_num, edges);
     }
+
+    const std::map<std::array<size_t, 2>, size_t >&
+    edgeIndices() const { return edge_index_; }
 
     // binary edge interface
     template<bool D=Directed, std::enable_if_t<D, int> T=0>
@@ -96,7 +104,7 @@ public:
 
 protected:
     size_t edge_num_ = 0;
-    std::vector<std::vector<size_t>> adjacency_lists;
+    std::vector<std::vector<size_t>> adjacency_lists_;
     std::map<std::array<size_t, 2>, size_t > edge_index_;
 
 private:
@@ -104,21 +112,21 @@ private:
     template<bool D=Directed, std::enable_if_t<D, int> T=0>
     void initAdjacencyLists(size_t vertex_num, const Matrix<size_t>& edge_buffer)
     {
-        adjacency_lists.resize(vertex_num);
+        adjacency_lists_.resize(vertex_num);
         for(size_t i = 0; i < edge_buffer.shape(1); i++)
         {
-            adjacency_lists.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
+            adjacency_lists_.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
         }
     }
 
     template<bool D=Directed, std::enable_if_t<!D, int> T=0>
     void initAdjacencyLists(size_t vertex_num, const Matrix<size_t>& edge_buffer)
     {
-        adjacency_lists.resize(vertex_num);
+        adjacency_lists_.resize(vertex_num);
         for(size_t i = 0; i < edge_buffer.shape(1); i++)
         {
-            adjacency_lists.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
-            adjacency_lists.at(edge_buffer(1, i)).push_back(edge_buffer(0, i));
+            adjacency_lists_.at(edge_buffer(0, i)).push_back(edge_buffer(1, i));
+            adjacency_lists_.at(edge_buffer(1, i)).push_back(edge_buffer(0, i));
         }
     }
 
@@ -161,16 +169,22 @@ public:
         property_buffer_ = property_buffer;
     }
 
-    PropertyType property(size_t edge_index) const
+    const PropertyType& property(size_t edge_index) const
     {
         if(edge_index >= property_buffer_.size()) return invalid_property_;
         return property_buffer_(edge_index);
     }
 
-    // Vector<PropertyType> properties(const Matrix<size_t>& vertices)
-    // {
-    //     GraphType* p_graph = static_cast<GraphType*>(this);
-    // }
+    PropertyType& property(size_t edge_index)
+    {
+        if(edge_index >= property_buffer_.size()) return invalid_property_;
+        return property_buffer_(edge_index);
+    }
+
+    const Vector<PropertyType>& properties() const
+    {
+        return property_buffer_;
+    }
 
 protected:
     Vector<PropertyType> property_buffer_;
@@ -181,11 +195,24 @@ template<typename PropertyType, typename GraphType>
 class BinaryEdgeProperty: public EdgeProperty<PropertyType, GraphType>
 {
 public:
-    PropertyType property(size_t v1, size_t v2) const
+    const PropertyType& property(size_t v1, size_t v2) const
     {
         const GraphType* p_graph = static_cast<const GraphType*>(this);
         size_t edge_index = p_graph->edgeIndices(Vector<size_t>{v1, v2})(0);
 
+        return EdgeProperty<PropertyType, GraphType>::property(edge_index);
+    }
+
+    PropertyType& property(size_t v1, size_t v2)
+    {
+        const GraphType* p_graph = static_cast<const GraphType*>(this);
+        size_t edge_index = p_graph->edgeIndices(Vector<size_t>{v1, v2})(0);
+
+        return EdgeProperty<PropertyType, GraphType>::property(edge_index);
+    }
+
+    const PropertyType& property(size_t edge_index) const
+    {
         return EdgeProperty<PropertyType, GraphType>::property(edge_index);
     }
 protected:
@@ -216,6 +243,11 @@ public:
     }
 
     DType weight(size_t from, size_t to) const
+    {
+        return PropertyEdgeType::property(from, to);
+    }
+
+    DType& weight(size_t from, size_t to)
     {
         return PropertyEdgeType::property(from, to);
     }
@@ -267,14 +299,14 @@ class FlowNetwork:
 public:
     using ThisType = FlowNetwork<DType>;
     using EdgeDirectionType = BinaryEdge<true, ThisType>;
-    using PropertyEdgeType = BinaryEdgeProperty<DType, ThisType>;
+    using PropertyEdgeType = BinaryEdgeProperty<CapacityFlow<DType>, ThisType>;
 
     FlowNetwork(): GraphBase()
     {
         this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
     }
 
-    FlowNetwork(size_t vertex_num): GraphBase(vertex_num)
+FlowNetwork(size_t vertex_num): GraphBase(vertex_num)
     {
         this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
     }

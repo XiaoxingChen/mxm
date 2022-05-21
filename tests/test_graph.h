@@ -9,6 +9,7 @@
 #include "mxm/graph_top_sort.h"
 #include "mxm/graph_utils.h"
 #include "mxm/random.h"
+#include "mxm/graph_flow.h"
 #endif
 
 using namespace mxm;
@@ -509,13 +510,13 @@ public:
         Vector<float> prev_vertex_value = vertex_value_;
         for(auto & state_idx: state_vertices_)
         {
-            if(this->adjacency_lists.at(state_idx).empty()) continue;
-            size_t best_action = this->adjacency_lists.at(state_idx).front();
+            if(this->adjacency_lists_.at(state_idx).empty()) continue;
+            size_t best_action = this->adjacency_lists_.at(state_idx).front();
             float max_action_reward = 0;
-            for(auto & action_idx: this->adjacency_lists.at(state_idx))
+            for(auto & action_idx: this->adjacency_lists_.at(state_idx))
             {
                 float expected_action_reward = 0.f;
-                for(auto & next_state_idx: this->adjacency_lists.at(action_idx))
+                for(auto & next_state_idx: this->adjacency_lists_.at(action_idx))
                 {
                     float local_reward = prev_vertex_value(next_state_idx) * discount_ + edgeProperty(action_idx, next_state_idx).reward;
                     expected_action_reward += edgeProperty(action_idx, next_state_idx).probability * local_reward;
@@ -617,7 +618,7 @@ inline void testMarkovDecisionProcess03()
 
 inline void testFlowNetwork01()
 {
-    FlowNetwork<float> g(3);
+    FlowNetwork<float> g(4);
     Matrix<size_t> edges(fixRow(2), {0,1, 1,2, 2,3}, COL);
     Vector<CapacityFlow<float>> properties{{3,1}, {5,1}, {4,1}};
     g.initEdges(edges);
@@ -628,6 +629,21 @@ inline void testFlowNetwork01()
         std::cout << g.property(0,1).flow << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
+
+}
+
+inline void testFlowNetwork02()
+{
+    WeightedDirectedGraph<float> g(4);
+    Matrix<size_t> edge_buffer(fixRow(2), {
+        0,1, 0,2, 2,1, 1,3, 2,3}, COL);
+
+    g.initEdges(edge_buffer);
+    Vector<float> cap{10, 3, 3, 10, 2};
+    g.initProperty(cap);
+
+    fordFulkersonMaxFLow(g, 0, 3);
+
 
 }
 
@@ -647,6 +663,7 @@ inline void testGraph()
     testMarkovDecisionProcess01();
     testMarkovDecisionProcess02();
     testMarkovDecisionProcess03();
+    testFlowNetwork02();
 }
 #else
 inline void testGraph(){}
