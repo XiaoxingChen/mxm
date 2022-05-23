@@ -21,7 +21,7 @@ residualCapacityGraph(const GraphType& g)
         edge_buffer(1, idx + g.edgeNum()) = e_idx_pair.first[0];
     }
     ret.initEdges(edge_buffer);
-    using DType = typename GraphType::DistanceType;
+    using DType = typename GraphType::WeightType;
     Vector<DType> properties(g.edgeNum()*2);
 
     for(size_t i = 0;i < g.edgeNum(); i++)
@@ -57,7 +57,7 @@ void noneZeroDfsAnyHit(const GraphType& g, size_t src, size_t dst, std::set<size
 template<typename GraphType>
 GraphType fordFulkersonMaxFLow(const GraphType& capacity_graph, size_t src, size_t sink)
 {
-    using DType = typename GraphType::DistanceType;
+    using DType = typename GraphType::WeightType;
     auto operation_g = residualCapacityGraph(capacity_graph);
 
     DType max_flow = DType(0.);

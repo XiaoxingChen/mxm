@@ -228,7 +228,7 @@ class WeightedGraph:
 {
 public:
     using ThisType = WeightedGraph<DType, IsDirected>;
-    using DistanceType = DType;
+    using WeightType = DType;
     using EdgeDirectionType = BinaryEdge<IsDirected, ThisType>;
     using PropertyEdgeType = BinaryEdgeProperty<DType, ThisType>;
 
@@ -278,7 +278,7 @@ protected:
 
 using UndirectedGraph = UnweightedGraph<false>;
 using DirectedGraph = UnweightedGraph<true>;
-
+#if 0
 template<typename DType>
 struct CapacityFlow
 {
@@ -334,7 +334,7 @@ class GridGraph
 public:
 private:
 };
-
+#endif
 template<class GraphType>
 struct is_edge_binary:
 std::integral_constant<bool, std::is_base_of_v< BinaryEdge<GraphType::directed(), GraphType>, GraphType >>

@@ -16,7 +16,7 @@ dijkstraBestPredecessor(
     const GraphType& g,
     size_t start)
 {
-    using DType = typename GraphType::DistanceType;
+    using DType = typename GraphType::WeightType;
     std::multimap<DType, size_t> candidates;
     candidates.insert({DType(0), start});
 
@@ -95,9 +95,9 @@ pathFromBestPredecessor(
     const GraphType& g,
     const std::vector<size_t>& best_pred,
     size_t destination,
-    typename GraphType::DistanceType& distance)
+    typename GraphType::WeightType& distance)
 {
-    using DType = typename GraphType::DistanceType;
+    using DType = typename GraphType::WeightType;
     std::vector<size_t> path;
     path.clear();
     distance = 0;
@@ -158,11 +158,11 @@ dijkstra(
     const GraphType& g,
     size_t start,
     size_t dest,
-    typename GraphType::DistanceType* p_distance)
+    typename GraphType::WeightType* p_distance)
 {
     auto best_predecessor = dijkstraBestPredecessor(g, start);
     // std::cout << "best_predecessor: " << mxm::to_string(best_predecessor) << std::endl;
-    typename GraphType::DistanceType distance;
+    typename GraphType::WeightType distance;
     auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
     if(p_distance) *p_distance = distance;
     return path;
@@ -177,7 +177,7 @@ dijkstra(
     int* p_distance)
 {
     auto best_predecessor = dijkstraBestPredecessor(g, start);
-    typename GraphType::DistanceType distance;
+    typename GraphType::WeightType distance;
     auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
     if(p_distance) *p_distance = distance;
     return path;
@@ -189,7 +189,7 @@ bellmanFordBestPredecessor(
     const GraphType& g,
     size_t start)
 {
-    using DType = typename GraphType::DistanceType;
+    using DType = typename GraphType::WeightType;
     std::vector<DType> dist_from_start(g.vertexNum(), std::numeric_limits<DType>::max());
     dist_from_start.at(start) = DType(0);
     std::vector<size_t> best_predecessor(g.vertexNum(), g.nullVertex());
@@ -219,11 +219,11 @@ shortedPathBellmanFord(
     const GraphType& g,
     size_t start,
     size_t dest,
-    typename GraphType::DistanceType* p_distance)
+    typename GraphType::WeightType* p_distance)
 {
     auto best_predecessor = bellmanFordBestPredecessor(g, start);
     // std::cout << "best_predecessor: " << mxm::to_string(best_predecessor) << std::endl;
-    typename GraphType::DistanceType distance;
+    typename GraphType::WeightType distance;
     auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
     if(p_distance) *p_distance = distance;
     return path;
