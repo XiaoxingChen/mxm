@@ -22,15 +22,15 @@ residualCapacityGraph(const GraphType& g)
     }
     ret.initEdges(edge_buffer);
     using DType = typename GraphType::WeightType;
-    Vector<DType> properties(g.edgeNum()*2);
+    Vector<DType> weights(g.edgeNum()*2);
 
     for(size_t i = 0;i < g.edgeNum(); i++)
     {
-        properties(i) = g.property(i);
-        properties(g.edgeNum() + i) = DType(0.);
+        weights(i) = g.weights()(i);
+        weights(g.edgeNum() + i) = DType(0.);
     }
 
-    ret.initProperty(g.properties());
+    ret.initWeight(weights);
     return ret;
 }
 
@@ -76,8 +76,8 @@ GraphType fordFulkersonMaxFLow(const GraphType& capacity_graph, size_t src, size
         }
         for(size_t i = 0; i < path.size() - 1; i++)
         {
-            operation_g.property(path.at(i), path.at(i+1)) -= bottle_neck;
-            operation_g.property(path.at(i+1), path.at(i)) += bottle_neck;
+            operation_g.weight(path.at(i), path.at(i+1)) -= bottle_neck;
+            operation_g.weight(path.at(i+1), path.at(i)) += bottle_neck;
         }
     }
     // std::cout << "max_flow: " << max_flow << std::endl;
