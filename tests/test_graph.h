@@ -675,6 +675,38 @@ inline void testFlowNetwork02()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
+
+inline void testFlowNetwork03()
+{
+    DirectedGraph g(6);
+    const size_t S_IDX = 4;
+    const size_t T_IDX = 5;
+    BinaryEdgeProperty<float, true> f_cap;
+    Matrix<size_t> edge_buffer(fixRow(2), {
+        0,2, 1,3, 2,T_IDX, 3,0, 3,T_IDX, S_IDX,0, S_IDX,1}, COL);
+
+    g.initEdges(edge_buffer);
+    Vector<float> cap{25, 15, 10, 6, 10, 10, 10};
+    f_cap.initProperty(cap).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
+
+    auto residual = fordFulkersonMaxFLow(g, f_cap, S_IDX, T_IDX);
+    // return;
+    BinaryEdgeProperty<float, true> f_max_flow = flowFromCapacityResidual(f_cap, residual);
+    // max_flow_graph.initWeight(cap - residual.weights()(Block({0, g.edgeNum()}, {})));
+    f_max_flow.setTopology(&g);
+
+
+    float max_flow(0.f);
+    for(auto & adj: g.adjacency(S_IDX))
+    {
+        max_flow += f_max_flow(S_IDX, adj);
+    }
+    if( std::abs(max_flow - 20.) > eps<float>())
+    {
+        std::cout << max_flow << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
 #if 0
 #endif
 
@@ -695,6 +727,7 @@ inline void testGraph()
     // testMarkovDecisionProcess02();
     // testMarkovDecisionProcess03();
     testFlowNetwork02();
+    testFlowNetwork03();
 }
 #else
 inline void testGraph(){}
