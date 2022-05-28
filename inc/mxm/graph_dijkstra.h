@@ -10,13 +10,14 @@ namespace mxm
 
 // Summary:Move vertices from Unvisited Set to Visited Set.
 // check every vertex is a better predecessor in the Unvisited Set.
-template<typename GraphType>
-std::enable_if_t< is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+template<typename GraphType, typename WeightType>
+std::vector<size_t>
 dijkstraBestPredecessor(
     const GraphType& g,
+    const BinaryEdgeProperty<WeightType, GraphType::directed()> f_dist,
     size_t start)
 {
-    using DType = typename GraphType::WeightType;
+    using DType = WeightType;
     std::multimap<DType, size_t> candidates;
     candidates.insert({DType(0), start});
 
@@ -38,7 +39,7 @@ dijkstraBestPredecessor(
         for(auto & succ_idx: g.adjacency(target_idx))
         {
             if(visited.count(succ_idx) > 0) continue;
-            DType latest_distance = g.weight(target_idx, succ_idx) + dist_to_start.at(target_idx);
+            DType latest_distance = f_dist(target_idx, succ_idx) + dist_to_start.at(target_idx);
 
             if(latest_distance < dist_to_start.at(succ_idx))
             {
@@ -59,7 +60,7 @@ dijkstraBestPredecessor(
 }
 
 template<typename GraphType>
-std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::vector<size_t>
 dijkstraBestPredecessor(
     const GraphType& g,
     size_t start)
@@ -89,18 +90,19 @@ dijkstraBestPredecessor(
     return best_pred;
 }
 
-template<typename GraphType>
-std::enable_if_t< is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+template<typename GraphType, typename WeightType>
+std::vector<size_t>
 pathFromBestPredecessor(
     const GraphType& g,
+    const BinaryEdgeProperty<WeightType, GraphType::directed()> f_dist,
     const std::vector<size_t>& best_pred,
     size_t destination,
-    typename GraphType::WeightType& distance)
+    WeightType& path_len)
 {
-    using DType = typename GraphType::WeightType;
+    using DType = WeightType;
     std::vector<size_t> path;
     path.clear();
-    distance = 0;
+    path_len = 0;
 
     size_t p = destination;
     while(best_pred.at(p) != p)
@@ -109,10 +111,10 @@ pathFromBestPredecessor(
         if(! g.validVertex(pred))
         {
             path.clear();
-            distance = std::numeric_limits<DType>::max();
+            path_len = std::numeric_limits<DType>::max();
             return path;
         }
-        distance += g.weight(pred, p);
+        path_len += f_dist(pred, p);
         p = pred;
         path.push_back(p);
     }
@@ -126,70 +128,72 @@ pathFromBestPredecessor(
 }
 
 template<typename GraphType>
-std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::vector<size_t>
 pathFromBestPredecessor(
     const GraphType& g,
     const std::vector<size_t>& best_pred,
     size_t destination,
-    int& distance)
+    int& path_len)
 {
     std::vector<size_t> path;
     path.push_back(destination);
-    distance = 0;
+    path_len = 0;
 
     auto iterator = destination;
     while(best_pred.at(iterator) != iterator)
     {
         if(!g.validVertex(best_pred.at(iterator)))
         {
-            distance = -1;
+            path_len = -1;
             return {};
         }
         path.push_back(best_pred.at(iterator));
-        distance++;
+        path_len++;
     }
 
     return path;
 }
 
-template<typename GraphType>
-std::enable_if_t<is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+template<typename GraphType, typename WeightType>
+std::vector<size_t>
 dijkstra(
     const GraphType& g,
+    const BinaryEdgeProperty<WeightType, GraphType::directed()> f_dist,
     size_t start,
     size_t dest,
-    typename GraphType::WeightType* p_distance)
+    WeightType* p_path_len)
 {
-    auto best_predecessor = dijkstraBestPredecessor(g, start);
+    auto best_predecessor = dijkstraBestPredecessor(g, f_dist, start);
     // std::cout << "best_predecessor: " << mxm::to_string(best_predecessor) << std::endl;
-    typename GraphType::WeightType distance;
-    auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
-    if(p_distance) *p_distance = distance;
+    WeightType path_len;
+    auto path = pathFromBestPredecessor(g, f_dist, best_predecessor, dest, path_len);
+    if(p_path_len) *p_path_len = path_len;
     return path;
 }
 
 template<typename GraphType>
-std::enable_if_t< is_unweighted_binary_edge<GraphType>::value , std::vector<size_t>>
+std::vector<size_t>
 dijkstra(
     const GraphType& g,
     size_t start,
     size_t dest,
-    int* p_distance)
+    int* p_path_len)
 {
     auto best_predecessor = dijkstraBestPredecessor(g, start);
-    typename GraphType::WeightType distance;
-    auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
-    if(p_distance) *p_distance = distance;
+    int path_len;
+    auto path = pathFromBestPredecessor(g, best_predecessor, dest, path_len);
+    if(p_path_len) *p_path_len = path_len;
     return path;
 }
 
-template<typename GraphType>
-std::enable_if_t< is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+template<typename GraphType, typename WeightType>
+std::vector<size_t>
 bellmanFordBestPredecessor(
     const GraphType& g,
+    const BinaryEdgeProperty<WeightType, GraphType::directed()> f_dist,
     size_t start)
 {
-    using DType = typename GraphType::WeightType;
+    using DType = WeightType;
     std::vector<DType> dist_from_start(g.vertexNum(), std::numeric_limits<DType>::max());
     dist_from_start.at(start) = DType(0);
     std::vector<size_t> best_predecessor(g.vertexNum(), g.nullVertex());
@@ -201,7 +205,7 @@ bellmanFordBestPredecessor(
         {
             for(auto & adj_idx : g.adjacency(vertex_idx))
             {
-                auto latest_dist = dist_from_start[vertex_idx] + g.weight(vertex_idx, adj_idx);
+                auto latest_dist = dist_from_start[vertex_idx] + f_dist(vertex_idx, adj_idx);
                 if(latest_dist < dist_from_start[adj_idx])
                 {
                     dist_from_start[adj_idx] = latest_dist;
@@ -213,19 +217,20 @@ bellmanFordBestPredecessor(
     return best_predecessor;
 }
 
-template<typename GraphType>
-std::enable_if_t<is_weighted_binary_edge<GraphType>::value , std::vector<size_t>>
+template<typename GraphType, typename WeightType>
+std::vector<size_t>
 shortedPathBellmanFord(
     const GraphType& g,
+    const BinaryEdgeProperty<WeightType, GraphType::directed()> f_dist,
     size_t start,
     size_t dest,
-    typename GraphType::WeightType* p_distance)
+    WeightType* p_path_len)
 {
-    auto best_predecessor = bellmanFordBestPredecessor(g, start);
+    auto best_predecessor = bellmanFordBestPredecessor(g, f_dist, start);
     // std::cout << "best_predecessor: " << mxm::to_string(best_predecessor) << std::endl;
-    typename GraphType::WeightType distance;
-    auto path = pathFromBestPredecessor(g, best_predecessor, dest, distance);
-    if(p_distance) *p_distance = distance;
+    WeightType path_len;
+    auto path = pathFromBestPredecessor(g, f_dist, best_predecessor, dest, path_len);
+    if(p_path_len) *p_path_len = path_len;
     return path;
 }
 

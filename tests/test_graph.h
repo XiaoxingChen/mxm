@@ -14,22 +14,26 @@
 
 using namespace mxm;
 #if TEST_AVAILABLE_ALL
+
+
 // test graph:
 // link: https://en.wikipedia.org/wiki/File:Dijkstra_Animation.gif
 inline void testShortedPath1()
 {
-    WeightedDirectedGraph<float> g(7);
+    DirectedGraph g(7);
+    BinaryEdgeProperty<float, true> f_dist;
     Matrix<size_t> edge_buffer(fixRow(2), {1,2, 1,3, 1,6, 2,4, 2,3, 3,6, 3,4, 6,5, 4,5}, COL);
     Vector<float> weight_buffer{7,9,14,15,10,2,11,9,6};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
-    float distance = 0;
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
+    // f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
+    float path_len = 0;
 
     for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
         std::vector<size_t> path;
-        if(0 == method_idx) path = dijkstra(g, 1, 5, &distance);
-        else if(1 == method_idx) path = shortedPathBellmanFord(g, 1, 5, &distance);
+        if(0 == method_idx) path = dijkstra(g, f_dist, 1, 5, &path_len);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, f_dist, 1, 5, &path_len);
 
         if(path != std::vector<size_t>{1,3,6,5})
         {
@@ -38,7 +42,7 @@ inline void testShortedPath1()
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 
-        if(distance != 20)
+        if(path_len != 20)
         {
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
@@ -46,20 +50,22 @@ inline void testShortedPath1()
 
 }
 
+
 inline void testShortedPath2()
 {
-    WeightedDirectedGraph<float> g(4);
+    DirectedGraph g(4);
+    BinaryEdgeProperty<float, true> f_dist;
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 2,3, 3,0, 0,3, 0,0}, COL);
     Vector<float> weight_buffer{1,1,1,1,1,1};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     float distance = 0;
 
     for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
         std::vector<size_t> path;
-        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
-        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+        if(0 == method_idx) path = dijkstra(g, f_dist, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, f_dist, 0, 3, &distance);
 
         if(path != std::vector<size_t>{0,3})
         {
@@ -76,18 +82,19 @@ inline void testShortedPath2()
 // link: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
 inline void testShortedPath3()
 {
-    WeightedUnirectedGraph<float> g(9);
+    UndirectedGraph g(9);
+    BinaryEdgeProperty<float, false> f_dist;
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 0,7, 1,2, 1,7, 2,3, 2,5, 2,8, 3,5, 3,4, 4,5, 5,6, 6,7, 6,8, 7,8}, COL);
     Vector<float> weight_buffer{4, 8, 8, 11, 7, 4, 2, 9, 14, 10, 2, 1, 6, 7};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     float distance = 0;
 
     for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
         std::vector<size_t> path;
-        if(0 == method_idx) path = dijkstra(g, 0, 4, &distance);
-        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 4, &distance);
+        if(0 == method_idx) path = dijkstra(g, f_dist, 0, 4, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, f_dist, 0, 4, &distance);
 
         if(path != std::vector<size_t>{0,7,6,5,4})
         {
@@ -100,18 +107,19 @@ inline void testShortedPath3()
 
 inline void testShortedPath4()
 {
-    WeightedUnirectedGraph<float> g(4);
+    UndirectedGraph g(4);
+    BinaryEdgeProperty<float, false> f_dist;
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 1,2, 1,3, 2,3}, COL);
     Vector<float> weight_buffer{1, 2, 10, 9};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     float distance = 0;
 
     for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
         std::vector<size_t> path;
-        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
-        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+        if(0 == method_idx) path = dijkstra(g, f_dist, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, f_dist, 0, 3, &distance);
 
         // std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
         if(path != std::vector<size_t>{0,1,3})
@@ -125,18 +133,19 @@ inline void testShortedPath4()
 
 inline void testShortedPath5()
 {
-    WeightedUnirectedGraph<float> g(4);
+    UndirectedGraph g(4);
+    BinaryEdgeProperty<float, false> f_dist;
     Matrix<size_t> edge_buffer(fixRow(2), {0,1, 2,3}, COL);
     Vector<float> weight_buffer{1, 2};
     g.initEdges(edge_buffer);
-    g.initWeight(weight_buffer);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     float distance = 0;
 
     for(size_t method_idx = 0; method_idx < 2; method_idx++)
     {
         std::vector<size_t> path;
-        if(0 == method_idx) path = dijkstra(g, 0, 3, &distance);
-        else if(1 == method_idx) path = shortedPathBellmanFord(g, 0, 3, &distance);
+        if(0 == method_idx) path = dijkstra(g, f_dist, 0, 3, &distance);
+        else if(1 == method_idx) path = shortedPathBellmanFord(g, f_dist, 0, 3, &distance);
 
         // std::vector<size_t> path = dijkstra(g, 0, 3, &distance);
         if(path != std::vector<size_t>{})
@@ -168,9 +177,10 @@ bool validateTopologicalOrder(const GraphType& g, const std::vector<size_t>& ord
     return true;
 }
 
+
 inline void testTopologicalSort()
 {
-    WeightedDirectedGraph<float> g(13);
+    DirectedGraph g(13);
     Matrix<size_t> edge_buffer(fixRow(2), {
         0,3, 1,3, 2,0, 2,1, 3,6, 3,7, 4,0, 4,3, 4,5, 5,9,
         5,10, 6,8, 7,8, 7,9, 8,11, 9,11, 9,12, 10,9}, COL);
@@ -196,7 +206,7 @@ inline void testTopologicalSort()
 
 inline void testTopologicalSort02()
 {
-    WeightedDirectedGraph<float> g(4);
+    DirectedGraph g(4);
     Matrix<size_t> edge_buffer(fixRow(2), {
         0,1, 1,2, 2,3, 3,0}, COL);
 
@@ -568,7 +578,7 @@ inline void testMarkovDecisionProcess01()
     };
 
     g.initEdges(edges);
-    g.initWeight(edge_info);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     g.setStateVertices({0,1,2}).setDiscount(1);
     g.solve(2);
     if(abs(g.value()(0) - 3.5f) > eps<float>())
@@ -624,7 +634,7 @@ inline void testFlowNetwork01()
     Matrix<size_t> edges(fixRow(2), {0,1, 1,2, 2,3}, COL);
     Vector<CapacityFlow<float>> properties{{3,1}, {5,1}, {4,1}};
     g.initEdges(edges);
-    g.initWeight(properties);
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     g.setSource(0).setSink(3);
     if(g.property(0,1).flow != 1)
     {
@@ -636,24 +646,28 @@ inline void testFlowNetwork01()
 
 inline void testFlowNetwork02()
 {
-    WeightedDirectedGraph<float> g(4);
+    DirectedGraph g(4);
+    BinaryEdgeProperty<float, true> f_cap;
     Matrix<size_t> edge_buffer(fixRow(2), {
         0,1, 0,2, 2,1, 1,3, 2,3}, COL);
 
     g.initEdges(edge_buffer);
     Vector<float> cap{10, 3, 3, 10, 2};
-    g.initWeight(cap);
+    f_cap.initProperty(cap).setTopology(&g).setInvalidProperty(std::numeric_limits<float>::max());
     size_t src_idx = 0;
     size_t sink_idx = 3;
-    auto residual = fordFulkersonMaxFLow(g, src_idx, sink_idx);
 
-    WeightedDirectedGraph<float> max_flow_graph(g.topology());
-    max_flow_graph.initWeight(cap - residual.weights()(Block({0, g.edgeNum()}, {})));
+    auto residual = fordFulkersonMaxFLow(g, f_cap, src_idx, sink_idx);
+    // return;
+    BinaryEdgeProperty<float, true> f_max_flow = flowFromCapacityResidual(f_cap, residual);
+    // max_flow_graph.initWeight(cap - residual.weights()(Block({0, g.edgeNum()}, {})));
+    f_max_flow.setTopology(&g);
+
 
     float max_flow(0.f);
-    for(auto & adj: max_flow_graph.adjacency(src_idx))
+    for(auto & adj: g.adjacency(src_idx))
     {
-        max_flow += max_flow_graph.weight(src_idx, adj);
+        max_flow += f_max_flow(src_idx, adj);
     }
     if( std::abs(max_flow - 12.) > eps<float>())
     {
@@ -661,6 +675,8 @@ inline void testFlowNetwork02()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 }
+#if 0
+#endif
 
 inline void testGraph()
 {
