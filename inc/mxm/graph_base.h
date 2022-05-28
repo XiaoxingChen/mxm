@@ -16,26 +16,11 @@ public:
     const size_t& vertexNum() const { return vertex_num_; }
     GraphBase() {}
     GraphBase(size_t vertex_num): vertex_num_(vertex_num)  {}
-#if 0
-    ThisType& setEdgeBuffer(const Matrix<size_t>& edges)
-    {
-        edge_buffer_ = edges;
-        return *this;
-    }
-    ThisType& addEdge(const Vector<size_t>& edges)
-    {
-        edge_buffer_ = hstack(edge_buffer_, edges);
-        return *this;
-    }
-
-    const Matrix<size_t>& edgeBuffer() const { return edge_buffer_; }
-#endif
 
     bool validVertex(size_t idx) const { return idx < vertex_num_; }
     static constexpr size_t nullVertex() { return std::numeric_limits<size_t>::max(); }
 protected:
     size_t vertex_num_ = 0;
-    // Matrix<size_t> edge_buffer_;
 };
 
 template<bool Directed, typename GraphType>
@@ -156,24 +141,24 @@ private:
 };
 
 template<bool IsDirected>
-class UnweightedGraph:
+class Graph:
     public GraphBase,
-    public BinaryEdge<IsDirected, UnweightedGraph<IsDirected>>
+    public BinaryEdge<IsDirected, Graph<IsDirected>>
 {
 public:
-    UnweightedGraph(): GraphBase()
+    Graph(): GraphBase()
     {
     }
 
-    UnweightedGraph(size_t vertex_num): GraphBase(vertex_num)
+    Graph(size_t vertex_num): GraphBase(vertex_num)
     {
     }
 
 protected:
 };
 
-using UndirectedGraph = UnweightedGraph<false>;
-using DirectedGraph = UnweightedGraph<true>;
+using UndirectedGraph = Graph<false>;
+using DirectedGraph = Graph<true>;
 
 template<typename PropertyType, bool IsDirected>
 class EdgeProperty
@@ -192,13 +177,13 @@ public:
         return *this;
     }
 
-    ThisType& setTopology( const UnweightedGraph<IsDirected>* p )
+    ThisType& setTopology( const Graph<IsDirected>* p )
     {
         p_topology_ = p;
         return *this;
     }
 
-    const UnweightedGraph<IsDirected>*
+    const Graph<IsDirected>*
     topology() const { return p_topology_; }
 
     const PropertyType& property(size_t edge_index) const
@@ -225,7 +210,7 @@ public:
 protected:
     Vector<PropertyType> property_buffer_;
     PropertyType invalid_property_;
-    const UnweightedGraph<IsDirected>* p_topology_ = nullptr;
+    const Graph<IsDirected>* p_topology_ = nullptr;
 };
 
 template<typename PropertyType, bool IsDirected>
@@ -242,10 +227,6 @@ public:
     PropertyType& operator()(size_t v1, size_t v2)
     {
         assert(this->p_topology_);
-        // if(this->p_topology_ == nullptr)
-        // {
-        //     exit(0);
-        // }
         size_t edge_index = this->p_topology_->edgeIndices(Vector<size_t>{v1, v2})(0);
         return EdgeProperty<PropertyType, IsDirected>::property(edge_index);
     }
@@ -255,166 +236,6 @@ protected:
 };
 
 
-
-
-#if 0
-template<typename DType>
-struct CapacityFlow
-{
-    CapacityFlow() {}
-    CapacityFlow(DType _cap, DType _flow=DType(0)):cap(_cap), flow(_flow) {}
-    DType flow = DType(0);
-    DType cap = DType(0);
-    bool invalid = false;
-    static CapacityFlow invalidInstance() { CapacityFlow obj(0,0); obj.invalid = true; return obj; }
-};
-
-template<typename DType, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
-class FlowNetwork:
-    public GraphBase,
-    public BinaryEdge<true, FlowNetwork<DType>>,
-    public BinaryEdgeProperty<CapacityFlow<DType>, FlowNetwork<DType>>
-{
-public:
-    using ThisType = FlowNetwork<DType>;
-    using EdgeDirectionType = BinaryEdge<true, ThisType>;
-    using PropertyEdgeType = BinaryEdgeProperty<CapacityFlow<DType>, ThisType>;
-
-    FlowNetwork(): GraphBase()
-    {
-        this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
-    }
-
-FlowNetwork(size_t vertex_num): GraphBase(vertex_num)
-    {
-        this->setInvalidProperty(CapacityFlow<DType>::invalidInstance());
-    }
-    ThisType& setSource(size_t source) { source_ = source; return *this;}
-    ThisType& setSink(size_t sink) { sink_ = sink; return *this;}
-
-    size_t source(size_t source) const { return source_; }
-    size_t sink(size_t sink) const { return sink_; }
-protected:
-    size_t source_;
-    size_t sink_;
-};
-
-
-// template<typename ExtendedType>
-// class IndexExtension
-// {
-// public:
-//     size_t rawFromExt(const ExtendedType& ext);
-//     ExtendedType extFromRaw(size_t raw);
-// };
-
-class GridGraph
-{
-public:
-private:
-};
-#endif
-template<class GraphType>
-struct is_edge_binary:
-std::integral_constant<bool, true>
-{};
-
-#if 0
-template<class T, class = void>
-struct is_edge_weighted: std::false_type{};
-
-template<class T>
-struct is_edge_weighted<
-    T, typename std::void_t< decltype(std::declval<T>().weight(0,0)) >
-    >: std::true_type{};
-
-template<class GraphType>
-struct is_weighted_binary_edge:
-std::integral_constant<bool, is_edge_binary<GraphType>::value && is_edge_weighted<GraphType>::value >
-{};
-
-template<class GraphType>
-struct is_unweighted_binary_edge:
-std::integral_constant<bool, is_edge_binary<GraphType>::value && !is_edge_weighted<GraphType>::value >
-{};
-
-template <typename GraphType>
-inline constexpr bool is_edge_weighted_v = is_edge_weighted<GraphType>::value;
-
-template <typename GraphType>
-inline constexpr bool is_edge_binary_v = is_edge_binary<GraphType>::value;
-
-template <typename GraphType>
-inline constexpr bool is_unweighted_binary_edge_v = is_unweighted_binary_edge<GraphType>::value;
-#endif
-#if 0
-template<typename DType, bool IsDirected, std::enable_if_t<std::is_floating_point<DType>::value, int> T=0>
-class WeightedGraph
-{
-public:
-    using ThisType = WeightedGraph<DType, IsDirected>;
-    using WeightType = DType;
-
-    WeightedGraph()
-    {
-        edge_property_.setInvalidProperty(std::numeric_limits<DType>::max());
-    }
-
-    WeightedGraph(size_t vertex_num)
-    {
-        p_topology_ = std::make_shared<UnweightedGraph<IsDirected>>(vertex_num);
-        edge_property_.setInvalidProperty(std::numeric_limits<DType>::max());
-    }
-
-    WeightedGraph(std::shared_ptr<UnweightedGraph<IsDirected>> p_topology)
-    {
-        p_topology_ = p_topology;
-        edge_property_.setInvalidProperty(std::numeric_limits<DType>::max());
-    }
-
-    void setInvalidProperty(const DType& v) { edge_property_.setInvalidProperty(v); }
-    void initWeight(const Vector<WeightType>& property_buffer) { edge_property_.initProperty(property_buffer); }
-    void initEdges(const Matrix<size_t>& edges) const {p_topology_->initEdges(edges); }
-    static constexpr bool directed() { return IsDirected; }
-
-    const Vector<DType>& weights() const
-    {
-        return edge_property_.properties();
-    }
-
-    const DType& weight(size_t from, size_t to) const
-    {
-        return edge_property_.property(p_topology_->edgeIndex(from, to));
-    }
-
-    DType& weight(size_t from, size_t to)
-    {
-        return edge_property_.property(p_topology_->edgeIndex(from, to));
-    }
-
-    std::shared_ptr<UnweightedGraph<IsDirected>> topology() const
-    {
-        return p_topology_;
-    }
-
-    size_t vertexNum() const { return p_topology_->vertexNum(); }
-    size_t edgeNum() const { return p_topology_->edgeNum(); }
-    const std::vector<size_t>& adjacency(size_t v_index) const { return p_topology_->adjacency(v_index); }
-    bool validVertex(size_t idx) const { return p_topology_->validVertex(idx); }
-    static size_t nullVertex() { return UnweightedGraph<IsDirected>::nullVertex(); }
-    const std::map<std::array<size_t, 2>, size_t >& edgeIndices() const { return p_topology_->edgeIndices(); }
-
-protected:
-    std::shared_ptr<UnweightedGraph<IsDirected>> p_topology_ = nullptr;
-    EdgeProperty<DType> edge_property_;
-};
-
-
-template<typename DType>
-using WeightedDirectedGraph = WeightedGraph<DType, true>;
-template<typename DType>
-using WeightedUnirectedGraph = WeightedGraph<DType, false>;
-#endif
 } // namespace mxm
 
 
