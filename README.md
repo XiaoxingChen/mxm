@@ -2,110 +2,102 @@
 
 A header-only/compiled C++ numerical compute library.
 
-<img src="https://render.githubusercontent.com/render/math?math=A_{m\times m}">
+<!-- <img src="https://render.githubusercontent.com/render/math?math=A_{m\times m}"> -->
 
+$$\Huge A_{m \times m}$$
+
+# Installation
+
+## Linux/MacOS
+
+```sh
+git clone https://github.com/XiaoxingChen/mxm
+cd mxm
+./build.py --test
+```
+## Windows
+```sh
+git clone https://github.com/XiaoxingChen/mxm
+cd mxm
+python build.py --test
+```
 # Features
 
-## 1. Matrix
-```cpp
-#include "mxm/linalg.h"
-using namespace mxm;
-```
-- Initialize a matrix
+### 1. Dense Matrix Operation
 
-```cpp
-Mat mat_a = Mat({3,3}, {
-    1,1,1,
-    2,2,2,
-    3,3,3})
-```
+- N-Dimensional Matrix/Vector Operation [<a href="./inc/mxm/linalg_mat.h">mxm/linalg_mat.h</a>]
+    - Real
+    - Complex [<a href="./inc/mxm/linalg_complex.h">mxm/linalg_complex.h</a>]
+    - Quaternion [<a href="./inc/mxm/linalg_complex.h">mxm/linalg_complex.h</a>]
+    - Dual Number [<a href="./inc/mxm/linalg_dual_number.h">mxm/linalg_dual_number.h</a>]
+- QR Decomposition/solver (Real, Complex) [<a href="./inc/mxm/linalg_solve.h">mxm/linalg_solve.h</a>]
+- Eigenvalue Decomposition (Real, by shifted QR Iteration).
+- Singular Value Decomposition (Real).
 
-- Matrix block assignment
+### 2. Geometry
 
-```cpp
-Mat transform = Mat({4,4});
-transform(3,3) = 1;
-transform(Block({0,3},{0,3})) = Mat::identity(3);
-```
+- 2-D, 3-D, N-D Rotation
+    - Logarithmic/Exponential Map for $SO(n)$ and $\mathfrak{so}(n)$ [<a href="./inc/mxm/lie_special_orthogonal.h">mxm/lie_special_orthogonal.h</a>]
+    - Conversion between Axis/Plane-Angle, Rotation Matrix, Quaternion [<a href="./inc/mxm/full_dimensional_rotation.h">mxm/full_dimensional_rotation.h</a>]
+    - Spherical Linear Interpolation
+- N-D Ray [<a href="./inc/mxm/geometry_ray.h">mxm/geometry_ray.h</a>]
+- N-D Pinhole Camera (3D Radial Tangential Distortion) [<a href="./inc/mxm/model_camera.h">mxm/model_camera.h</a>]
+- N-D Simplex(line segment, triangle, tetrahedron ...) [<a href="./inc/mxm/geometry_primitive.h">mxm/geometry_primitive.h</a>]
+- N-D Rigidbody Transform [<a href="./inc/mxm/rigid_transform.h">mxm/rigid_transform.h</a>]
+- N-D Affine Transform [<a href="./inc/mxm/transform_affine.h">mxm/transform_affine.h</a>]
+- N-D BVH Tree [<a href="./inc/mxm/spatial_bvh.h">mxm/spatial_bvh.h</a>]
+    - Ray Closest-Hit/Any-Hit/Multi-Hit
+    - Radius Search
+    - Nearest Neighbor Search
+- N-D Metric Tree (for any metric space) [<a href="./inc/mxm/spatial_metric_tree.h">mxm/spatial_metric_tree.h</a>]
 
-- Random matrix
+### 3. None-linear Optimization
 
-```cpp
-Mat mat_a = random::uniform({5,5});
-```
+- Gauss-Newton Method [<a href="./inc/mxm/optimize.h">mxm/optimize.h</a>]
+- Auto Derivative(based on Dual Number) :star2: :star2:
+- Sparse Jacobian Acceleration for SfM [<a href="./inc/mxm/optimize_sfm_gn.h">mxm/optimize_sfm_gn.h</a>]
 
-- Common operations: matrix multiplication, transpose, inversion
+### 4. Graph
 
-```cpp
-Mat mat_a = random::uniform({3,3});
-Mat mat_b = Mat::identity({3,3});
-Mat mat_c = mat_a.matmul(mat_b);
-mat_a = mat_a.T() // O(1) time complexity
-```
+- Directed/Undirected Weighted/Unweighted Graph [<a href="./inc/mxm/graph_base.h">mxm/graph_base.h</a>]
+- Shortest Path [<a href="./inc/mxm/graph_dijkstra.h">mxm/graph_dijkstra.h</a>]
+    - Dijkstra
+    - Bellman Ford
+- Flow Network [<a href="./inc/mxm/graph_flow.h">mxm/graph_flow.h</a>]
+    - Fulkerson Ford Max Flow
 
-```cpp
-Mat mat_a = Mat::ones({3,3});
-mat_a(Col(2)) += Vec({2,3,4});
-Mat inv_b = mat_a.inv();
+### 5. Toy Demos
+- Optical Flow [<a href="./inc/mxm/cv_optical_flow.h">mxm/cv_optical_flow.h</a>]
+- Pinhole Camera Calibration [<a href="./inc/mxm/cv_calibration.h">mxm/cv_calibration.h</a>]
 
-```
 
+# Code Sample
 - QR decomposition and linear equation
 
 ```cpp
-Mat mat_a = random::uniform({5,5});
-Vec vec_b = random::uniform({5,1});
-auto qr = qr::decomposeByRotation(mat_a);
-Vec vec_x = qr::solve(mat_a, vec_b);
-```
-
-## 2. N-Dimensional Rigid Body Transform
-
-```cpp
-#include "mxm/rigid_transform.h"
+#include "mxm/linalg.h"
 using namespace mxm;
-```
 
-- 2D Rotation
-```cpp
-Rotation r1 = Rotation::fromAngle(0.1);
-Rotation r2 = Rotation::fromAngle(0.5);
-Vec v1 = (r1 * r2).apply({1,2});
-```
-
-- 3D Rotation
-
-```cpp
-Rotation r1 = Rotation::fromAxisAngle({0,0,1}, 0.5);
-Rotation r2 = Rotation::fromAxisAngle({0,1,0}, 0.3);
-Vec v1 = (r1 * r2).apply({1,2,3});
+Matrix<float> mat_a = random::uniform({5,5});
+Vector<float> vec_b = random::uniform({5,1});
+auto qr = qr::decomposeByRotation(mat_a);
+auto vec_x = qr::solve(mat_a, vec_b);
 ```
 
 - 4D Rotation
 
 ```cpp
 // Rotation::fromPlaneAngle() is available for any dimensional rotation.
-Rotation r1 = Rotation::fromPlaneAngle({1,0,0,0}, {0,1,0,0}, 0.5);
-Vec v1 = r1.apply({1,2,3,4});
-```
-
-- 3D Rigid Body Transform
-
-```cpp
-RigidTrans tf = RigidTrans::identity(3);
-Vec v1 = tf.apply({1,0,0});
-```
-
-## 3. Space Indexing
-
-```cpp
-#include "mxm/spatial_bvh.h"
-using namespace mxm;
+Rotation<double> r1 = Rotation::fromPlaneAngle({1,0,0,0}, {0,1,0,0}, 0.5);
+auto v1 = r1.apply({1,2,3,4});
 ```
 
 - BVH Tree and Ray-primitive Intersection
 
 ```cpp
+#include "mxm/spatial_bvh.h"
+using namespace mxm;
+
 Mat vertex_buffer;
 Matrix<size_t> vertex_buffer;
 createTriangleBand(&vertex_buffer, &index_buffer);
@@ -116,42 +108,10 @@ Ray ray({0,0,0},{1,0,0});
 auto records = tree.hit(ray, bvh::eMultiHit);
 ```
 
-- Radius Search and K Nearest Neighbor Search
+For more code samples, see [tests/test_main.cpp](./tests/test_main.cpp).
 
-```cpp
-size_t dim = 2;
-std::shared_ptr<Mat> pts(new Mat(random::uniform<FloatType>({dim, 100})));
-
-bvh::PointCloudTree tree(pts);
-tree.build(4, false);
-
-Vec target_pt({.5, .5});
-FloatType radius = 0.5;
-
-auto radius_search_result = tree.radiusSearch(target_pt, radius);
-
-size_t k = 5;
-std::multimap<FloatType, size_t> knn_result = tree.nearestNeighborSearch(target_pt, k);
-```
-
-## 4. None-linear Optimization with Auto Derivative
-
-```cpp
-    std::vector<size_t> cali_board_reso{8,8};
-    Matrix<float> pts3d({3, cali_board_reso.at(0) * cali_board_reso.at(1)});
-    pts3d.setBlock(0,0, generateNCubeVertices({5e-1, 5e-1}, cali_board_reso) );
-    Camera<float, 3> cam;
-    cam.setResolution({500, 500}).setFov({M_PI /3,M_PI /3}).setPosition({0, 0, -2});
-
-    Matrix<float> pts2d = cam.project(pts3d);
-
-    PerspectiveNPointOptimizer<float> problem(pts3d, pts2d, cam);
-    problem.initialGuess(Vector<float>{0.2,0.2, -2.1}, Vector<float>{0.1, -0.02, 0.05});
-    problem.solve(6, 0, "gn");
-
-    std::cout << mxm::to_string(problem.tState()) << std::endl;
-    std::cout << mxm::to_string(problem.rState()) << std::endl;
-```
-
-# Projects using mxm
-1. [ray_tracing_4d](https://github.com/XiaoxingChen/ray_tracing_4d)
+# Related Blogs and Links
+1. A 4D CPU Ray Tracing Renderer based on `mxm`: [ray_tracing_4d](https://github.com/XiaoxingChen/ray_tracing_4d)
+2. Blog: [Dual Number and Auto Derivative of Special Orthogonal Group](https://xiaoxingchen.github.io/2022/03/20/dual_number_auto_derivative_on_so3/)
+3. Blog: [Geometries for N-Dimensional Ray Tracing](https://xiaoxingchen.github.io/2021/01/07/ray_tracing_4d_01/)
+4. Zhihu: [How to implement Auto Differentiation in C++?](https://www.zhihu.com/question/48356514/answer/2446699680)(Chinese)
