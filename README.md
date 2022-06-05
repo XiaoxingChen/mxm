@@ -116,6 +116,10 @@ cd mxm
 python build.py --test
 ```
 
+## Dependents
+- c++17
+- STL
+
 # Related Blogs and Links
 1. A 4D CPU Ray Tracing Renderer based on `mxm`: [ray_tracing_4d](https://github.com/XiaoxingChen/ray_tracing_4d)
 2. Blog: [Dual Number and Auto Derivative of Special Orthogonal Group](https://xiaoxingchen.github.io/2022/03/20/dual_number_auto_derivative_on_so3/)
