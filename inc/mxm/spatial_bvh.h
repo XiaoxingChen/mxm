@@ -87,6 +87,14 @@ private:
 
 };
 
+size_t rayCast(
+    const Ray& ray,
+    const PrimitiveMeshTree& tree,
+    HitType hit_type,
+    Matrix<float>* p_coeff=nullptr,
+    Vector<size_t>* p_prim_idx=nullptr,
+    Vector<float>* p_hit_t=nullptr);
+
 class PointCloudTree: public BaseTree
 {
 public:

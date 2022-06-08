@@ -142,19 +142,28 @@ MXM_INLINE size_t PrimitiveMeshTree::multiHit(const Ray& ray) const
     auto records = hit(ray, eMultiHit);
     return records.size();
 }
-MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(const Ray& ray_in, HitType hit_type) const
+
+MXM_INLINE size_t rayCast(
+    const Ray& ray_in,
+    const PrimitiveMeshTree& tree,
+    HitType hit_type,
+    Matrix<float>* p_coeff,
+    Vector<size_t>* p_prim_idx,
+    Vector<float>* p_hit_t)
 {
-    std::vector<HitRecord> records;
     Ray ray(ray_in);
     std::stack<size_t> node_idx_stk;
+    std::vector<float> data_hit_t;
+    std::vector<float> data_vertex_coeff;
+    std::vector<size_t> data_prim_idx;
 
-    if(!node_buffer_.at(0).aabb.hit(ray))
-        return records;
+    if(!tree.nodeBuffer().at(0).aabb.hit(ray))
+        return 0;
     node_idx_stk.push(0);
 
     while(! node_idx_stk.empty())
     {
-        const Node& target_node = node_buffer_.at(node_idx_stk.top());
+        const Node& target_node = tree.nodeBuffer().at(node_idx_stk.top());
         node_idx_stk.pop();
 
         //
@@ -163,32 +172,34 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
         {
             for(const auto& prim_idx: target_node.primitive_index_buffer)
             {
-                auto result = intersectEquation( primitive(prim_idx), ray);
+                auto result = intersectEquation( tree.primitive(prim_idx), ray);
                 auto hit_t = result(0);
                 if(!validIntersect (result) || !ray.valid(hit_t))
                     continue;
 
-                HitRecord record;
-                record.t = hit_t;
-                record.prim_idx = prim_idx;
-                record.ray = ray_in;
-                record.coeff = result;
-                record.coeff(0) = 1.f - mxm::sum(result) + hit_t;
-
-
-                if(hit_type == eAnyHit)
+                if(hit_type == eAnyHit
+                || hit_type == eMultiHit
+                || (hit_type == eClosestHit && data_hit_t.empty()))
                 {
-                    records.push_back(record);
-                    return records;
-                }
+                    data_hit_t.push_back(hit_t);
+                    data_prim_idx.push_back(prim_idx);
+                    data_vertex_coeff.push_back(1.f - mxm::sum(result) + hit_t);
+                    for(size_t i = 1; i < result.size(); i++)
+                        data_vertex_coeff.push_back(result(i));
+                }else if (hit_type == eClosestHit && !data_hit_t.empty() && hit_t < data_hit_t.at(0))
+                {
+                    data_hit_t.at(0) = hit_t;
+                    data_prim_idx.at(0) = prim_idx;
+                    data_vertex_coeff.at(0) = (1.f - mxm::sum(result) + hit_t);
+                    for(size_t i = 1; i < result.size(); i++)
+                        data_vertex_coeff.at(i) = result(i);
+                }else{ assert(false); }
+
+
+                if(hit_type == eAnyHit) break;
                 if(hit_type == eClosestHit)
                 {
-                    if(records.empty()) records.push_back(record);
-                    if(records.front().t > record.t) records.front() = record;
                     ray.tMax() = hit_t;
-                }else if(hit_type == eMultiHit)
-                {
-                    records.push_back(record);
                 }
 
             }
@@ -199,10 +210,35 @@ MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(cons
         // deal with internal node
         for(const auto& child_idx: target_node.children_index_buffer)
         {
-            if(node_buffer_.at(child_idx).aabb.hit(ray))
+            if(tree.nodeBuffer().at(child_idx).aabb.hit(ray))
                 node_idx_stk.push(child_idx);
         }
 
+    }
+    size_t hit_cnt = data_hit_t.size();
+
+    if(p_coeff) (*p_coeff) = std::move(Matrix<float>({tree.dim(), data_hit_t.size()}, std::move(data_vertex_coeff), COL));
+    if(p_prim_idx) (*p_prim_idx) = Vector<size_t>(std::move(data_prim_idx));
+    if(p_hit_t) (*p_hit_t) = Vector<float>(std::move(data_hit_t));
+
+    return hit_cnt;
+}
+
+MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(const Ray& ray_in, HitType hit_type) const
+{
+    std::vector<HitRecord> records;
+    Matrix<float> coeff;
+    Vector<size_t> prim_idx;
+    Vector<float> hit_t;
+    rayCast(ray_in, *this, hit_type, &coeff, &prim_idx, &hit_t);
+    for(size_t i = 0; i < prim_idx.size(); i++)
+    {
+        HitRecord record;
+        record.ray = ray_in;
+        record.prim_idx = prim_idx(i);
+        record.coeff = coeff(Col(i));
+        record.t = hit_t(i);
+        records.push_back(record);
     }
 
     return records;
