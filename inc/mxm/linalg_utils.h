@@ -4,6 +4,7 @@
 #include "linalg_mat.h"
 #include "linalg_solve.h"
 #include <algorithm>
+#include <thread>
 
 #define NO_MAT_REF 1
 
@@ -197,41 +198,81 @@ Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matr
 }
 
 template<typename DType, typename CoreType>
+void convoluteBlock(
+    const Matrix<DType>& src,
+    const Matrix<CoreType>& core,
+    const Shape& start,
+    const Shape& shape,
+    Matrix<decltype(DType()*CoreType())>& ret)
+{
+
+    Shape half_w{core.shape(0)/2, core.shape(1)/2};
+    for(size_t i = start[0]; i < start[0] + shape[0]; i++)
+    {
+        for(size_t j = start[1]; j < start[1] + shape[1]; j++)
+        {
+            if(i + half_w[0] >= src.shape(0)
+            || j + half_w[1] >= src.shape(1)
+            || i < half_w[0]
+            || j < half_w[1])
+            {
+                ret(i,j) = src(i,j);
+                continue;
+            }
+            ret(i, j) = 0;
+            for(size_t u = 0; u < core.shape(0); u++)
+            {
+                for(size_t v = 0; v < core.shape(1); v++)
+                {
+                    ret(i, j) += core(u,v)* src(i - half_w[0] + u, j - half_w[1] + v);
+                } // v
+            } // u
+        } // j
+    } // i
+}
+
+template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> convoluteParallel(const Matrix<DType>& src, const Matrix<CoreType>& core)
+{
+    const size_t THREAD_NUM = 2;
+    std::vector<std::thread> threads;
+    size_t slice_axis = src.majorAxis() == ROW ? COL : ROW;
+    size_t untouched_axis = src.majorAxis();
+    Matrix<decltype(DType()*CoreType())> ret(src.shape(), {}, src.majorAxis());
+
+    for(size_t i = 0; i < THREAD_NUM; i++)
+    {
+        Shape start;
+        start[untouched_axis] = 0;
+        start[slice_axis] = i * (src.shape(slice_axis) / THREAD_NUM);
+
+        Shape shape;
+        shape[untouched_axis] = src.shape(untouched_axis);
+        shape[slice_axis] = src.shape(slice_axis) / THREAD_NUM;
+        if(i == THREAD_NUM - 1)
+            shape[slice_axis] = src.shape(slice_axis) - start[slice_axis];
+
+        threads.push_back(std::thread([&, st = start, sh = shape](){
+            convoluteBlock(src, core, st, sh, ret);
+        }));
+    }
+    for(auto & th: threads)
+    {
+        th.join();
+    }
+    return ret;
+}
+
+template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
     if(core.shape(0) % 2 != 1 || core.shape(1) % 2 != 1)
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(false);
     Matrix<decltype(DType()*CoreType())> ret(src.shape());
 
-    Shape half_w{core.shape(0)/2, core.shape(1)/2};
-
-    ret.traverse([&](auto i, auto j){
-        if(i + half_w[0] >= src.shape(0)
-        || j + half_w[1] >= src.shape(1)
-        || i < half_w[0]
-        || j < half_w[1])
-        {
-            ret(i,j) = src(i,j);
-            return;
-        }
-#if NO_MAT_REF
-        ret(i, j) = 0;
-        for(size_t u = 0; u < core.shape(0); u++)
-        {
-            for(size_t v = 0; v < core.shape(1); v++)
-            {
-                ret(i, j) += core(u,v)* src(i - half_w[0] + u, j - half_w[1] + v);
-            }
-        }
-#else
-        ret(i, j)
-            = mxm::sum(core * src(Block(
-                {i - half_w[0], i + half_w[0] + 1},
-                {j - half_w[1], j + half_w[1] + 1})));
-#endif
-    });
+    convoluteBlock(src, core, {0,0}, src.shape(), ret);
     return ret;
-
+    // return convoluteParallel(src, core);
 }
 
 template<typename DType, typename CoreType>

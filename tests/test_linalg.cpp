@@ -1034,6 +1034,28 @@ void testSvdPipelineError()
     }
 }
 
+void testConvolution01()
+{
+    Matrix<float> mat({20, 5});
+    mat.traverse([&](auto i, auto j){mat(i,j) = i+j;});
+    Matrix<float> core({3, 3}, {1,2,1,1,4,1,1,2,1});
+    auto ret = convolute(mat, core);
+    auto ret_p = convoluteParallel(mat, core);
+
+    if(!mxm::isZero(ret - ret_p, nullptr, eps()))
+    {
+        std::cout << mxm::to_string(ret) << std::endl;
+        std::cout << mxm::to_string(ret_p) << std::endl;
+    }
+
+
+}
+
+void testConvolution()
+{
+    testConvolution01();
+}
+
 void testLinearAlgebra()
 {
     Mat m1({3,3},{1,1,1, 2,2,2, 3,3,3});
@@ -1099,5 +1121,6 @@ void testLinearAlgebra()
     testCombinations();
     testSvdPipelineError<double>();
     testSvdPipelineError<float>();
+    testConvolution();
 
 }

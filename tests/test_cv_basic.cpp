@@ -199,6 +199,7 @@ void testBriefDescriptor()
         if( abs(delta_orientation - M_PI_2) > 1 * eps() )
         {
             std::cout << delta_orientation << std::endl;
+            std::cout << "error: " << abs(delta_orientation - M_PI_2) << std::endl;
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         }
 

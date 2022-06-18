@@ -138,7 +138,11 @@ Matrix<DType>::Matrix(): shape_({0,0}), data_(0), major_(ROW)
 // 01
 template<typename DType>
 Matrix<DType>::Matrix(const AutoShape& _shape, std::vector<DType>&& data, bool major)
-    :shape_(_shape.deduct(data.size())), data_(std::move(data)), major_(major) {}
+    :shape_(_shape.deduct(data.size())), data_(0), major_(major)
+{
+    if(data.size() > 0) data_.swap(data);
+    else data_.resize(shape_[0] * shape_[1]);
+}
 
 // 02
 template<typename DType>
