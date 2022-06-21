@@ -277,7 +277,7 @@ void testICP()
         }
         auto pts2 = rot.apply(pts);
         auto result = icpFindRotation(pts, pts2);
-        if(!isIdentity(rot.asMatrix().matmul(result.asMatrix().T()), nullptr, 5 * std::numeric_limits<float>::epsilon()))
+        if(!isIdentity(rot.asMatrix().matmul(result.asMatrix().T()), nullptr, 10 * std::numeric_limits<float>::epsilon()))
         {
             std::cout << mxm::to_string(rot.asMatrix()) << std::endl;
             std::cout << mxm::to_string(result.asMatrix()) << std::endl;

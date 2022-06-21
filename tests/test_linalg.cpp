@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <map>
+#include <chrono>
 
 #if TEST_AVAILABLE_LINALG_MAT
 #include "mxm/linalg_mat.h"
@@ -1038,22 +1039,59 @@ void testConvolution01()
 {
     Matrix<float> mat({20, 5});
     mat.traverse([&](auto i, auto j){mat(i,j) = i+j;});
-    Matrix<float> core({3, 3}, {1,2,1,1,4,1,1,2,1});
+    Matrix<float> core({3, 3}, {0,0,0,0,1,0,0,0,0});
     auto ret = convolute(mat, core);
     auto ret_p = convoluteParallel(mat, core);
 
-    if(!mxm::isZero(ret - ret_p, nullptr, eps()))
+    if(!mxm::isZero(ret - mat, nullptr, eps()))
     {
+        std::cout << mxm::to_string(mat) << std::endl;
         std::cout << mxm::to_string(ret) << std::endl;
-        std::cout << mxm::to_string(ret_p) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
+    if(!mxm::isZero(ret_p - mat, nullptr, eps()))
+    {
+        std::cout << mxm::to_string(mat) << std::endl;
+        std::cout << mxm::to_string(ret_p) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
 
+}
+
+void testConvolution02()
+{
+#define ENABLE_SPEED_TEST 0
+#if ENABLE_SPEED_TEST
+    size_t loop_num = 10;
+    size_t scale = 8;
+    auto mat = random::uniform<float>({2000, 2000});
+    Matrix<float> ret_serial(mat.shape());
+    Matrix<float> core({3, 3}, {1,2,1,1,4,1,1,2,1});
+    auto t_start = std::chrono::system_clock::now();
+    for(size_t i = 0; i < loop_num; i++)
+    {
+        ret_serial = convolute(mat, core);
+    }
+    auto t_end = std::chrono::system_clock::now();
+    auto t_serial = std::chrono::duration<double>(t_end - t_start).count() * scale;
+
+    Matrix<float> ret_parallel(mat.shape());
+    t_start = std::chrono::system_clock::now();
+    for(size_t i = 0; i < loop_num * scale; i++)
+    {
+        ret_parallel = convoluteParallel(mat, core);
+    }
+    t_end = std::chrono::system_clock::now();
+    auto t_parallel = std::chrono::duration<double>(t_end - t_start).count();
+    std::cout << "t_serial: " << t_serial << ", t_parallel: " << t_parallel << std::endl;
+#endif
 }
 
 void testConvolution()
 {
     testConvolution01();
+    testConvolution02();
 }
 
 void testLinearAlgebra()

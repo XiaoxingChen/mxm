@@ -236,7 +236,7 @@ std::vector<Matrix<PType>> gaussPyramid(const Matrix<PType>& img, size_t level, 
     Matrix<PType> prev_img(img);
     for(size_t i = 0; i < level; i++)
     {
-        auto blured = convolute(prev_img, kernel::gauss<DType>(3));
+        auto blured = convoluteParallel(prev_img, kernel::gauss<DType>(3));
         prev_img = std::move(reduce(blured, kernel::average<DType>(2)));
         pyramid.push_back(std::move(blured));
     }

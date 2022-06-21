@@ -46,8 +46,8 @@ inline Matrix<float> lkOpticalFlow(
     const Matrix<float>& pts_init,
     size_t window_width=5)
 {
-    Matrix<float> sobel_x = convolute(img_curr, kernel::sobel());
-    Matrix<float> sobel_y = convolute(img_curr, kernel::sobel().T());
+    Matrix<float> sobel_x = convoluteParallel(img_curr, kernel::sobel());
+    Matrix<float> sobel_y = convoluteParallel(img_curr, kernel::sobel().T());
 
     const size_t max_it = 10;
     const float tol = 1e-2;

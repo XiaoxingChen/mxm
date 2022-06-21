@@ -167,6 +167,38 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
     for(size_t i = 0; i < vec.shape(0); i++) ret(i,i) = vec(i,0);
     return ret;
 }
+
+template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> reduceBlock(
+    const Matrix<DType>& src,
+    const Matrix<CoreType>& core,
+    Matrix<decltype(DType()*CoreType())>& ret,
+    const Shape& start,
+    const Shape& shape)
+{
+    for(size_t i = start[0]; i < start[0] + shape[0]; i++)
+    {
+        for(size_t j = start[1]; j < start[1] + shape[1]; j++)
+        {
+            size_t i_src = i * core.shape(0);
+            size_t j_src = j * core.shape(1);
+            if(i_src + core.shape(0) > src.shape(0) || j_src + core.shape(1) > src.shape(1))
+            {
+                ret(i,j) = src(i_src, j_src);
+                continue;
+            }
+            ret(i, j) = 0;
+            for(size_t u = 0; u < core.shape(0); u++)
+            {
+                for(size_t v = 0; v < core.shape(1); v++)
+                {
+                    ret(i, j) += core(u,v)* src(i_src + u, j_src + v);
+                } // v
+            } // u
+        } // j
+    } // i
+}
+
 template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
@@ -205,12 +237,18 @@ void convoluteBlock(
     const Shape& shape,
     Matrix<decltype(DType()*CoreType())>& ret)
 {
-
+    bool major_ax = src.majorAxis();
+    bool minor_ax = !major_ax;
     Shape half_w{core.shape(0)/2, core.shape(1)/2};
-    for(size_t i = start[0]; i < start[0] + shape[0]; i++)
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t major_idx = start[major_ax]; major_idx < start[major_ax] + shape[major_ax]; major_idx++)
     {
-        for(size_t j = start[1]; j < start[1] + shape[1]; j++)
+        for(size_t minor_idx = start[minor_ax]; minor_idx < start[minor_ax] + shape[minor_ax]; minor_idx++)
         {
+            if(ROW == major_ax){ i = major_idx; j = minor_idx; }
+            else { i = minor_idx; j = major_idx; }
+
             if(i + half_w[0] >= src.shape(0)
             || j + half_w[1] >= src.shape(1)
             || i < half_w[0]
@@ -234,7 +272,7 @@ void convoluteBlock(
 template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convoluteParallel(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
-    const size_t THREAD_NUM = 2;
+    const size_t THREAD_NUM = 4;
     std::vector<std::thread> threads;
     size_t slice_axis = src.majorAxis() == ROW ? COL : ROW;
     size_t untouched_axis = src.majorAxis();
@@ -264,11 +302,18 @@ Matrix<decltype(DType()*CoreType())> convoluteParallel(const Matrix<DType>& src,
 }
 
 template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> convoluteParallel(const Matrix<DType>& src, const MatrixRef<CoreType>& core)
+{
+    Matrix<CoreType> deref_core(core);
+    return convoluteParallel(src, deref_core);
+}
+
+template<typename DType, typename CoreType>
 Matrix<decltype(DType()*CoreType())> convolute(const Matrix<DType>& src, const Matrix<CoreType>& core)
 {
     if(core.shape(0) % 2 != 1 || core.shape(1) % 2 != 1)
         assert(false);
-    Matrix<decltype(DType()*CoreType())> ret(src.shape());
+    Matrix<decltype(DType()*CoreType())> ret(src.shape(), {}, src.majorAxis());
 
     convoluteBlock(src, core, {0,0}, src.shape(), ret);
     return ret;
