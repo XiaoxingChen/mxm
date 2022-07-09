@@ -169,17 +169,25 @@ Matrix<DType> diagonalMatrix(const Matrix<DType>& vec)
 }
 
 template<typename DType, typename CoreType>
-Matrix<decltype(DType()*CoreType())> reduceBlock(
+void reduceBlock(
     const Matrix<DType>& src,
     const Matrix<CoreType>& core,
     Matrix<decltype(DType()*CoreType())>& ret,
     const Shape& start,
     const Shape& shape)
 {
-    for(size_t i = start[0]; i < start[0] + shape[0]; i++)
+    bool major_ax = src.majorAxis();
+    bool minor_ax = !major_ax;
+    size_t i = 0;
+    size_t j = 0;
+
+    for(size_t major_idx = start[major_ax]; major_idx < start[major_ax] + shape[major_ax]; major_idx++)
     {
-        for(size_t j = start[1]; j < start[1] + shape[1]; j++)
+        for(size_t minor_idx = start[minor_ax]; minor_idx < start[minor_ax] + shape[minor_ax]; minor_idx++)
         {
+            if(ROW == major_ax){ i = major_idx; j = minor_idx; }
+            else { i = minor_idx; j = major_idx; }
+
             size_t i_src = i * core.shape(0);
             size_t j_src = j * core.shape(1);
             if(i_src + core.shape(0) > src.shape(0) || j_src + core.shape(1) > src.shape(1))
@@ -204,28 +212,42 @@ Matrix<decltype(DType()*CoreType())> reduce(const Matrix<DType>& src, const Matr
 {
     Shape ret_shape;
     for(auto i : {0,1}) ret_shape[i] = src.shape(i) / core.shape(i) + size_t(src.shape(i) % core.shape(i));
-    Matrix<decltype(DType()*CoreType())> ret(ret_shape);
-    ret.traverse([&](auto i, auto j){
-        size_t i_src = i * core.shape(0);
-        size_t j_src = j * core.shape(1);
-        if(i_src + core.shape(0) > src.shape(0) || j_src + core.shape(1) > src.shape(1))
-        {
-            ret(i,j) = src(i_src, j_src);
-            return;
-        }
-    #if NO_MAT_REF
-        ret(i, j) = 0;
-        for(size_t u = 0; u < core.shape(0); u++)
-        {
-            for(size_t v = 0; v < core.shape(1); v++)
-            {
-                ret(i, j) += core(u,v)* src(i_src + u, j_src + v);
-            }
-        }
-    #else
-        ret(i,j) = mxm::sum(src(Block({i_src, i_src + core.shape(0)}, {j_src, j_src + core.shape(1)})) * core);
-    #endif
-    });
+    Matrix<decltype(DType()*CoreType())> ret(ret_shape, {}, src.majorAxis());
+    reduceBlock(src, core, ret, {0, 0}, ret_shape);
+    return ret;
+}
+
+template<typename DType, typename CoreType>
+Matrix<decltype(DType()*CoreType())> reduceParallel(const Matrix<DType>& src, const Matrix<CoreType>& core)
+{
+    const size_t THREAD_NUM = 4;
+    std::vector<std::thread> threads;
+    size_t slice_axis = src.majorAxis() == ROW ? COL : ROW;
+    size_t untouched_axis = src.majorAxis();
+    Shape ret_shape;
+    for(auto i : {0,1}) ret_shape[i] = src.shape(i) / core.shape(i) + size_t(src.shape(i) % core.shape(i));
+    Matrix<decltype(DType()*CoreType())> ret(ret_shape, {}, src.majorAxis());
+
+    for(size_t i = 0; i < THREAD_NUM; i++)
+    {
+        Shape start;
+        start[untouched_axis] = 0;
+        start[slice_axis] = i * (ret.shape(slice_axis) / THREAD_NUM);
+
+        Shape shape;
+        shape[untouched_axis] = ret.shape(untouched_axis);
+        shape[slice_axis] = ret.shape(slice_axis) / THREAD_NUM;
+        if(i == THREAD_NUM - 1)
+            shape[slice_axis] = ret.shape(slice_axis) - start[slice_axis];
+
+        threads.push_back(std::thread([&, st = start, sh = shape](){
+            reduceBlock(src, core, ret, st, sh);
+        }));
+    }
+    for(auto & th: threads)
+    {
+        th.join();
+    }
     return ret;
 }
 

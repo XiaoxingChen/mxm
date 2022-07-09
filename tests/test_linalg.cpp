@@ -1094,6 +1094,39 @@ void testConvolution()
     testConvolution02();
 }
 
+void testReduce01()
+{
+    Matrix<float> mat({20, 8});
+    mat.traverse([&](auto i, auto j){mat(i,j) = 1.f;});
+    Matrix<float> core({2, 2}, {1.f, 1.f, 1.f, 1.f});
+    auto ret = reduce(mat, core);
+    auto ret_parallel = reduceParallel(mat, core);
+    Matrix<float> expected = Matrix<float>::ones({10, 4}) * 4.f;
+
+    float error;
+    if(! isZero(expected - ret, &error, eps()))
+    {
+        std::cout << mxm::to_string(ret - expected) << std::endl;
+        // std::cout << mxm::to_string(expected) << std::endl;
+        std::cout << "error: " << error << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    if(! isZero(expected - ret_parallel, &error, eps()))
+    {
+        std::cout << mxm::to_string(ret_parallel - expected) << std::endl;
+        // std::cout << mxm::to_string(expected) << std::endl;
+        // std::cout << mxm::to_string(ret_parallel) << std::endl;
+        std::cout << "error: " << error << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
+void testReduce()
+{
+    testReduce01();
+}
+
 void testLinearAlgebra()
 {
     Mat m1({3,3},{1,1,1, 2,2,2, 3,3,3});
@@ -1160,5 +1193,6 @@ void testLinearAlgebra()
     testSvdPipelineError<double>();
     testSvdPipelineError<float>();
     testConvolution();
+    testReduce();
 
 }

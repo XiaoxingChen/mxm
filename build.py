@@ -114,7 +114,7 @@ class LinuxNativeTarget(BuildTarget):
 
     def runExecutable(self):
         if not self.checkExecutableValid():
-            exit(1)
+            return None
         exit_code = os.system("{} {}".format(self.host_exec, self.exec_args))
         if exit_code != 0:
             exit(1)
