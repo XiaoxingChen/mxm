@@ -29,6 +29,7 @@
 #include "test_metric_tree.h"
 #include "test_dual_number.h"
 #include "test_metric_string.h"
+#include "test_model_lidar.h"
 
 #define ENABLE_GLOBAL_CATCH 1
 
@@ -71,6 +72,7 @@ int main(int argc, char const *argv[])
   testMetricTree();
   testDualNumber();
   testMetricString();
+  testModelLidar();
 #if ENABLE_GLOBAL_CATCH
   }
   catch(const std::exception& e)
