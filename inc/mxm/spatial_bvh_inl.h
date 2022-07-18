@@ -137,21 +137,21 @@ MXM_INLINE void BaseTree::build(size_t primitive_per_leaf, bool verbose)
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
 
-MXM_INLINE size_t PrimitiveMeshTree::multiHit(const Ray& ray) const
+MXM_INLINE size_t PrimitiveMeshTree::multiHit(const Ray<>& ray) const
 {
     auto records = hit(ray, eMultiHit);
     return records.size();
 }
 
 MXM_INLINE size_t rayCast(
-    const Ray& ray_in,
+    const Ray<>& ray_in,
     const PrimitiveMeshTree& tree,
     HitType hit_type,
     Matrix<float>* p_coeff,
     Vector<size_t>* p_prim_idx,
     Vector<float>* p_hit_t)
 {
-    Ray ray(ray_in);
+    Ray<> ray(ray_in);
     std::stack<size_t> node_idx_stk;
     std::vector<float> data_hit_t;
     std::vector<float> data_vertex_coeff;
@@ -224,7 +224,7 @@ MXM_INLINE size_t rayCast(
     return hit_cnt;
 }
 
-MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(const Ray& ray_in, HitType hit_type) const
+MXM_INLINE std::vector<PrimitiveMeshTree::HitRecord> PrimitiveMeshTree::hit(const Ray<>& ray_in, HitType hit_type) const
 {
     std::vector<HitRecord> records;
     Matrix<float> coeff;

@@ -65,7 +65,7 @@ inline void testAffineTransform()
 
     {
         auto tf = affineTransformTestData1();
-        Ray ray({1,2,3}, {0,1,2});
+        Ray<> ray({1,2,3}, {0,1,2});
 
         auto inv_ray = apply(tf, ray);
         auto expect_ray = apply(tf.inv(), inv_ray);

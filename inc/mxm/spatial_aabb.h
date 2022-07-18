@@ -85,7 +85,7 @@ class AxisAlignedBoundingBox
             throw std::runtime_error(std::string(file) + ":" + std::to_string(line));
     }
 
-    bool hit(const Ray& ray) const
+    bool hit(const Ray<>& ray) const
     {
         if(empty()) return false;
         auto in_out = AxisAlignedBoundingBox::hit(ray, min_, max_);
@@ -97,7 +97,7 @@ class AxisAlignedBoundingBox
         return true;
     }
 
-    static std::array<FloatType, 2> hit(const Ray& ray, const Vec& vertex_min, const Vec& vertex_max)
+    static std::array<FloatType, 2> hit(const Ray<>& ray, const Vec& vertex_min, const Vec& vertex_max)
     {
         if(ray.origin().size() != vertex_min.size())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));

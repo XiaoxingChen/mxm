@@ -210,11 +210,11 @@ public:
         updateCameraMatrix();
     }
 
-    Ray pixelRay(const std::vector<size_t>& pixel_coordinate) const
+    Ray<DType> pixelRay(const std::vector<size_t>& pixel_coordinate) const
     {
         // std::vector<size_t> homo_coord(pixel_coordinate);
         // homo_coord.push_back(1);
-        return Ray(pose_.translation(), pixelDirection(Vector<size_t>(pixel_coordinate)));
+        return Ray<DType>(pose_.translation(), pixelDirection(Vector<size_t>(pixel_coordinate)));
     }
 
     Matrix<DType> pixelDirection(const Matrix<size_t>& pixels, DType z_dir=DType(1.)) const

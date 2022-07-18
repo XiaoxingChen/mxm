@@ -50,7 +50,7 @@ class PrimitiveMeshTree: public BaseTree
 public:
     struct HitRecord
     {
-        Ray ray;
+        Ray<> ray;
         FloatType t;
         size_t prim_idx;
         Vector<FloatType> coeff;
@@ -71,8 +71,8 @@ public:
 
     virtual Mat primitive(size_t idx) const override { return getPrimitive(*vertex_buffer_, *vertex_index_buffer_, idx); }
 
-    size_t multiHit(const Ray& ray) const;
-    std::vector<HitRecord> hit(const Ray& ray, HitType hit_type) const;
+    size_t multiHit(const Ray<>& ray) const;
+    std::vector<HitRecord> hit(const Ray<>& ray, HitType hit_type) const;
 
     // const AABB& aabb() const { return node_buffer_.at(0).aabb; }
     const Mat & vertexBuffer() const { return *vertex_buffer_; }
@@ -88,7 +88,7 @@ private:
 };
 
 size_t rayCast(
-    const Ray& ray,
+    const Ray<>& ray,
     const PrimitiveMeshTree& tree,
     HitType hit_type,
     Matrix<float>* p_coeff=nullptr,

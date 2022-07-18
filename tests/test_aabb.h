@@ -26,8 +26,8 @@ void testAABB()
 {
     {
         AxisAlignedBoundingBox box({1,1,1}, {2,2,2});
-        Ray ray1({0,0,0}, {1,1,1});
-        Ray ray2({0,0,0}, {1,1,2.001});
+        Ray<> ray1({0,0,0}, {1,1,1});
+        Ray<> ray2({0,0,0}, {1,1,2.001});
 
         if(!box.hit(ray1))
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
@@ -37,8 +37,8 @@ void testAABB()
 
     {
         AxisAlignedBoundingBox box({-1,-1}, {1,1});
-        Ray ray1({3,0}, {-1,0});
-        Ray ray2({3,1.1}, {-1,0});
+        Ray<> ray1({3,0}, {-1,0});
+        Ray<> ray2({3,1.1}, {-1,0});
         if(!box.hit(ray1))
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
         if(box.hit(ray2))

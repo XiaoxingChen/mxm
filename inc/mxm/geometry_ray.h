@@ -2,23 +2,25 @@
 #define __GEOMETRY_RAY_H__
 
 #include "linalg.h"
-#include "common.h"
+// #include "common.h"
 #include "rigid_transform.h"
 #include "transform_affine.h"
 
 namespace mxm{
 
+template<typename DType=float>
 class Ray
 {
 public:
-    Ray():origin_(), direction_(), t_min_(mxm::tMin()), t_max_(mxm::tMax()){}
-    Ray(size_t dimension):origin_(dimension), direction_(dimension), t_min_(mxm::tMin()), t_max_(mxm::tMax()){ direction_(0) = 1; }
-    Ray(const Vec& origin, const Vec& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
-    origin_(origin), direction_(direction.normalized()), t_min_(t_min), t_max_(t_max) { checkDimension(); }
-    // Ray(const std::vector<FloatType>& origin, const std::vector<FloatType>& direction, FloatType t_min=mxm::tMin(), FloatType t_max=mxm::tMax()):
+    using ThisType = Ray<DType>;
+    Ray():origin_(), direction_(){}
+    Ray(size_t dimension):origin_(dimension), direction_(dimension){ direction_(0) = 1; }
+    Ray(const Vector<DType>& origin, const Vector<DType>& direction, DType t_min=DType(1e-4), DType t_max=DType(1e4)):
+    origin_(origin), direction_(direction.normalized()) { checkDimension(); }
+    // Ray(const std::vector<DType>& origin, const std::vector<DType>& direction, DType t_min=mxm::tMin(), DType t_max=mxm::tMax()):
     // origin_(origin), direction_(direction), t_min_(t_min), t_max_(t_max) { checkDimension(); }
 
-    const Ray& checkDimension(size_t dim=0) const
+    const ThisType& checkDimension(size_t dim=0) const
     {
         if(origin_.size() != direction_.size())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
@@ -29,37 +31,37 @@ public:
         return *this;
     }
 
-    const Vec& origin() const       { return origin_; }
-    Vec& origin()       { return origin_; }
+    const Vector<DType>& origin() const       { return origin_; }
+    Vector<DType>& origin()       { return origin_; }
 
-    const Vec& direction() const    { return direction_; }
-    void setDirection(const Vec& direction)    { direction_ = direction.normalized(); checkDimension(); }
+    const Vector<DType>& direction() const    { return direction_; }
+    void setDirection(const Vector<DType>& direction)    { direction_ = direction.normalized(); checkDimension(); }
 
-    Vec operator() (FloatType t) const { return origin() + direction() * t; }
-    bool valid(FloatType t) const { return t < t_max_ && t > t_min_; }
-    FloatType tMax() const { return t_max_; }
-    FloatType& tMax() { return t_max_; }
-    FloatType tMin() const { return t_min_; }
+    Vector<DType> operator() (DType t) const { return origin() + direction() * t; }
+    bool valid(DType t) const { return t < t_max_ && t > t_min_; }
+    DType tMax() const { return t_max_; }
+    DType& tMax() { return t_max_; }
+    DType tMin() const { return t_min_; }
 
     private:
-    Vec origin_;
-    Vec direction_;
-    FloatType t_min_;
-    FloatType t_max_;
+    Vector<DType> origin_;
+    Vector<DType> direction_;
+    DType t_min_ = DType(1e-4);
+    DType t_max_ = DType(1e4);
 };
 
-template<size_t DIM=3>
-Ray apply(const RigidTransform<float, DIM>& tf, const Ray& r)
+template<typename DType, size_t DIM=3>
+Ray<DType> apply(const RigidTransform<DType, DIM>& tf, const Ray<DType>& r)
 {
-    return Ray(tf.apply(r.origin()), tf.rotation().apply(r.direction()));
+    return Ray<DType>(tf.apply(r.origin()), tf.rotation().apply(r.direction()));
 }
 
-template<size_t DIM=3>
-Ray apply(const AffineTransform<float, DIM>& tf, const Ray& r)
+template<typename DType, size_t DIM=3>
+Ray<DType> apply(const AffineTransform<DType, DIM>& tf, const Ray<DType>& r)
 {
-    Vector<float> new_direction = tf.linear().matmul(r.direction());
-    float scale = mxm::norm(new_direction);
-    return Ray(tf.apply(r.origin()), new_direction * (1.f / scale), r.tMin() * scale, r.tMax() * scale);
+    Vector<DType> new_direction = tf.linear().matmul(r.direction());
+    DType scale = mxm::norm(new_direction);
+    return Ray<DType>(tf.apply(r.origin()), new_direction * (DType(1.) / scale), r.tMin() * scale, r.tMax() * scale);
 }
 
 // using RayPtr = std::shared_ptr<Ray>;

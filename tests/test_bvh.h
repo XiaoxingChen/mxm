@@ -158,7 +158,7 @@ inline void testMultiHit()
     tree.build(1, false);
 
     if(1){
-        Ray ray({-3, 0.1, 0}, {1,0,0});
+        Ray<> ray({-3, 0.1, 0}, {1,0,0});
         auto records = tree.hit(ray, bvh::eMultiHit);
         if(records.size() != 2)
         {

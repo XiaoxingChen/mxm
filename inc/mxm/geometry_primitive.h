@@ -8,18 +8,17 @@ namespace mxm
 {
 // return Vec: [t, k1, k2, ..., kn]
 // intersect = sum(k) < 1 ? true : false
-inline Vec intersectEquation(const Mat& primitive, const Ray& ray)
+template<typename DType>
+Vector<DType> intersectEquation(const Matrix<DType>& primitive, const Ray<DType>& ray)
 {
-    if(!primitive.square())
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    if(primitive.shape(0) != ray.origin().size())
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    assert(primitive.square() && "square marix required!");
+    assert(primitive.shape(0) == ray.origin().size() && "input shape mismatch!");
 
     // (d BA CA) (t k1 k2).T = OA
     // Ax = b
 
-    Vec b = primitive(Col(0)) - ray.origin();
-    Mat mat_a(primitive.shape());
+    Vector<DType> b = primitive(Col(0)) - ray.origin();
+    Matrix<DType> mat_a(primitive.shape());
     mat_a(Col(0)) = ray.direction();
     for(size_t i = 1; i < primitive.shape(0); i++)
     {
@@ -67,7 +66,7 @@ inline void putTriangleInPlane(
 
 template<typename DType>
 inline Vector<DType> primitiveNorm(
-    const Matrix<DType>& prim, const Ray& ray)
+    const Matrix<DType>& prim, const Ray<DType>& ray)
 {
     Matrix<DType> vs = prim(Block({},{1, end()})) - prim(Block({},{0, end() - 1}));
     Vector<DType> norm = orthogonalComplement(vs);
