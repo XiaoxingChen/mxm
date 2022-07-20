@@ -404,7 +404,20 @@ isZero(DType val, DType* p_error, DType tol)
     return error < tol;
 }
 
+template<typename DType>
+Matrix<DType> findMean(const Matrix<DType>& data)
+{
+    Matrix<DType> ret = mxm::sum(data, 1);
+    ret *= DType(data.shape(1));
+    return ret;
+}
 
+template<typename DType>
+Matrix<DType> findCovariance(const Matrix<DType>& data, const Matrix<DType>& mean_vec)
+{
+    Matrix<DType> residual = data - mean_vec;
+    return residual.matmul(residual.T()) / DType(data.shape(1));
+}
 
 } // namespace mxm
 #endif // _LINALG_UTILS_H

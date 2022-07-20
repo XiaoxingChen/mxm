@@ -44,6 +44,28 @@ inline Matrix<DType> unitSphere(size_t dim=3, size_t num=1)
 }
 
 template<typename DType>
+Matrix<DType> gaussian(const Vector<DType>& mean, const Matrix<DType>& cov, size_t num)
+{
+    assert(mean.size() == cov.shape(0) && cov.square());
+    std::default_random_engine generator;
+
+    Matrix<DType> ret({mean.size(), num});
+    auto val_vec = symmetricEig(cov);
+    for(size_t i = 0; i < mean.size(); i++)
+    {
+        std::normal_distribution<DType> distribution(mean(i), sqrt(val_vec[0](i,0)));
+        for(size_t j = 0; j < num; j++)
+        {
+            ret(i,j) = distribution(generator);
+            // ret(i,j) = 0;
+        }
+    }
+
+    return val_vec[1].matmul(ret);
+    // return (ret);
+}
+
+template<typename DType>
 size_t weightedSample(const Vector<DType>& weights)
 {
     if(weights.size() < 2) return 0;
