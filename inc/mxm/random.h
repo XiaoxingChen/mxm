@@ -66,6 +66,19 @@ Matrix<DType> gaussian(const Vector<DType>& mean, const Matrix<DType>& cov, size
 }
 
 template<typename DType>
+Vector<DType> gaussian(DType mean, DType variance, size_t num=1)
+{
+    Vector<DType> ret(num);
+    std::default_random_engine generator;
+    std::normal_distribution<DType> distribution(mean, sqrt(variance));
+    for(size_t i = 0; i < num; i++)
+    {
+        ret(i) = distribution(generator);
+    }
+    return ret;
+}
+
+template<typename DType>
 size_t weightedSample(const Vector<DType>& weights)
 {
     if(weights.size() < 2) return 0;
