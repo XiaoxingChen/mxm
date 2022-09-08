@@ -119,6 +119,7 @@ incomingDegrees(const GraphType& g)
     return ret;
 }
 
+// https://www.youtube.com/watch?v=cIBFEhD77b4&list=PLDV1Zeh2NRsDGO4--qE8yH72HFL1Km93P&index=17
 template <typename GraphType>
 std::enable_if_t<GraphType::directed(), std::vector<size_t>>
 kahnAlgorithm(const GraphType& g)
