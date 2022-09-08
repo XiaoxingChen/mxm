@@ -53,15 +53,15 @@ Matrix<DType> gaussian(const Vector<DType>& mean, const Matrix<DType>& cov, size
     auto val_vec = symmetricEig(cov);
     for(size_t i = 0; i < mean.size(); i++)
     {
-        std::normal_distribution<DType> distribution(mean(i), sqrt(val_vec[0](i,0)));
+        std::normal_distribution<DType> distribution(0, sqrt(val_vec[0](i,0)));
         for(size_t j = 0; j < num; j++)
         {
             ret(i,j) = distribution(generator);
             // ret(i,j) = 0;
         }
     }
-
-    return val_vec[1].matmul(ret);
+    std::cout << "WARNING: the eigenvectors are sorted according to the norm of eigenvalues" << std::endl;
+    return val_vec[1].matmul(ret) + mean;
     // return (ret);
 }
 
