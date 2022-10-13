@@ -1,3 +1,7 @@
+#if !defined(_TEST_DUAL_NUMBER_H_)
+#define _TEST_DUAL_NUMBER_H_
+
+
 #include "test_config.h"
 #include "mxm/linalg_dual_number.h"
 
@@ -61,3 +65,4 @@ void testDualNumber()
     testDualNumberTypeConversion();
     testDualNumberTypeCast();
 }
+#endif // _TEST_DUAL_NUMBER_H_
