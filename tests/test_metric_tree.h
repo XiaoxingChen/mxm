@@ -4,7 +4,7 @@
 #include "mxm/spatial_metric_tree.h"
 #include "mxm/linalg.h"
 
-using namespace mxm;
+namespace mxm{
 
 class EuclideanPointMetricTree
 :public MetricTreeBase<Matrix<float>, Matrix<float>, float >
@@ -101,5 +101,5 @@ void testMetricTree()
 }
 
 
-
+} //scope of namespace mxm
 #endif // _TEST_METRIC_TREE_H_

@@ -6,7 +6,7 @@
 #if TEST_AVAILABLE_ALL
 #include "mxm/spatial_bsp.h"
 
-using namespace mxm;
+namespace mxm{
 
 inline void testAxisPartition()
 {
@@ -80,4 +80,6 @@ inline void testBspTree()
 #else
 inline void testBspTree(){}
 #endif
+
+} //scope of namespace mxm
 #endif // __TEST_BSP_TREE_H__

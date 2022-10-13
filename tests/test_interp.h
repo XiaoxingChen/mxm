@@ -8,6 +8,8 @@
 #include <iostream>
 #include "mxm/interpolation.h"
 
+namespace mxm{
+
 void testTriangular()
 {
     Mat tex_coord({2,3}, {0,0, 1,0, 0.5, 0.5f*sqrt(3.f)}, COL);
@@ -53,5 +55,5 @@ void testInterpolation()
 void testInterpolation(){}
 #endif
 
-
+}//namespace mxm
 #endif // _TEST_INTERP_H_

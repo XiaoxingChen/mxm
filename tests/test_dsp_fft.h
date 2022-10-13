@@ -3,6 +3,9 @@
 
 #include "mxm/dsp_fft.h"
 
+
+namespace mxm{
+
 inline void testDspFFT()
 {
     {
@@ -21,5 +24,5 @@ inline void testDspFFT()
         }
     }
 }
-
+}
 #endif // __TEST_DSP_FFT__

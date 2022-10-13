@@ -5,7 +5,7 @@
 #if TEST_AVAILABLE_RANDOM
 #include "mxm/random.h"
 #include "mxm/stats.h"
-using namespace mxm;
+namespace mxm{
 
 // cov mat: diag{0.01, 0.04, 0.09}
 // mean: {0,0,1}
@@ -131,4 +131,6 @@ void testRandom()
 #else
 void testRandom(){}
 #endif
+
+} //scope of namespace mxm
 #endif // _TEST_RANDOM_H_

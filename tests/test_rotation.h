@@ -10,7 +10,7 @@
 #include "mxm/lie_special_orthogonal.h"
 #include <iostream>
 
-using namespace mxm;
+namespace mxm{
 
 inline void rotationTestCase1()
 {
@@ -235,4 +235,5 @@ inline void testRotation()
 #else
 inline void testRotation(){}
 #endif
+} //scope of namespace mxm
 #endif // _TEST_ROTATION_H_

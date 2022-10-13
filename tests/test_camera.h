@@ -5,7 +5,7 @@
 #if TEST_AVAILABLE_ALL
 #include "mxm/model_camera.h"
 
-using namespace mxm;
+namespace mxm{
 
 inline void cameraTest1()
 {
@@ -94,5 +94,5 @@ inline void testCamera()
 #else
 inline void testCamera(){}
 #endif
-
+} //scope of namespace mxm
 #endif // _TEST_CAMERA_H_

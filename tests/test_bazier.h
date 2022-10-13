@@ -6,7 +6,7 @@
 
 #include "mxm/bazier.h"
 
-using namespace mxm;
+namespace mxm{
 
 
 inline void testBazier()
@@ -33,5 +33,5 @@ inline void testBazier()
 #else
 inline void testBazier(){}
 #endif
-
+} //scope of namespace mxm
 #endif // _TEST_BAZIER_H

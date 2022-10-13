@@ -9,7 +9,7 @@
 #include "mxm/random.h"
 #endif
 
-using namespace mxm;
+namespace mxm{
 
 inline void testHarrisCorner()
 {
@@ -19,5 +19,5 @@ inline void testHarrisCorner()
 #endif
 }
 
-
+} //scope of namespace mxm
 #endif // _TEST_HARRIS_CORNER_H_

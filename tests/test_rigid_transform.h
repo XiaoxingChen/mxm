@@ -5,7 +5,7 @@
 #if TEST_AVAILABLE_RIGID_TRANSFORM
 #include "mxm/rigid_transform.h"
 #include "mxm/rotation.h"
-using namespace mxm;
+namespace mxm{
 
 inline void testRigidTransform()
 {
@@ -18,5 +18,5 @@ inline void testRigidTransform()
 inline void testRigidTransform(){}
 #endif
 
-
+} //scope of namespace mxm
 #endif // _TEST_RIGID_TRANSFORM_H

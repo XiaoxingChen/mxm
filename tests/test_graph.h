@@ -12,7 +12,7 @@
 #include "mxm/graph_flow.h"
 #endif
 
-using namespace mxm;
+namespace mxm{
 #if TEST_AVAILABLE_ALL
 
 
@@ -734,5 +734,5 @@ inline void testGraph(){}
 #endif
 
 
-
+} //scope of namespace mxm
 #endif // _TEST_GRAPH_H_

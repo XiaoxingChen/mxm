@@ -10,7 +10,7 @@
 #include <string>
 
 
-using namespace mxm;
+namespace mxm{
 
 void testDistanceToPoint()
 {
@@ -78,4 +78,6 @@ void testAABB()
 #else
 void testAABB(){}
 #endif //TEST_AVAILABLE_ALL
+
+} //scope of namespace mxm
 #endif // _TEST_AABB_H_

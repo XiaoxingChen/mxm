@@ -32,6 +32,7 @@
 #include "test_model_lidar.h"
 
 #define ENABLE_GLOBAL_CATCH 1
+using namespace mxm;
 
 int main(int argc, char const *argv[])
 {

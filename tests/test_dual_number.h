@@ -5,7 +5,7 @@
 #include "test_config.h"
 #include "mxm/linalg_dual_number.h"
 
-using namespace mxm;
+namespace mxm{
 
 template<typename DType>
 DType testFunction01(DType x)
@@ -65,4 +65,5 @@ void testDualNumber()
     testDualNumberTypeConversion();
     testDualNumberTypeCast();
 }
+} //scope of namespace mxm
 #endif // _TEST_DUAL_NUMBER_H_

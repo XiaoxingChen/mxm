@@ -3,7 +3,7 @@
 
 #include "mxm/lie_special_unitary.h"
 
-using namespace mxm;
+namespace mxm{
 
 inline Matrix<Complex<float>> testDataSU2()
 {
@@ -49,5 +49,5 @@ inline void testLieSpecialUnitary()
     }
 }
 
-
+} //scope of namespace mxm
 #endif // _TEST_LIE_SPECIAL_UNITARY_H_

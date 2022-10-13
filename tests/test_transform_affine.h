@@ -4,7 +4,7 @@
 #include "mxm/transform_affine.h"
 #include "mxm/rotation.h"
 #include "mxm/geometry_ray.h"
-using namespace mxm;
+namespace mxm{
 
 inline AffineTransform<float, 3> affineTransformTestData0()
 {
@@ -100,5 +100,5 @@ inline void testAffineTransform()
 
 
 }
-
+} //scope of namespace mxm
 #endif // _TEST_TRANSFORM_AFFINE_H_

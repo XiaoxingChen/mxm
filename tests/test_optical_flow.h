@@ -8,7 +8,7 @@
 #include "mxm/cv_optical_flow.h"
 #endif
 
-using namespace mxm;
+namespace mxm{
 
 inline void testOpticalFlow01()
 {
@@ -57,5 +57,5 @@ inline void testOpticalFlow01()
 }
 
 
-
+} //scope of namespace mxm
 #endif // _TEST_OPTICAL_FLOW_H_

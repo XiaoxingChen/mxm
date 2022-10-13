@@ -6,7 +6,7 @@
 #if TEST_AVAILABLE_GEOMETRY_RAY
 
 #include "mxm/geometry_ray.h"
-using namespace mxm;
+namespace mxm{
 
 inline void testRay()
 {
@@ -22,4 +22,6 @@ inline void testRay()
 #else
 inline void testRay(){}
 #endif
+
+} //scope of namespace mxm
 #endif // _TEST_RAY_H_

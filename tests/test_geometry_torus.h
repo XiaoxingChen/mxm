@@ -3,7 +3,7 @@
 
 #include "mxm/geometry_torus.h"
 
-using namespace mxm;
+namespace mxm{
 
 inline void testGenerateCircle()
 {
@@ -30,5 +30,5 @@ inline void testGeometryTorus()
 {
     testGenerateCircle();
 }
-
+} //scope of namespace mxm
 #endif // __TEST_GEOMETRY_TORUS_H__

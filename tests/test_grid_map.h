@@ -7,7 +7,7 @@
 #include "mxm/spatial_grid_map.h"
 #endif
 
-using namespace mxm;
+namespace mxm{
 
 #if TEST_AVAILABLE_ALL
 void testQuantize01()
@@ -29,5 +29,5 @@ void testGridMap()
 void testGridMap(){}
 #endif
 
-
+} //scope of namespace mxm
 #endif // __TEST_GRID_MAP_H__

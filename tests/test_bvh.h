@@ -10,7 +10,7 @@
 #include <memory>
 #include <set>
 
-using namespace mxm;
+namespace mxm{
 
 // A triangle band from [0,half_n]
 inline std::shared_ptr<Mat> createTriangleBand(
@@ -251,4 +251,5 @@ void testBvh()
 #else
 void testBvh(){}
 #endif
+} //scope of namespace mxm
 #endif // _TEST_BVH_H

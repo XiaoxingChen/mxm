@@ -2,7 +2,7 @@
 #define _TEST_METRIC_STRING_H_
 
 #include "mxm/metric_string.h"
-using namespace mxm;
+namespace mxm{
 
 void testLongestCommonString01()
 {
@@ -48,5 +48,5 @@ void testMetricString()
     testLongestCommonString02();
 }
 
-
+} //scope of namespace mxm
 #endif // _TEST_METRIC_STRING_H_

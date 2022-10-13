@@ -3,7 +3,7 @@
 
 #include "mxm/model_lidar.h"
 
-using namespace mxm;
+namespace mxm{
 
 inline void testModelLidar()
 {
@@ -20,5 +20,5 @@ inline void testModelLidar()
     // std::cout << mxm::to_string(dirs_2d) << std::endl;
     // std::cout << mxm::to_string(dirs_3d) << std::endl;
 }
-
+} //scope of namespace mxm
 #endif // __TEST_MODEL_LIDAR_H__
