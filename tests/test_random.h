@@ -74,7 +74,7 @@ void testGaussian()
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
 
-    if(  !isZero(mean - generated_mean, &error, 0.01))
+    if(  !isZero(mean - generated_mean, &error, 0.05))
     {
         std::cout << "mean: \n" << mxm::to_string(mean) << std::endl;
         std::cout << "generated_mean: \n" << mxm::to_string(generated_mean) << std::endl;
