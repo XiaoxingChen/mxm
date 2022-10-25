@@ -10,6 +10,7 @@
 #include "mxm/graph_utils.h"
 #include "mxm/random.h"
 #include "mxm/graph_flow.h"
+#include "mxm/graph_minimum_spanning_tree.h"
 #endif
 
 namespace mxm{
@@ -710,6 +711,54 @@ inline void testFlowNetwork03()
 #if 0
 #endif
 
+inline void testGraphTranspose01()
+{
+    DirectedGraph g(7);
+    Matrix<size_t> edge_buffer({2,8},{0,1, 1,2, 2,0, 2,4, 4,3, 3,6, 6,5, 5,3}, COL);
+    g.initEdges(edge_buffer);
+    auto g_t = transpose(g);
+    for(size_t i = 0; i < edge_buffer.shape(1); i++)
+    {
+        size_t e_idx = g_t.edgeIndex(edge_buffer(1, i), edge_buffer(0, i));
+        if(e_idx >= g_t.edgeNum())
+        {
+            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        }
+    }
+}
+
+inline void testMinimumSpanningTree01()
+{
+    UndirectedGraph g(10);
+    Matrix<size_t> edge_buffer(fixRow(2),{
+        0,1, 0,3, 0,4,
+        1,2, 1,3, 
+        2,7, 2,8, 2,9, 
+        3,4, 3,5, 3,6, 3,7, 
+        4,5, 5,6,
+        6,7, 6,8, 
+        7,8, 8,9}, COL);
+    
+    g.initEdges(edge_buffer);
+    Vector<size_t> weight_buffer{5,4,1,4,2,4,1,2,2,5,11,2,1,7,1,4,6,0};
+    BinaryEdgeProperty<size_t, false> f_dist;
+    f_dist.initProperty(weight_buffer).setTopology(&g).setInvalidProperty(std::numeric_limits<size_t>::max());
+
+    auto ret = kruskalMinimumSpanningTree<UndirectedGraph, size_t>(g, f_dist);
+    size_t expected_cost = 14;
+    size_t actual_cost = 0;
+    for(auto & e_idx_pair: ret.edgeIndices())
+    {
+        actual_cost += f_dist(e_idx_pair.first[0], e_idx_pair.first[1]);
+    }
+
+    if(expected_cost != actual_cost)
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 inline void testGraph()
 {
     testShortedPath1();
@@ -728,6 +777,8 @@ inline void testGraph()
     // testMarkovDecisionProcess03();
     testFlowNetwork02();
     testFlowNetwork03();
+    testGraphTranspose01();
+    testMinimumSpanningTree01();
 }
 #else
 inline void testGraph(){}

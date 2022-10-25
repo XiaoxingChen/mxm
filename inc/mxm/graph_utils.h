@@ -173,7 +173,7 @@ bool isCyclic(const GraphType& g, size_t component_num)
 
 template <typename GraphType>
 std::enable_if_t<GraphType::directed(), bool>
-isTree(const GraphType& g, size_t component_num)
+isDirectedRootedOutTree(const GraphType& g, size_t component_num)
 {
     if(1 != component_num) return false;
     if(isCyclic(g, component_num)) return false;
@@ -181,6 +181,22 @@ isTree(const GraphType& g, size_t component_num)
     size_t max_incoming_degree = *std::max_element(incoming_degrees.begin(), incoming_degrees.end());
     if(max_incoming_degree > 1) return false;
     return true;
+}
+
+template <typename GraphType>
+std::enable_if_t<GraphType::directed(), GraphType>
+transpose(const GraphType& g)
+{
+    GraphType ret(g.vertexNum());
+    Matrix<size_t> edge_buffer({2, g.edgeNum()});
+    for(auto & e_idx_pair: g.edgeIndices())
+    {
+        size_t idx = e_idx_pair.second;
+        edge_buffer(0, idx) = e_idx_pair.first[1];
+        edge_buffer(1, idx) = e_idx_pair.first[0];
+    }
+    ret.initEdges(edge_buffer);
+    return ret;
 }
 
 } // namespace mxm
