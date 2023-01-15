@@ -49,8 +49,7 @@ public:
     Vector(const MatrixBase<DeriveType>& mat)
         : BaseType(mat.shape(1) == 1 ? (mat.T().T()) : mat.T())
     {
-        if(mat.shape(0) != 1 && mat.shape(1) != 1)
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(mat.shape(0) == 1 || mat.shape(1) == 1);
     }
 
     size_t size() const { return this->shape(0); }
@@ -71,8 +70,8 @@ public:
 
     DType dot(const ThisType& rhs) const
     {
-        if(size() != rhs.size())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(size() == rhs.size());
+            
         DType sum(0);
         for(int i = 0; i < size(); i++) sum += (*this)(i) * rhs(i);
         return sum;
