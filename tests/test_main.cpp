@@ -30,6 +30,7 @@
 #include "test_dual_number.h"
 #include "test_metric_string.h"
 #include "test_model_lidar.h"
+#include "test_simplex.h"
 
 #define ENABLE_GLOBAL_CATCH 1
 using namespace mxm;
@@ -74,6 +75,7 @@ int main(int argc, char const *argv[])
   testDualNumber();
   testMetricString();
   testModelLidar();
+  testSimplex();
 #if ENABLE_GLOBAL_CATCH
   }
   catch(const std::exception& e)
