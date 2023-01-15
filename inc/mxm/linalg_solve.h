@@ -21,10 +21,8 @@ solveLUTriangle(const MatrixBase<DeriveType1>& mat_in, const MatrixBase<DeriveTy
     auto & mat = static_cast<const DeriveType1&>(mat_in);
     auto & b = static_cast<const DeriveType2&>(b_in);
 
-    if(!mat.square())
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-    if(mat.shape(0) != b.shape(0))
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    assert(mat.square());
+    assert(mat.shape(0) == b.shape(0));
 
     size_t idx_start = l_tri ? 0 : b.shape(0) - 1;
     int step = l_tri ? 1 : - 1;
