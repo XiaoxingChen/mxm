@@ -27,19 +27,19 @@ size_t inversionNumber(const std::vector<size_t>& seq)
 namespace qr
 {
 
-std::vector<std::array<size_t, 2>> upperTrianglizeSequence(size_t cols)
+std::vector<std::array<size_t, 2>> upperTrianglizeSequence(const Shape& shape)
 {
     std::vector<std::array<size_t, 2>> ret;
-    for(size_t j = 0; j < cols; j++)
-        for(size_t i = cols-1; i > j; i--)
+    for(size_t j = 0; j < shape[1]; j++)
+        for(size_t i = shape[0]-1; i > j; i--)
             ret.push_back({i,j});
     return ret;
 }
-std::vector<std::array<size_t, 2>> upperHessenbergizeSequence(size_t cols)
+std::vector<std::array<size_t, 2>> upperHessenbergizeSequence(const Shape& shape)
 {
     std::vector<std::array<size_t, 2>> ret;
-    for(size_t j = 0; j < cols; j++)
-        for(size_t i = cols-1; i > j+1; i--)
+    for(size_t j = 0; j < shape[1]; j++)
+        for(size_t i = shape[0]-1; i > j+1; i--)
             ret.push_back({i,j});
     return ret;
 }
@@ -70,7 +70,7 @@ std::array<Matrix<typename Traits<DeriveType>::EntryType>, 2>
 decomposeByRotation(const MatrixBase<DeriveType>& mat_in, TraverseSeq idx_seq, bool symmetric)
 {
     using DType = typename Traits<DeriveType>::EntryType;
-    assert(mat_in.square());
+    // assert(mat_in.square());
 
     std::array<Matrix<DType>, 2> ret;
     Matrix<DType>& mat(ret[1]);
@@ -80,8 +80,8 @@ decomposeByRotation(const MatrixBase<DeriveType>& mat_in, TraverseSeq idx_seq, b
     rot = Matrix<DType>::identity(n);
 
     std::vector<std::array<size_t, 2>> seq;
-    if(idx_seq == eUpperTrianglize) seq = upperTrianglizeSequence(mat_in.shape(1));
-    else if (idx_seq == eUpperHessenbergize) seq = upperHessenbergizeSequence(mat_in.shape(1));
+    if(idx_seq == eUpperTrianglize) seq = upperTrianglizeSequence(mat_in.shape());
+    else if (idx_seq == eUpperHessenbergize) seq = upperHessenbergizeSequence(mat_in.shape());
     else if (idx_seq == eSubdiagonal)  seq = subdiagonalSequence(mat_in.shape());
 
     for(auto& idx: seq)
