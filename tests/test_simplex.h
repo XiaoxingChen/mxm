@@ -44,10 +44,28 @@ inline void testBarycentricCoordinate01()
 
 }
 
+inline void testLebesgueMeasure()
+{
+    Matrix<float> triangle({3,3},{1,0,0, 0,1,0, 0,0,0}, COL);
+    float area = splx::lebesgueMeasure(triangle);
+    if(fabs(area - 0.5) > eps<float>())
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+    Matrix<float> tetrahedron({3,4},{0,0,0, 1,0,0, 0,1,0, 0,0,1}, COL);
+    float volume = splx::lebesgueMeasure(tetrahedron);
+    if(fabs(volume - 1./6) > eps<float>())
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 inline void testSimplex()
 {
     testAffineCoordinate01();
     testBarycentricCoordinate01();
+    testLebesgueMeasure();
 }
 
 } // namespace mxm

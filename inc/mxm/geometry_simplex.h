@@ -74,6 +74,25 @@ Matrix<DType> barycentricCoordinate(
     return vstack(row0, affine);
 }
 
+template<typename DType>
+DType lebesgueMeasure(const Matrix<DType>& simplex)
+{
+    Matrix<DType> basis = simplex(Block({},{1, simplex.shape(1)}));
+    basis -= simplex(Col(0));
+    auto qr_result = qr::decomposeByRotation(basis);
+    size_t simplex_dim = simplex.shape(1) - 1;
+    DType ret(1.);
+    for(size_t i = 0; i < simplex_dim; i++)
+    {
+        ret *= qr_result[1](i,i);
+    }
+    DType alpha(1);
+    for(size_t i = 2; i <= simplex_dim; i++) alpha /= DType(i);
+    ret *= alpha;
+
+    return ret;
+}
+
 } // namespace splx
 
 } // namespace mxm
