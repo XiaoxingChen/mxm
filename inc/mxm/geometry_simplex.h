@@ -93,6 +93,30 @@ DType lebesgueMeasure(const Matrix<DType>& simplex)
     return ret;
 }
 
+template<typename DType>
+Vector<int8_t> arePointsInside(
+    const Matrix<DType>& pts_in, 
+    const Matrix<DType>& simplex)
+{
+    assert(simplex.shape(0) + 1 == simplex.shape(1) && "simplex shape mismatch");
+    assert(simplex.shape(0) == pts_in.shape(0) && "simplex shape mismatch");
+    
+    auto bary_coord = barycentricCoordinate(pts_in, simplex);
+    Vector<int8_t> ret = Vector<int8_t>::ones(pts_in.shape(1));
+    for(size_t j = 0; j < bary_coord.shape(1); j++)
+    {
+        for(size_t i = 0; i < bary_coord.shape(0); i++)
+        {
+            if(bary_coord(i,j) < DType(0.) || bary_coord(i,j) > DType(1.))
+            {
+                ret(j) = 0;
+                continue;
+            }
+        }
+    }
+    return ret;
+}
+
 } // namespace splx
 
 } // namespace mxm

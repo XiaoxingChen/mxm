@@ -582,8 +582,9 @@ bool isIdentity(
     return max_error < tol;
 }
 
-template<typename DeriveType>
-bool isZero(
+template<typename DeriveType, typename U=int>
+std::enable_if_t< std::is_floating_point_v<typename Traits<DeriveType>::ArithType>, bool >
+isZero(
     const MatrixBase<DeriveType>& mat,
     typename Traits<DeriveType>::ArithType* p_error=nullptr,
     typename Traits<DeriveType>::ArithType tol=std::numeric_limits<typename Traits<DeriveType>::ArithType>::epsilon())
@@ -596,6 +597,24 @@ bool isZero(
     });
     if(p_error) *p_error = max_error;
     return max_error < tol;
+}
+
+template<typename DeriveType, typename U=int>
+std::enable_if_t< std::is_integral_v<typename Traits<DeriveType>::ArithType>, bool >
+isZero(
+    const MatrixBase<DeriveType>& mat,
+    typename Traits<DeriveType>::ArithType* p_error=nullptr,
+    typename Traits<DeriveType>::ArithType tol=typename Traits<DeriveType>::ArithType(0))
+{
+    bool ret = true;
+    using ArithType = typename Traits<DeriveType>::ArithType;
+    ArithType max_error(0);
+    auto zero_val = typename Traits<DeriveType>::ArithType(0);
+    mat.traverse([&](auto i, auto j){
+        max_error = std::max(abs(mat(i,j)), max_error);
+    });
+    if(p_error) *p_error = max_error;
+    return max_error <= tol;
 }
 #endif
 } // namespace mxm

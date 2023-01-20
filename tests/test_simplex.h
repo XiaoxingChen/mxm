@@ -61,11 +61,27 @@ inline void testLebesgueMeasure()
     }
 }
 
+inline void testPointsInsideSimplex()
+{
+    Matrix<float> triangle({2,3},{1,0, 0,1, 0,0}, COL);
+    Matrix<float> pts(fixRow(2), {0.1,0.1, 0.5,1.1, 0.5,0.5}, COL);
+    auto ret = splx::arePointsInside(pts, triangle);
+    Vector<int8_t> expected{1,0,1};
+    
+    if(!isZero(ret - expected))
+    {
+        std::cout << mxm::to_string(ret) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+
+}
+
 inline void testSimplex()
 {
     testAffineCoordinate01();
     testBarycentricCoordinate01();
     testLebesgueMeasure();
+    testPointsInsideSimplex();
 }
 
 } // namespace mxm
