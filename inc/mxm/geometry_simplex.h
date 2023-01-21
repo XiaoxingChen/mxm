@@ -96,7 +96,8 @@ DType lebesgueMeasure(const Matrix<DType>& simplex)
 template<typename DType>
 Vector<int8_t> arePointsInside(
     const Matrix<DType>& pts_in, 
-    const Matrix<DType>& simplex)
+    const Matrix<DType>& simplex,
+    DType tol=DType(0.))
 {
     assert(simplex.shape(0) + 1 == simplex.shape(1) && "simplex shape mismatch");
     assert(simplex.shape(0) == pts_in.shape(0) && "simplex shape mismatch");
@@ -107,7 +108,7 @@ Vector<int8_t> arePointsInside(
     {
         for(size_t i = 0; i < bary_coord.shape(0); i++)
         {
-            if(bary_coord(i,j) < DType(0.) || bary_coord(i,j) > DType(1.))
+            if(bary_coord(i,j) < DType(0.) - tol || bary_coord(i,j) > DType(1.) + tol)
             {
                 ret(j) = 0;
                 continue;
