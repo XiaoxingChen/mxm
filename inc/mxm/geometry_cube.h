@@ -110,6 +110,29 @@ Matrix<size_t> generateNCubeIndices(const std::vector<size_t>& resolutions)
     return Matrix<size_t>();
 }
 
+template<typename DType=float>
+Matrix<size_t> generateSquareTriangleIndices(const std::vector<size_t>& resolutions)
+{
+    std::vector<size_t> index_data;
+    for(size_t i = 0; i < resolutions[0] + 1; i++)
+    {
+        for(size_t j = 0; j < resolutions[1] + 1; j++)
+        {
+            if(j != resolutions[1] && i != resolutions[0])
+            {
+                index_data.push_back(i * (resolutions[1] + 1) + j);
+                index_data.push_back((i + 1) * (resolutions[1] + 1) + j);
+                index_data.push_back((i + 1) * (resolutions[1] + 1) + (j + 1));
+
+                index_data.push_back(i * (resolutions[1] + 1) + j);
+                index_data.push_back((i + 1) * (resolutions[1] + 1) + (j + 1));
+                index_data.push_back(i * (resolutions[1] + 1) + (j + 1));
+            }
+        }
+    }
+    return Matrix<size_t>(fixRow(3), std::move(index_data), COL);
+}
+
 } // namespace mxm
 
 
