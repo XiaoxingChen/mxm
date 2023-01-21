@@ -117,6 +117,22 @@ Vector<int8_t> arePointsInside(
     return ret;
 }
 
+template<typename DType>
+Vector<DType> centroid(const Matrix<DType>& simplex)
+{
+    return sum(simplex, 1) / DType(simplex.shape(1)); 
+}
+
+#if 0
+// reference:
+// https://math.stackexchange.com/questions/4056099/circumcenter-of-the-n-simplex
+template<typename DType>
+Vector<DType> circumCenter(const Matrix<DType>& simplex, DType* radius=nullptr)
+{
+    
+}
+#endif
+
 } // namespace splx
 
 } // namespace mxm
