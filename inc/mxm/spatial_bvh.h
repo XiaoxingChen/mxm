@@ -25,7 +25,7 @@ enum HitType
 struct Node
 {
     Node(size_t dim): aabb(dim), is_leaf(false){}
-    AABB aabb;
+    AABB<float> aabb;
     std::vector<size_t> children_index_buffer;
     std::vector<size_t> primitive_index_buffer;
     bool is_leaf;

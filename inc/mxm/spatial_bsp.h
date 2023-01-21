@@ -118,7 +118,7 @@ inline void PointCloudTree::build(size_t point_per_leaf, bool verbose)
     node_buffer_.push_back(Node(dim()));
 
     {
-        AABB aabb(dim());
+        AABB<float> aabb(dim());
         aabb.extend(*point_buffer_);
         node_buffer_.back().min = aabb.min();
         node_buffer_.back().width = mxm::min(aabb.max() - aabb.min());

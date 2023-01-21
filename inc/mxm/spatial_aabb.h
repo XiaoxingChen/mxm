@@ -9,23 +9,24 @@
 
 namespace mxm
 {
+template<typename DType>
 class AxisAlignedBoundingBox
 {
   public:
-    AxisAlignedBoundingBox(Vec min_pt, Vec max_pt):
+    AxisAlignedBoundingBox<DType>(Vector<DType> min_pt, Vector<DType> max_pt):
         min_(min_pt), max_(max_pt) { checkDimension(__FILE__, __LINE__); }
-    // AxisAlignedBoundingBox(const std::vector<FloatType>& min_pt, const std::vector<FloatType>& max_pt):
+    // AxisAlignedBoundingBox(const std::vector<DType>& min_pt, const std::vector<DType>& max_pt):
     //     min_(min_pt), max_(max_pt) { checkDimension(__FILE__, __LINE__); }
 
-    AxisAlignedBoundingBox(size_t dim):
+    AxisAlignedBoundingBox<DType>(size_t dim):
         min_(dim), max_(dim) { clear(); }
 
-    using ThisType = AxisAlignedBoundingBox;
+    using ThisType = AxisAlignedBoundingBox<DType>;
 
     const Vec& min() const {return min_;}
     const Vec& max() const {return max_;}
-    Vec center() const {return (min_ + max_) * 0.5;}
-    FloatType center(size_t i) const {return (min_(i) + max_(i)) * 0.5;}
+    Vector<DType> center() const {return (min_ + max_) * 0.5;}
+    DType center(size_t i) const {return (min_(i) + max_(i)) * 0.5;}
     bool empty() const { return min_(0) > max_(0); }
     void clear()
     {
@@ -81,14 +82,13 @@ class AxisAlignedBoundingBox
 
     void checkDimension(const char* file, uint32_t line) const
     {
-        if(min_.size() != max_.size())
-            throw std::runtime_error(std::string(file) + ":" + std::to_string(line));
+        assert(min_.size() == max_.size());
     }
 
-    bool hit(const Ray<>& ray) const
+    bool hit(const Ray<DType>& ray) const
     {
         if(empty()) return false;
-        auto in_out = AxisAlignedBoundingBox::hit(ray, min_, max_);
+        auto in_out = AxisAlignedBoundingBox<DType>::hit(ray, min_, max_);
         // if (in_out[0] < ray.tMin()) return false;
         if (in_out[1] < in_out[0] - eps()) return false;
         if(!ray.valid(in_out[0]) && !ray.valid(in_out[1])) return false;
@@ -97,7 +97,7 @@ class AxisAlignedBoundingBox
         return true;
     }
 
-    static std::array<FloatType, 2> hit(const Ray<>& ray, const Vec& vertex_min, const Vec& vertex_max)
+    static std::array<DType, 2> hit(const Ray<DType>& ray, const Vec& vertex_min, const Vec& vertex_max)
     {
         if(ray.origin().size() != vertex_min.size())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
@@ -105,11 +105,11 @@ class AxisAlignedBoundingBox
         if(ray.origin().size() != vertex_max.size())
             throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 
-        FloatType t_in = -INFINITY;
-        FloatType t_out = INFINITY;
+        DType t_in = -INFINITY;
+        DType t_out = INFINITY;
         for(int i = 0; i < vertex_min.size(); i++)
         {
-            if(abs(ray.direction()(i)) < std::numeric_limits<FloatType>::min())
+            if(abs(ray.direction()(i)) < std::numeric_limits<DType>::min())
             {
                 if(vertex_min(i) < ray.origin()(i) + eps() && ray.origin()(i) < vertex_max(i) + eps())
                     continue;
@@ -119,8 +119,8 @@ class AxisAlignedBoundingBox
                 break;
             }
 
-            FloatType t0 = (vertex_min(i) - ray.origin()(i)) / ray.direction()(i);
-            FloatType t1 = (vertex_max(i) - ray.origin()(i)) / ray.direction()(i);
+            DType t0 = (vertex_min(i) - ray.origin()(i)) / ray.direction()(i);
+            DType t1 = (vertex_max(i) - ray.origin()(i)) / ray.direction()(i);
 
             t_in = std::max(t_in, std::min(t0, t1));
             t_out = std::min(t_out, std::max(t0, t1));
@@ -129,20 +129,21 @@ class AxisAlignedBoundingBox
     }
 
   private:
-    Vec min_;
-    Vec max_;
+    Vector<DType> min_;
+    Vector<DType> max_;
 };
 
-inline std::array<FloatType, 2> distance(const AxisAlignedBoundingBox& bbox, const Vec& pt)
+template<typename DType>
+std::array<DType, 2> distance(const AxisAlignedBoundingBox<DType>& bbox, const Vec& pt)
 {
     // AxisAlignedBoundingBox ret(bbox.dim());
-    std::array<FloatType, 2> ret{INFINITY, -INFINITY};
+    std::array<DType, 2> ret{INFINITY, -INFINITY};
 
-    // FloatType max_dist = 0;
+    // DType max_dist = 0;
     for(uint32_t i = 0; i < (1u << bbox.dim()); i++)
     {
-        Vec t = binaryToVector<FloatType>(bbox.dim(), i);
-        Vec vertex = (-t + 1) * bbox.min() + t * bbox.max();
+        Vector<DType> t = binaryToVector<DType>(bbox.dim(), i);
+        Vector<DType> vertex = (-t + 1) * bbox.min() + t * bbox.max();
 
         ret[1] = std::max(ret[1], (vertex - pt).norm());
     }
@@ -153,7 +154,7 @@ inline std::array<FloatType, 2> distance(const AxisAlignedBoundingBox& bbox, con
         return ret;
     }
 
-    Vec min_dist(bbox.dim());
+    Vector<DType> min_dist(bbox.dim());
     for(size_t axis = 0; axis < bbox.dim(); axis++)
     {
         if(bbox.min()(axis) < pt(axis) && pt(axis) < bbox.max()(axis))
@@ -170,7 +171,8 @@ inline std::array<FloatType, 2> distance(const AxisAlignedBoundingBox& bbox, con
     return ret;
 }
 
-using AABB = AxisAlignedBoundingBox;
+template<typename DType>
+using AABB = AxisAlignedBoundingBox<DType>;
 
 
 } // namespace mxm
