@@ -15,7 +15,7 @@ Matrix<DType> generateNCubeVertices(
     size_t dim = resolutions.size();
 
     std::vector<DType> step(width.size());
-    for(size_t i = 0; i < dim; i++) step.at(i) = width.at(i) / resolutions.at(i);
+    for(size_t i = 0; i < dim; i++) step.at(i) = resolutions.at(i) == 0 ? 0 : width.at(i) / resolutions.at(i);
 
     if(2 == dim)
     {

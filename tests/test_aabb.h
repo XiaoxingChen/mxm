@@ -18,7 +18,7 @@ void testDistanceToPoint()
     Vec pt({0.5, 0.5});
 
     auto dist = distance(box, pt);
-    if(abs((0.5 - 0.297029436) - dist[0]) > eps())
+    if(abs((0.5 - 0.297029436) - dist(0,0)) > eps())
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
 }
 

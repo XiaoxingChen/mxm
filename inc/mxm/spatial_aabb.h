@@ -23,15 +23,21 @@ class AxisAlignedBoundingBox
 
     using ThisType = AxisAlignedBoundingBox<DType>;
 
-    const Vec& min() const {return min_;}
-    const Vec& max() const {return max_;}
+    const Vector<DType>& min() const {return min_;}
+    DType min(size_t i) const {return min_(i);}
+
+    const Vector<DType>& max() const {return max_;}
+    DType max(size_t i) const {return max_(i);}
+
     Vector<DType> center() const {return (min_ + max_) * 0.5;}
     DType center(size_t i) const {return (min_(i) + max_(i)) * 0.5;}
     bool empty() const { return min_(0) > max_(0); }
     void clear()
     {
-        min_ = Vec::ones(min_.size()) * INFINITY;
-        max_ = Vec::ones(max_.size()) * (-INFINITY);
+        min_ *= 0;
+        min_ += std::numeric_limits<DType>::max();
+        max_ *= 0;
+        max_ -= std::numeric_limits<DType>::max();
     }
     size_t dim() const { return min_.size(); }
     std::string str() const { return mxm::to_string(min_.T()) + mxm::to_string(max_.T()); }
@@ -40,8 +46,7 @@ class AxisAlignedBoundingBox
 
     ThisType& extend(const Mat& vertices)
     {
-        if(vertices.shape(0) != min_.size())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(vertices.shape(0) == min_.size());
 
         Mat bounds = boundary(vertices);
 
@@ -71,13 +76,21 @@ class AxisAlignedBoundingBox
         return true;
     }
 
-    bool contains(const Mat& pts) const
+    Vector<uint8_t> contains(const Matrix<DType>& pts, DType tol=DType(0)) const
     {
-        if(empty()) return false;
-        for(size_t i = 0; i < pts.shape(0); i++)
-            for(size_t j = 0; j < pts.shape(1); j++)
-                if(pts(i,j) < min()(i) || pts(i,j) > max()(i)) return false;
-        return true;
+        Vector<uint8_t> ret = Vector<uint8_t>::zeros(pts.shape(1));
+        if(empty()) return ret;
+        
+        for(size_t j = 0; j < pts.shape(1); j++)
+        {
+            ret(j) = true;
+            for(size_t i = 0; i < pts.shape(0); i++)
+            {
+                ret(j) &= (pts(i,j) > min()(i) - tol && pts(i,j) < max()(i) + tol);
+            }
+        }
+            
+        return ret;
     }
 
     void checkDimension(const char* file, uint32_t line) const
@@ -97,16 +110,13 @@ class AxisAlignedBoundingBox
         return true;
     }
 
-    static std::array<DType, 2> hit(const Ray<DType>& ray, const Vec& vertex_min, const Vec& vertex_max)
+    static std::array<DType, 2> hit(const Ray<DType>& ray, const Vector<DType>& vertex_min, const Vector<DType>& vertex_max)
     {
-        if(ray.origin().size() != vertex_min.size())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+        assert(ray.origin().size() == vertex_min.size());
+        assert(ray.origin().size() == vertex_max.size());
 
-        if(ray.origin().size() != vertex_max.size())
-            throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
-
-        DType t_in = -INFINITY;
-        DType t_out = INFINITY;
+        DType t_in = -std::numeric_limits<DType>::max();
+        DType t_out = std::numeric_limits<DType>::max();
         for(int i = 0; i < vertex_min.size(); i++)
         {
             if(abs(ray.direction()(i)) < std::numeric_limits<DType>::min())
@@ -114,8 +124,8 @@ class AxisAlignedBoundingBox
                 if(vertex_min(i) < ray.origin()(i) + eps() && ray.origin()(i) < vertex_max(i) + eps())
                     continue;
 
-                t_in = 1;
-                t_out = -1;
+                t_in = DType(1);
+                t_out = DType(0);
                 break;
             }
 
@@ -133,41 +143,50 @@ class AxisAlignedBoundingBox
     Vector<DType> max_;
 };
 
+// parameters:
+// bbox: DIM dimension
+// pts: (DIM, N), N points with DIM dimension
+// ret: (2, N)
 template<typename DType>
-std::array<DType, 2> distance(const AxisAlignedBoundingBox<DType>& bbox, const Vec& pt)
+Matrix<DType> distance(const AxisAlignedBoundingBox<DType>& bbox, const Matrix<DType>& pts)
 {
     // AxisAlignedBoundingBox ret(bbox.dim());
-    std::array<DType, 2> ret{INFINITY, -INFINITY};
+    // std::array<DType, 2> ret{INFINITY, -INFINITY};
+    Matrix<DType> ret = Matrix<DType>::zeros({2, pts.shape(1)});
+    ret(Row(0)) += std::numeric_limits<DType>::max();
+    ret(Row(1)) -= std::numeric_limits<DType>::max();
+    auto is_contained = bbox.contains(pts);
 
-    // DType max_dist = 0;
-    for(uint32_t i = 0; i < (1u << bbox.dim()); i++)
+    for(size_t pt_idx = 0; pt_idx < pts.shape(1); pt_idx++)
     {
-        Vector<DType> t = binaryToVector<DType>(bbox.dim(), i);
-        Vector<DType> vertex = (-t + 1) * bbox.min() + t * bbox.max();
-
-        ret[1] = std::max(ret[1], (vertex - pt).norm());
-    }
-
-    if(bbox.contains(pt))
-    {
-        ret[0] = 0;
-        return ret;
-    }
-
-    Vector<DType> min_dist(bbox.dim());
-    for(size_t axis = 0; axis < bbox.dim(); axis++)
-    {
-        if(bbox.min()(axis) < pt(axis) && pt(axis) < bbox.max()(axis))
+        for(uint32_t i = 0; i < (1u << bbox.dim()); i++)
         {
-            min_dist(axis) = 0.;
-        }else
-        {
-            min_dist(axis) = std::min(abs(bbox.min()(axis) - pt(axis)), abs(bbox.max()(axis) - pt(axis)));
+            Vector<DType> t = binaryToVector<DType>(bbox.dim(), i);
+            Vector<DType> vertex = (-t + 1) * bbox.min() + t * bbox.max();
+
+            ret(1, pt_idx) = std::max(ret(1, pt_idx), (vertex - pts(Col(pt_idx))).norm());
         }
-    }
 
-    // ret.extend(min_dist);
-    ret[0] = min_dist.norm();
+        if(is_contained(pt_idx) > 0)
+        {
+            ret(0, pt_idx) = 0;
+            continue;
+        }
+
+        Vector<DType> min_dist(bbox.dim());
+        for(size_t axis = 0; axis < bbox.dim(); axis++)
+        {
+            if(bbox.min(axis) < pts(axis, pt_idx) && pts(axis, pt_idx) < bbox.max(axis))
+            {
+                min_dist(axis) = 0.;
+            }else
+            {
+                min_dist(axis) = std::min(abs(bbox.min(axis) - pts(axis, pt_idx)), abs(bbox.max(axis) - pts(axis, pt_idx)));
+            }
+        }
+        ret(0, pt_idx) = min_dist.norm();
+    }
+    
     return ret;
 }
 

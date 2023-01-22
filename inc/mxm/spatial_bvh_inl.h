@@ -270,7 +270,7 @@ MXM_INLINE std::multimap<FloatType, size_t> PointCloudTree::radiusSearch(const V
         {
             for(auto idx: target_node.children_index_buffer)
             {
-                if(distance(nodeBuffer().at(idx).aabb, pt).at(0) < radius)
+                if(distance(nodeBuffer().at(idx).aabb, pt)(0,0) < radius)
                     stk.push(nodeBuffer().at(idx));
             }
         }
@@ -303,7 +303,7 @@ MXM_INLINE std::multimap<FloatType, size_t> PointCloudTree::nearestNeighborSearc
         {
             for(auto idx: target.children_index_buffer)
             {
-                auto dist = distance(nodeBuffer().at(idx).aabb, pt)[0];
+                auto dist = distance(nodeBuffer().at(idx).aabb, pt)(0,0);
                 if(dist < curr_max_dist) stk.push(idx);
             }
         }
