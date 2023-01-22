@@ -611,7 +611,7 @@ isZero(
     ArithType max_error(0);
     auto zero_val = typename Traits<DeriveType>::ArithType(0);
     mat.traverse([&](auto i, auto j){
-        max_error = std::max(abs(mat(i,j)), max_error);
+        max_error = std::max(std::abs(mat(i,j)), max_error);
     });
     if(p_error) *p_error = max_error;
     return max_error <= tol;
