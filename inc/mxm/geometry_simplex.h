@@ -93,27 +93,27 @@ DType lebesgueMeasure(const Matrix<DType>& simplex)
     return ret;
 }
 
+// parameters
+// N points, DIM dimension, M simplex dimension
+// pts_in: shape(DIM, N)
+// simplex: shape(DIM, M)
+// return: shape(N, 1). 
+//   ret[i] > 0: inside
+//   ret[i] == 0: on the boundary
+//   ret[i] < 0: outside
 template<typename DType>
-Vector<int8_t> arePointsInside(
+Vector<DType> arePointsInside(
     const Matrix<DType>& pts_in, 
-    const Matrix<DType>& simplex,
-    DType tol=DType(0.))
+    const Matrix<DType>& simplex)
 {
     assert(simplex.shape(0) + 1 == simplex.shape(1) && "simplex shape mismatch");
     assert(simplex.shape(0) == pts_in.shape(0) && "simplex shape mismatch");
     
     auto bary_coord = barycentricCoordinate(pts_in, simplex);
-    Vector<int8_t> ret = Vector<int8_t>::ones(pts_in.shape(1));
+    Vector<DType> ret(pts_in.shape(1));
     for(size_t j = 0; j < bary_coord.shape(1); j++)
     {
-        for(size_t i = 0; i < bary_coord.shape(0); i++)
-        {
-            if(bary_coord(i,j) < DType(0.) - tol || bary_coord(i,j) > DType(1.) + tol)
-            {
-                ret(j) = 0;
-                continue;
-            }
-        }
+        ret(j) = mxm::min(bary_coord(Col(j)));
     }
     return ret;
 }

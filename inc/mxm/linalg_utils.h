@@ -82,18 +82,24 @@ inline std::vector<size_t> argSort(const Vec& v)
     return indices;
 }
 
-inline size_t min(const Vec& v)
+template<typename DeriveType>
+typename Traits<DeriveType>::ArithType
+min(const MatrixBase<DeriveType>& mat)
 {
-    FloatType m(INFINITY);
-    for(size_t i = 0; i < v.size(); i++) m = v(i) < m ? v(i) : m;
-    return m;
+    using DType = typename Traits<DeriveType>::ArithType;
+    auto ret = std::numeric_limits<DType>::max();
+    mat.traverse([&](auto i, auto j){ ret = std::min(ret, mat(i,j)); });
+    return ret;
 }
 
-inline size_t max(const Vec& v)
+template<typename DeriveType>
+typename Traits<DeriveType>::ArithType
+max(const MatrixBase<DeriveType>& mat)
 {
-    FloatType m(-INFINITY);
-    for(size_t i = 0; i < v.size(); i++) m = v(i) > m ? v(i) : m;
-    return m;
+    using DType = typename Traits<DeriveType>::ArithType;
+    auto ret = std::numeric_limits<DType>::lowest();
+    mat.traverse([&](auto i, auto j){ ret = std::max(ret, mat(i,j)); });
+    return ret;
 }
 
 // template <typename DType>
