@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplex</title>
+</head>
+<body>
+    <h1>Simplex Geometry</h1>
+    <div class="logflow_toc">
+        <h2>Table of Contents</h2>
+    </div>
+
+    <hr>
+    <h1>Basic Concepts</h1>
+
+    <h2>Definition: Dimension of Simplex</h2>
+    <ul>
+        <li>a 0-dimensional simplex is a point,</li>
+        <li>a 1-dimensional simplex is a line segment,</li>
+        <li>a 2-dimensional simplex is a triangle,</li>
+        <li>a 3-dimensional simplex is a tetrahedron, and</li>
+        <li>a 4-dimensional simplex is a 5-cell.</li>
+    </ul>
+    <p>In summary, the dimensonal of a simplex is \(M - 1\), where \(M\) is the number of its vertex.   </p>
+
+    <h2>Matrix expression in <code class="md">mxm</code></h2>
+    <p>A simplex with \(M\) vertices embedded in \(N\) dimensional space is stored as a matrix </p>
+    \[
+        \Huge A_{n \times m}
+    \]
+    <p>\(N \geq M-1\). </p>
+
+    \[
+        A = 
+        \left[ 
+        \begin{matrix}
+            v_0 & v_1 & \cdots & v_m \\
+        \end{matrix}
+         \right] 
+    \]
+    <p>where \(v_i\) is the i-th vertex of the simplex. </p>
+    
+    <hr>
+    <h1>Linear Subspace</h1>
+
+    <p>An \(M-1\) dimensional simplex spans a \(M-1\) dimensional subspace. The basis are defined by: </p>
+    \[
+        b_i = v_i - v_0 \quad (i = 1,2, \cdots m)
+    \]
+    
+
+    <hr>
+    <h1>Lebesgue Measure</h1>
+    
+    <hr>
+    <h1>References</h1>
+    <ul>
+        <li><a href="https://en.wikipedia.org/wiki/Simplex">wikipedia</a></li>
+    </ul>
+
+    <script type="module" src="https://xiaoxingchen.github.io/logflow_notes/js/notes.js?2"></script>
+</body>
+</html>
