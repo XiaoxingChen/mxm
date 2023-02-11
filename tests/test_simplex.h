@@ -10,15 +10,15 @@ namespace mxm
 inline void testAffineCoordinate01()
 {
     Matrix<float> pts(fixRow(3), {
-        1,0,0, 
-        0,1,0, 
+        1,0,0,
+        0,1,0,
         0,0.5,0.5}, COL);
     Matrix<float> triangle(fixRow(3), {1,0,0, 0,1,0, 0,0,1}, COL);
     Matrix<float> coord = splx::affineCoordinate(pts, triangle);
 
     Matrix<float> expected(fixRow(2), {
-        0,0, 
-        1,0, 
+        0,0,
+        1,0,
         0.5,0.5}, COL);
     if(!isZero(coord - expected, nullptr, 1e-7))
     {
@@ -67,7 +67,7 @@ inline void testPointsInsideSimplex()
     Matrix<float> pts(fixRow(2), {0.1,0.1, 0.5,1.1, 0.5,0.5}, COL);
     auto ret = splx::arePointsInside(pts, triangle);
     Vector<float> expected{0.1f, -0.6, 0.};
-    
+
     if(!isZero(ret - expected))
     {
         std::cout << mxm::to_string(ret) << std::endl;
@@ -116,7 +116,7 @@ inline void testSimplexDistanceToPoint()
         std::cout << mxm::to_string(ret) << std::endl;
         throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
     }
-    
+
 }
 
 inline void testSimplexDistanceToPoint02()
@@ -128,7 +128,12 @@ inline void testSimplexDistanceToPoint02()
     Vector<float> ref_pt{0.f,0,1};
     auto dist = splx::distanceSubspaceToPoints(simplex, pts);
     // auto dist_bdry = splx::distanceBoundaryToPoints(simplex, pts);
-    std::cout << mxm::to_string(dist.T()) << std::endl;
+    Vector<float> expected{sqrt(0.5f)};
+    if(!isZero(dist - expected, nullptr, 1e-5))
+    {
+        std::cout << mxm::to_string(dist) << std::endl;
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
 }
 
 inline void testSimplex()
@@ -140,7 +145,7 @@ inline void testSimplex()
     testBoundaryNormalVector01();
     testBoundaryNormalVector02();
     testSimplexDistanceToPoint();
-    // testSimplexDistanceToPoint02();
+    testSimplexDistanceToPoint02();
 }
 
 } // namespace mxm
