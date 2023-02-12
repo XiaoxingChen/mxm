@@ -62,7 +62,9 @@ MXM_INLINE size_t rayCast(
     Ray<> ray(ray_in);
     std::stack<size_t> node_idx_stk;
     std::vector<float> data_hit_t;
-    std::vector<float> data_vertex_coeff;
+    // std::vector<float> data_vertex_coeff;
+    // Matrix<float> bary_coords({ray.origin().size(), 0});
+    Matrix<float> bary_coords({ray.origin().size(), 0});
     std::vector<size_t> data_prim_idx;
 
     if(!tree.nodeBuffer().at(0).aabb.hit(ray))
@@ -80,9 +82,8 @@ MXM_INLINE size_t rayCast(
         {
             for(const auto& prim_idx: target_node.primitive_index_buffer)
             {
-                auto result = intersectEquation( tree.primitive(prim_idx), ray);
-                auto hit_t = result(0);
-                if(!validIntersect (result) || !ray.valid(hit_t))
+                const auto [hit_t, bary_coord] = rayPrimitiveIntersection(ray.origin(), ray.direction(), tree.primitive(prim_idx));
+                if(min(bary_coord) < -eps<float>() || !ray.valid(hit_t))
                     continue;
 
                 if(hit_type == eAnyHit
@@ -91,16 +92,12 @@ MXM_INLINE size_t rayCast(
                 {
                     data_hit_t.push_back(hit_t);
                     data_prim_idx.push_back(prim_idx);
-                    data_vertex_coeff.push_back(1.f - mxm::sum(result) + hit_t);
-                    for(size_t i = 1; i < result.size(); i++)
-                        data_vertex_coeff.push_back(result(i));
+                    bary_coords = hstack(bary_coords, bary_coord);
                 }else if (hit_type == eClosestHit && !data_hit_t.empty() && hit_t < data_hit_t.at(0))
                 {
                     data_hit_t.at(0) = hit_t;
                     data_prim_idx.at(0) = prim_idx;
-                    data_vertex_coeff.at(0) = (1.f - mxm::sum(result) + hit_t);
-                    for(size_t i = 1; i < result.size(); i++)
-                        data_vertex_coeff.at(i) = result(i);
+                    bary_coords = hstack(bary_coords, bary_coord);
                 }else{ assert(false); }
 
 
@@ -125,7 +122,7 @@ MXM_INLINE size_t rayCast(
     }
     size_t hit_cnt = data_hit_t.size();
 
-    if(p_coeff) (*p_coeff) = std::move(Matrix<float>({tree.dim(), data_hit_t.size()}, std::move(data_vertex_coeff), COL));
+    if(p_coeff) (*p_coeff) = bary_coords;
     if(p_prim_idx) (*p_prim_idx) = Vector<size_t>(std::move(data_prim_idx));
     if(p_hit_t) (*p_hit_t) = Vector<float>(std::move(data_hit_t));
 

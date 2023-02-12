@@ -108,8 +108,7 @@ Matrix<typename Traits<DeriveTypeLhs>::EntryType>
 hstack(const MatrixBase<DeriveTypeLhs>& lhs, const MatrixBase<DeriveTypeRhs>& rhs)
 {
     using DType = typename Traits<DeriveTypeLhs>::EntryType;
-    if(lhs.shape(0) != rhs.shape(0))
-        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    assert(lhs.shape(0) == rhs.shape(0));
 
     Matrix<DType> ret({lhs.shape(0), lhs.shape(1) + rhs.shape(1)});
     ret.setBlock(0,0,lhs);

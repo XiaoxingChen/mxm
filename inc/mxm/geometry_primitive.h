@@ -3,6 +3,7 @@
 
 #include "linalg.h"
 #include "geometry_ray.h"
+#include "geometry_simplex.h"
 
 namespace mxm
 {
@@ -36,6 +37,25 @@ inline bool validIntersect(const Vec& x)
     // FloatType sum_k = x.norm(1) - fabs(x(0));
     FloatType sum_k = mxm::sum(x) - x(0);
     return sum_k < 1 + eps();
+}
+
+// ret[0]: intersect ray t
+// ret[1]: barycentric coordinate of triangle
+template <typename DType>
+std::tuple<DType, Vector<DType>>
+rayPrimitiveIntersection(
+    const Vector<DType>& origin,
+    const Vector<DType>& direction,
+    const Matrix<DType>& primitive)
+{
+    std::tuple<DType, Vector<DType>> ret;
+    std::get<1>(ret) = splx::intersect(direction, origin,
+        primitive(Block({},{1, end()})) - primitive(Col(0)), Vector<DType>(primitive(Col(0))));
+
+
+    std::get<0>(ret) = std::get<1>(ret)(0);
+    std::get<1>(ret)(0) = DType(1) - (sum(std::get<1>(ret)) - std::get<1>(ret)(0));
+    return ret;
 }
 
 //
