@@ -26,13 +26,13 @@ Matrix<DType> dimReduction(const Matrix<DType>& vertices)
 // pts_in: shape(M,K)
 // simplex: shape(M,N+1)
 // return: shape(N,K)
-// If point is not in the N subspace of simplex, 
-// the projection of the point will be used for calculation instead. 
-// reference: 
+// If point is not in the N subspace of simplex,
+// the projection of the point will be used for calculation instead.
+// reference:
 // [1] https://en.wikipedia.org/wiki/Affine_space#Coordinates
 template<typename DType>
 Matrix<DType> affineCoordinate(
-    const Matrix<DType>& pts_in, 
+    const Matrix<DType>& pts_in,
     const Matrix<DType>& simplex)
 {
     // dim reduction
@@ -65,7 +65,7 @@ Matrix<DType> affineCoordinate(
 // return: shape(N+1,K)
 template<typename DType>
 Matrix<DType> barycentricCoordinate(
-    const Matrix<DType>& pts_in, 
+    const Matrix<DType>& pts_in,
     const Matrix<DType>& simplex)
 {
     Matrix<DType> affine = affineCoordinate(pts_in, simplex);
@@ -97,18 +97,18 @@ DType lebesgueMeasure(const Matrix<DType>& simplex)
 // N points, DIM dimension, M simplex dimension
 // pts_in: shape(DIM, N)
 // simplex: shape(DIM, M)
-// return: shape(N, 1). 
+// return: shape(N, 1).
 //   ret[i] > 0: inside
 //   ret[i] == 0: on the boundary
 //   ret[i] < 0: outside
 template<typename DType>
 Vector<DType> arePointsInside(
-    const Matrix<DType>& pts_in, 
+    const Matrix<DType>& pts_in,
     const Matrix<DType>& simplex)
 {
     assert(simplex.shape(0) + 1 == simplex.shape(1) && "simplex shape mismatch");
     assert(simplex.shape(0) == pts_in.shape(0) && "simplex shape mismatch");
-    
+
     auto bary_coord = barycentricCoordinate(pts_in, simplex);
     Vector<DType> ret(pts_in.shape(1));
     for(size_t j = 0; j < bary_coord.shape(1); j++)
@@ -147,7 +147,7 @@ Matrix<DType> boundaryNormalVectors(const Matrix<DType>& simplex)
 
         Matrix<DType> norm_v = affine_basis.matmul(weights.T());
         norm_v /= norm(norm_v);
-        
+
         ret(Col(src_vtx_idx)) = norm_v;
     }
     return ret;
@@ -179,7 +179,7 @@ Vector<int8_t> normalVectorLeftUpRulePolarity(const Matrix<DType>& vectors)
 #if 0
 template<typename DType>
 Vector<int8_t> arePixelsInside(
-    const Matrix<DType>& bary_coord, 
+    const Matrix<DType>& bary_coord,
     const Matrix<DType>& simplex,
     DType tol)
 {
@@ -196,7 +196,7 @@ Vector<int8_t> arePixelsInside(
         exceed_idx.clear();
         for(size_t i = 0; i < bary_coord.shape(0); i++)
         {
-            
+
             if(bary_coord(i,j) < -tol)
             {
                 ret(j) = 0;
@@ -236,8 +236,8 @@ distanceSubspaceToPoints(const Matrix<DType>& simplex, const Matrix<DType>& pts_
 
     // pts under rotated coordinate
     pts = qr_result[0].T().matmul(pts);
-    
-    
+
+
     Vector<DType> ret(pts_in.shape(1));
 
     for(size_t pt_idx = 0; pt_idx < pts_in.shape(1); pt_idx++)
@@ -267,7 +267,7 @@ distanceToPointsWithinSubspace(const Matrix<DType>& simplex, const Matrix<DType>
     // pts under rotated coordinate
     pts = qr_result[0].T().matmul(pts);
     // auto projected_origin = qr_result[0].T().matmul(ref_pt);
-    
+
     size_t dist_axis = simplex.shape(1) - 1;
 
     Vector<DType> ret = pts(Row(dist_axis));
@@ -298,7 +298,7 @@ distanceBoundaryToPoints(const Matrix<DType>& simplex, const Matrix<DType>& pts_
 
 template<typename DType>
 Vector<int8_t> arePointsInside(
-    const Matrix<DType>& pts_in, 
+    const Matrix<DType>& pts_in,
     const Matrix<DType>& simplex,
     DType boundary_width)
 {
@@ -334,7 +334,7 @@ Vector<int8_t> arePointsInside(
 template<typename DType>
 Vector<DType> centroid(const Matrix<DType>& simplex)
 {
-    return sum(simplex, 1) / DType(simplex.shape(1)); 
+    return sum(simplex, 1) / DType(simplex.shape(1));
 }
 
 #if 0
@@ -343,9 +343,22 @@ Vector<DType> centroid(const Matrix<DType>& simplex)
 template<typename DType>
 Vector<DType> circumCenter(const Matrix<DType>& simplex, DType* radius=nullptr)
 {
-    
+
 }
 #endif
+
+// reference:
+// docs/simplex_geometry.html#h1_intersection_under_affine_frame
+template<typename DType>
+Vector<DType> intersect(
+    const Matrix<DType>& d1, const Vector<DType>& o1,
+    const Matrix<DType>& d2, const Vector<DType>& o2)
+{
+    assert(d1.shape(0) == o1.shape(0));
+    assert(d2.shape(0) == o2.shape(0));
+    assert(d1.shape(0) == d1.shape(0));
+    return qr::solve(hstack(d1, d2 * DType(-1)), o2 - o1);
+}
 
 } // namespace splx
 

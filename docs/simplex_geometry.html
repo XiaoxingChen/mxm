@@ -33,15 +33,15 @@
     <p>\(N \geq M-1\). </p>
 
     \[
-        A = 
-        \left[ 
+        A =
+        \left[
         \begin{matrix}
             v_0 & v_1 & \cdots & v_m \\
         \end{matrix}
-         \right] 
+         \right]
     \]
     <p>where \(v_i\) is the i-th vertex of the simplex. </p>
-    
+
     <hr>
     <h1>Linear Subspace</h1>
 
@@ -49,11 +49,73 @@
     \[
         b_i = v_i - v_0 \quad (i = 1,2, \cdots m)
     \]
-    
+
 
     <hr>
     <h1>Lebesgue Measure</h1>
-    
+
+    <hr>
+    <h1>Intersection under Affine Frame</h1>
+    <p>Define an affine transform as</p>
+    \[
+    F =
+    \left[
+    \begin{matrix}
+        D & P \\
+        0 & 1 \\
+    \end{matrix}
+     \right]
+    \]
+    \[
+        \begin{align}
+        \left[
+        \begin{matrix}
+            D_1 & P_1 \\
+            0 & 1 \\
+        \end{matrix}
+         \right]
+        \left[
+        \begin{matrix}
+            t_1 \\
+            1 \\
+        \end{matrix}
+         \right]
+
+         & =
+         \left[
+         \begin{matrix}
+             D_2 & P_2 \\
+             0 & 1 \\
+         \end{matrix}
+          \right]
+         \left[
+         \begin{matrix}
+             t_2 \\
+             1 \\
+         \end{matrix}
+          \right] \\
+
+          D_1 t_1 + P_1  &= D_2 t_2 + P_2 \\
+          D_1 t_1 - D_2 t_2 &= P_2 - P_1 \\
+
+          \left[
+          \begin{matrix}
+              D_1 & -D_2 \\
+          \end{matrix}
+           \right]
+
+           \left[
+           \begin{matrix}
+                t_1 \\
+                t_2 \\
+           \end{matrix}
+            \right]
+
+            &= P_2 - P_1
+
+        \end{align}
+    \]
+
     <hr>
     <h1>References</h1>
     <ul>
