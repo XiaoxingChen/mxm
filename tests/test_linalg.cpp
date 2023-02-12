@@ -1094,6 +1094,18 @@ void testConvolution()
     testConvolution02();
 }
 
+void testLeftInverse()
+{
+    Matrix<float> mat({4,2},{0,0, 0,0, 1,1, 0,1}, ROW);
+
+    auto ret = leftInv(mat);
+    float error;
+    if(! isIdentity(ret.matmul(mat), &error, eps<float>()))
+    {
+        throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__));
+    }
+}
+
 void testReduce01()
 {
     Matrix<float> mat({20, 8});
@@ -1194,5 +1206,6 @@ void testLinearAlgebra()
     testSvdPipelineError<float>();
     testConvolution();
     testReduce();
+    testLeftInverse();
 
 }

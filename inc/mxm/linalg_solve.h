@@ -13,6 +13,8 @@
 namespace mxm
 {
 
+// reference:
+// [1] https://en.wikipedia.org/wiki/Triangular_matrix#Forward_substitution
 template<typename DeriveType1, typename DeriveType2>
 Matrix<typename Traits<DeriveType1>::EntryType>
 solveLUTriangle(const MatrixBase<DeriveType1>& mat_in, const MatrixBase<DeriveType2>& b_in, bool l_tri)
@@ -155,6 +157,25 @@ eig(const Matrix<DType>& mat);
 template<typename DeriveType>
 std::array<Matrix<typename Traits<DeriveType>::EntryType>, 3>
 svd(const MatrixBase<DeriveType>& mat);
+
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+leftInv(const MatrixBase<DeriveType>& mat)
+{
+    using DType = typename Traits<DeriveType>::EntryType;
+    assert(mat.shape(0) >= mat.shape(1));
+    auto qr_ret = qr::decomposeByRotation(mat);
+    auto kernel_inv = solveUpperTriangle(qr_ret[1](Block({0,mat.shape(1)},{})), Matrix<DType>::identity(mat.shape(1)));
+    Matrix<DType> ret = kernel_inv.matmul(qr_ret[0].T()(Block({0, mat.shape(1)},{})));
+    return ret;
+}
+
+template<typename DeriveType>
+Matrix<typename Traits<DeriveType>::EntryType>
+rightInv(const MatrixBase<DeriveType>& mat)
+{
+    return leftInv(mat.T()).T();
+}
 
 } // namespace mxm
 
