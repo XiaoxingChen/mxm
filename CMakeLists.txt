@@ -12,6 +12,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "^Windows")
     if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
     endif(MSVC)
+else()
+    add_compile_options(-std=c++17)
 endif()
 
 include_directories(inc)
